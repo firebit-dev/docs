@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkdocs=self.webpackChunkdocs||[]).push([[486],{4410:s=>{s.exports=JSON.parse('{"sourceUrl":"https://github.com/firebit-dev/cross-repo-test/blob/main","baseUrl":"/cross-repo-test/","classOrder":[],"apiCategories":[]}')}}]);
