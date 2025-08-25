@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkdocs=self.webpackChunkdocs||[]).push([[6416],{84410:s=>{s.exports=JSON.parse('{"sourceUrl":"https://github.com/firebit-dev/farm-tycoon/blob/main","baseUrl":"/farm-tycoon/","classOrder":[],"apiCategories":[]}')}}]);
