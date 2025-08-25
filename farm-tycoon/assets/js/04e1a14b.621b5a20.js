@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkdocs=self.webpackChunkdocs||[]).push([[1357],{78534:e=>{e.exports=JSON.parse('[{"value":"Functions","id":"functions","level":2},{"value":".getOffsetFromPositionData","id":"getOffsetFromPositionData","level":3}]')}}]);

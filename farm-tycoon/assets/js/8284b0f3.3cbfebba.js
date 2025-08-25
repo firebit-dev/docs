@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkdocs=self.webpackChunkdocs||[]).push([[2830],{56281:e=>{e.exports=JSON.parse('[{"value":"Functions","id":"functions","level":2},{"value":".AutoCanvasSize","id":"AutoCanvasSize","level":3}]')}}]);

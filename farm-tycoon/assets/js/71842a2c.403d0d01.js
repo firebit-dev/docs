@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkdocs=self.webpackChunkdocs||[]).push([[6173],{75298:s=>{s.exports=JSON.parse('{"functions":[],"properties":[],"types":[],"name":"Zone","desc":"A class for managing zones","source":{"line":6,"path":"src/Shared/Class/Zone.luau"}}')}}]);
