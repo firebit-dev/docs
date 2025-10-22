@@ -1,6 +1,6 @@
 # AI Agent Guidelines
 
-This document provides guidelines for AI agents working on this Roblox Farm Tycoon project. The codebase uses modern Luau practices with comprehensive type annotations and follows established patterns.
+This document provides guidelines for AI agents working on this Roblox project. The codebase uses modern Luau practices with comprehensive type annotations and follows established patterns.
 
 ## Project Overview
 
