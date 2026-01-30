@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en" dir="ltr" class="plugin-moonwave plugin-id-moonwave" data-has-hydrated="false">
+<head>
+<meta charset="UTF-8">
+<meta name="generator" content="Docusaurus v3.7.0">
+<title data-rh="true">Attrify | attrify</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://firebit-dev.github.io/attrify/api/Attrify"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docusaurus_tag" content="default"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docsearch:docusaurus_tag" content="default"><meta data-rh="true" property="og:title" content="Attrify | attrify"><meta data-rh="true" name="description" content="No-code behavior system for Roblox using CollectionService tags and attributes.
+
+Usage:
+```lua
+-- Server script - Load all watchers
+local Attrify = require(ReplicatedStorage.Packages.Attrify)
+Attrify.start()
+
+-- Or load only specific watchers to reduce memory usage
+Attrify.start({
+	modules = { &quot;kill_part&quot;, &quot;jump_pad&quot;, &quot;checkpoint&quot; }
+})
+
+-- You can also use category.module format
+Attrify.start({
+	modules = { &quot;Combat.kill_part&quot;, &quot;Movement.jump_pad&quot; }
+})
+```
+
+Available behaviors are auto-loaded based on tags:
+- **Combat:** kill_part, damage_zone, heal_part, heal_zone
+- **Movement:** jump_pad, bounce_pad, teleporter, speed_boost, slow_zone, conveyor, push_zone, gravity_zone
+- **Collectibles:** collectible, coin
+- **Animation:** spinner, moving_platform, swing_part, thwomp, bobber, orbiter, shaker, escalator, elevator, path_follower
+- **Obby:** checkpoint, spawn_point, fading_part, cycling_platform, crumbling_part
+- **Visual:** glowing, color_cycler, fader, pulser, trailer, particle_emitter, beamer, spotlighter, billboard, flickerer
+- **Interaction:** prompt_part, clickable, button, pressure_plate
+- **Door:** auto_door, swing_gate, sliding_panel
+- **Destruction:** breakable, respawner, touch_fade_out
+- **Sound:** touch_sound, ambient_sound, proximity_sound
+- **Logic:** toggler, sequencer, timer_part, random_activator
+- **Constraint:** rope_part, hinge_part"><meta data-rh="true" property="og:description" content="No-code behavior system for Roblox using CollectionService tags and attributes.
+
+Usage:
+```lua
+-- Server script - Load all watchers
+local Attrify = require(ReplicatedStorage.Packages.Attrify)
+Attrify.start()
+
+-- Or load only specific watchers to reduce memory usage
+Attrify.start({
+	modules = { &quot;kill_part&quot;, &quot;jump_pad&quot;, &quot;checkpoint&quot; }
+})
+
+-- You can also use category.module format
+Attrify.start({
+	modules = { &quot;Combat.kill_part&quot;, &quot;Movement.jump_pad&quot; }
+})
+```
+
+Available behaviors are auto-loaded based on tags:
+- **Combat:** kill_part, damage_zone, heal_part, heal_zone
+- **Movement:** jump_pad, bounce_pad, teleporter, speed_boost, slow_zone, conveyor, push_zone, gravity_zone
+- **Collectibles:** collectible, coin
+- **Animation:** spinner, moving_platform, swing_part, thwomp, bobber, orbiter, shaker, escalator, elevator, path_follower
+- **Obby:** checkpoint, spawn_point, fading_part, cycling_platform, crumbling_part
+- **Visual:** glowing, color_cycler, fader, pulser, trailer, particle_emitter, beamer, spotlighter, billboard, flickerer
+- **Interaction:** prompt_part, clickable, button, pressure_plate
+- **Door:** auto_door, swing_gate, sliding_panel
+- **Destruction:** breakable, respawner, touch_fade_out
+- **Sound:** touch_sound, ambient_sound, proximity_sound
+- **Logic:** toggler, sequencer, timer_part, random_activator
+- **Constraint:** rope_part, hinge_part"><link data-rh="true" rel="canonical" href="https://firebit-dev.github.io/attrify/api/Attrify"><link data-rh="true" rel="alternate" href="https://firebit-dev.github.io/attrify/api/Attrify" hreflang="en"><link data-rh="true" rel="alternate" href="https://firebit-dev.github.io/attrify/api/Attrify" hreflang="x-default"><link rel="stylesheet" href="/attrify/assets/css/styles.7a4bdbad.css">
+<script src="/attrify/assets/js/runtime~main.ed749d7f.js" defer="defer"></script>
+<script src="/attrify/assets/js/main.eefecefd.js" defer="defer"></script>
+</head>
+<body class="navigation-with-keyboard">
+<script>!function(){function t(t){document.documentElement.setAttribute("data-theme",t)}var e=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme")}catch(t){}}();null!==e?t(e):window.matchMedia("(prefers-color-scheme: dark)").matches?t("dark"):(window.matchMedia("(prefers-color-scheme: light)").matches,t("light"))}(),function(){try{const c=new URLSearchParams(window.location.search).entries();for(var[t,e]of c)if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id="__docusaurus"><div role="region" aria-label="Skip to main content"><a class="skipToContent_fXgn" href="#__docusaurus_skipToContent_fallback">Skip to main content</a></div><nav aria-label="Main" class="navbar navbar--fixed-top"><div class="navbar__inner"><div class="navbar__items"><button aria-label="Toggle navigation bar" aria-expanded="false" class="navbar__toggle clean-btn" type="button"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/attrify/"><b class="navbar__title text--truncate">attrify</b></a><a class="navbar__item navbar__link" href="/attrify/docs/intro">Docs</a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/attrify/api/">API</a></div><div class="navbar__items navbar__items--right"><div class="toggle_vylO colorModeToggle_DEke"><button class="clean-btn toggleButton_gllP toggleButtonDisabled_aARS" type="button" disabled="" title="Switch between dark and light mode (currently light mode)" aria-label="Switch between dark and light mode (currently light mode)" aria-live="polite" aria-pressed="false"><svg viewBox="0 0 24 24" width="24" height="24" class="lightToggleIcon_pyhR"><path fill="currentColor" d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" class="darkToggleIcon_wfgR"><path fill="currentColor" d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z"></path></svg></button></div><div class="navbarSearchContainer_Bca1"><div class="navbar__search"><span aria-label="expand searchbar" role="button" class="search-icon" tabindex="0"></span><input id="search_input_react" type="search" placeholder="Loading..." aria-label="Search" class="navbar__search-input search-bar" disabled=""></div></div></div></div><div role="presentation" class="navbar-sidebar__backdrop"></div></nav><div id="__docusaurus_skipToContent_fallback" class="main-wrapper mainWrapper_z2l0 docPageContainer_wNNk"><div class="docPage_Dpn1"><div class="docSidebarContainer_o_re"><div class="sidebar_njMd"><nav aria-label="Docs sidebar" class="menu thin-scrollbar menu_SIkG"><ul class="theme-doc-sidebar-menu menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link menu__link--active" aria-current="page" href="/attrify/api/Attrify">​Attrify</a></li></ul></nav></div></div><main class="docMainContainer_HJE1"><div class="container padding-vert--lg"><div class="row"><div class="col docItemCol_MU3C"><div class="docItemContainer_Wv98"><article><div class="member_J0w1 markdown"><div class="tocCollapsible_ETCw theme-doc-toc-mobile tocMobile_oUs_"><button type="button" class="clean-btn tocCollapsibleButton_TO0P">On this page</button></div><header><h1 class="docTitle_mZRt" style="text-decoration:none"><span style="display:inline-block">Attrify</span></h1><div class="luaClassTags_EipM"></div><div>
+<p>No-code behavior system for Roblox using CollectionService tags and attributes.</p>
+<p>Usage:</p>
+<pre class="language-lua"><code class="language-lua"><span class="token comment">-- Server script - Load all watchers</span>
+<span class="token keyword">local</span> Attrify <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span>ReplicatedStorage<span class="token punctuation">.</span>Packages<span class="token punctuation">.</span>Attrify<span class="token punctuation">)</span>
+Attrify<span class="token punctuation">.</span><span class="token function">start</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token comment">-- Or load only specific watchers to reduce memory usage</span>
+Attrify<span class="token punctuation">.</span><span class="token function">start</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+	modules <span class="token operator">=</span> <span class="token punctuation">{</span> <span class="token string">"kill_part"</span><span class="token punctuation">,</span> <span class="token string">"jump_pad"</span><span class="token punctuation">,</span> <span class="token string">"checkpoint"</span> <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+<span class="token comment">-- You can also use category.module format</span>
+Attrify<span class="token punctuation">.</span><span class="token function">start</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+	modules <span class="token operator">=</span> <span class="token punctuation">{</span> <span class="token string">"Combat.kill_part"</span><span class="token punctuation">,</span> <span class="token string">"Movement.jump_pad"</span> <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+</code></pre>
+<p>Available behaviors are auto-loaded based on tags:</p>
+<ul>
+  <li><strong>Combat:</strong> kill_part, damage_zone, heal_part, heal_zone</li>
+  <li><strong>Movement:</strong> jump_pad, bounce_pad, teleporter, speed_boost, slow_zone, conveyor, push_zone, gravity_zone</li>
+  <li><strong>Collectibles:</strong> collectible, coin</li>
+  <li><strong>Animation:</strong> spinner, moving_platform, swing_part, thwomp, bobber, orbiter, shaker, escalator, elevator, path_follower</li>
+  <li><strong>Obby:</strong> checkpoint, spawn_point, fading_part, cycling_platform, crumbling_part</li>
+  <li><strong>Visual:</strong> glowing, color_cycler, fader, pulser, trailer, particle_emitter, beamer, spotlighter, billboard, flickerer</li>
+  <li><strong>Interaction:</strong> prompt_part, clickable, button, pressure_plate</li>
+  <li><strong>Door:</strong> auto_door, swing_gate, sliding_panel</li>
+  <li><strong>Destruction:</strong> breakable, respawner, touch_fade_out</li>
+  <li><strong>Sound:</strong> touch_sound, ambient_sound, proximity_sound</li>
+  <li><strong>Logic:</strong> toggler, sequencer, timer_part, random_activator</li>
+  <li><strong>Constraint:</strong> rope_part, hinge_part</li>
+</ul>
+</div></header><h2 class="anchor anchorWithStickyNavbar_LWe7" id="functions">Functions<a href="#functions" class="hash-link" aria-label="Direct link to Functions" title="Direct link to Functions">​</a></h2><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="start"><code style="text-decoration:none">start</code><a href="#start" class="hash-link" aria-label="Direct link to start" title="Direct link to start">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="/blob/master/src/init.luau#L94"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>Attrify<!-- -->.</code><code class="green_DgR4">start</code><code>(</code><div class="inset_uKQm"><div><code>config<!-- -->: </code><code class="blue_P4bS">Config?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Optional configuration table</p>
+</span></span></div></div><code>) → </code><code>(</code><code>)</code></div><div>
+<p>
+  Starts Attrify watchers. Call this once on both server and client.
+  Each watcher automatically determines if it should run on server or client.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="setPlayerCheckpoint"><code style="text-decoration:none">setPlayerCheckpoint</code><a href="#setPlayerCheckpoint" class="hash-link" aria-label="Direct link to setPlayerCheckpoint" title="Direct link to setPlayerCheckpoint">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="/blob/master/src/init.luau#L186"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>Attrify<!-- -->.</code><code class="green_DgR4">setPlayerCheckpoint</code><code>(</code><div class="inset_uKQm"><div><code>player<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/Player" target="_blank" rel="noopener noreferrer">Player<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code>,</code><span class="inlineDescription_G7Er">-- <span>
+<p>The player to set checkpoint for</p>
+</span></span></div><div><code>checkpointNumber<!-- -->: </code><code class="blue_P4bS">number</code><span class="inlineDescription_G7Er">-- <span>
+<p>The checkpoint number to set</p>
+</span></span></div></div><code>) → </code><code class="blue_P4bS">boolean</code><span class="inlineDescription_G7Er">-- <span>
+<p>True if checkpoint was set successfully</p>
+</span></span></div><div>
+<p>
+  Set player's checkpoint state (for loading from persistence).
+  Call this when player joins to restore their saved checkpoint.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="spawnPlayerAtCheckpoint"><code style="text-decoration:none">spawnPlayerAtCheckpoint</code><a href="#spawnPlayerAtCheckpoint" class="hash-link" aria-label="Direct link to spawnPlayerAtCheckpoint" title="Direct link to spawnPlayerAtCheckpoint">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="/blob/master/src/init.luau#L202"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>Attrify<!-- -->.</code><code class="green_DgR4">spawnPlayerAtCheckpoint</code><code>(</code><div class="inset_uKQm"><div><code>player<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/Player" target="_blank" rel="noopener noreferrer">Player<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code>,</code><span class="inlineDescription_G7Er">-- <span>
+<p>The player to spawn</p>
+</span></span></div><div><code>checkpointNumber<!-- -->: </code><code class="blue_P4bS">number</code><span class="inlineDescription_G7Er">-- <span>
+<p>The checkpoint number to spawn at</p>
+</span></span></div></div><code>) → </code><code class="blue_P4bS">boolean</code><span class="inlineDescription_G7Er">-- <span>
+<p>True if spawn was successful</p>
+</span></span></div><div>
+<p>Spawn player at a specific checkpoint.</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="getPlayerCheckpoint"><code style="text-decoration:none">getPlayerCheckpoint</code><a href="#getPlayerCheckpoint" class="hash-link" aria-label="Direct link to getPlayerCheckpoint" title="Direct link to getPlayerCheckpoint">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="/blob/master/src/init.luau#L217"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>Attrify<!-- -->.</code><code class="green_DgR4">getPlayerCheckpoint</code><code>(</code><div class="inset_uKQm"><div><code>player<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/Player" target="_blank" rel="noopener noreferrer">Player<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
+<p>The player to get checkpoint for</p>
+</span></span></div></div><code>) → </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>The current checkpoint number, or nil if not set</p>
+</span></span></div><div>
+<p>Get player's current in-memory checkpoint (not persisted).</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="getTotalCheckpoints"><code style="text-decoration:none">getTotalCheckpoints</code><a href="#getTotalCheckpoints" class="hash-link" aria-label="Direct link to getTotalCheckpoints" title="Direct link to getTotalCheckpoints">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="/blob/master/src/init.luau#L230"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>Attrify<!-- -->.</code><code class="green_DgR4">getTotalCheckpoints</code><code>(</code><code>) → </code><code class="blue_P4bS">number</code><span class="inlineDescription_G7Er">-- <span>
+<p>Total number of checkpoints</p>
+</span></span></div><div>
+<p>Get the total number of checkpoints in the game.</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="getCheckpointPart"><code style="text-decoration:none">getCheckpointPart</code><a href="#getCheckpointPart" class="hash-link" aria-label="Direct link to getCheckpointPart" title="Direct link to getCheckpointPart">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="/blob/master/src/init.luau#L244"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>Attrify<!-- -->.</code><code class="green_DgR4">getCheckpointPart</code><code>(</code><div class="inset_uKQm"><div><code>checkpointNumber<!-- -->: </code><code class="blue_P4bS">number</code><span class="inlineDescription_G7Er">-- <span>
+<p>The checkpoint number</p>
+</span></span></div></div><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/BasePart" target="_blank" rel="noopener noreferrer">BasePart?<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
+<p>The checkpoint part, or nil if not found</p>
+</span></span></div><div>
+<p>Get the part instance for a specific checkpoint.</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="getSpawnCFrame"><code style="text-decoration:none">getSpawnCFrame</code><a href="#getSpawnCFrame" class="hash-link" aria-label="Direct link to getSpawnCFrame" title="Direct link to getSpawnCFrame">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="/blob/master/src/init.luau#L258"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>Attrify<!-- -->.</code><code class="green_DgR4">getSpawnCFrame</code><code>(</code><div class="inset_uKQm"><div><code>checkpointNumber<!-- -->: </code><code class="blue_P4bS">number</code><span class="inlineDescription_G7Er">-- <span>
+<p>The checkpoint number</p>
+</span></span></div></div><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/CFrame" target="_blank" rel="noopener noreferrer">CFrame?<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
+<p>The spawn CFrame, or nil if not found</p>
+</span></span></div><div>
+<p>Get spawn CFrame for a checkpoint.</p>
+</div></div></article></div><details><summary>Show raw api</summary><pre style="max-width:100%;white-space:pre-wrap">{
+    &quot;functions&quot;: [
+        {
+            &quot;name&quot;: &quot;start&quot;,
+            &quot;desc&quot;: &quot;Starts Attrify watchers. Call this once on both server and client.\nEach watcher automatically determines if it should run on server or client.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;config&quot;,
+                    &quot;desc&quot;: &quot;Optional configuration table&quot;,
+                    &quot;lua_type&quot;: &quot;Config?&quot;
+                }
+            ],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 94,
+                &quot;path&quot;: &quot;src/init.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;setPlayerCheckpoint&quot;,
+            &quot;desc&quot;: &quot;Set player&#x27;s checkpoint state (for loading from persistence).\nCall this when player joins to restore their saved checkpoint.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;player&quot;,
+                    &quot;desc&quot;: &quot;The player to set checkpoint for&quot;,
+                    &quot;lua_type&quot;: &quot;Player&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;checkpointNumber&quot;,
+                    &quot;desc&quot;: &quot;The checkpoint number to set&quot;,
+                    &quot;lua_type&quot;: &quot;number&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;True if checkpoint was set successfully&quot;,
+                    &quot;lua_type&quot;: &quot;boolean&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 186,
+                &quot;path&quot;: &quot;src/init.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;spawnPlayerAtCheckpoint&quot;,
+            &quot;desc&quot;: &quot;Spawn player at a specific checkpoint.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;player&quot;,
+                    &quot;desc&quot;: &quot;The player to spawn&quot;,
+                    &quot;lua_type&quot;: &quot;Player&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;checkpointNumber&quot;,
+                    &quot;desc&quot;: &quot;The checkpoint number to spawn at&quot;,
+                    &quot;lua_type&quot;: &quot;number&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;True if spawn was successful&quot;,
+                    &quot;lua_type&quot;: &quot;boolean&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 202,
+                &quot;path&quot;: &quot;src/init.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;getPlayerCheckpoint&quot;,
+            &quot;desc&quot;: &quot;Get player&#x27;s current in-memory checkpoint (not persisted).&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;player&quot;,
+                    &quot;desc&quot;: &quot;The player to get checkpoint for&quot;,
+                    &quot;lua_type&quot;: &quot;Player&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;The current checkpoint number, or nil if not set&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 217,
+                &quot;path&quot;: &quot;src/init.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;getTotalCheckpoints&quot;,
+            &quot;desc&quot;: &quot;Get the total number of checkpoints in the game.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;Total number of checkpoints&quot;,
+                    &quot;lua_type&quot;: &quot;number&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 230,
+                &quot;path&quot;: &quot;src/init.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;getCheckpointPart&quot;,
+            &quot;desc&quot;: &quot;Get the part instance for a specific checkpoint.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;checkpointNumber&quot;,
+                    &quot;desc&quot;: &quot;The checkpoint number&quot;,
+                    &quot;lua_type&quot;: &quot;number&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;The checkpoint part, or nil if not found&quot;,
+                    &quot;lua_type&quot;: &quot;BasePart?&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 244,
+                &quot;path&quot;: &quot;src/init.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;getSpawnCFrame&quot;,
+            &quot;desc&quot;: &quot;Get spawn CFrame for a checkpoint.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;checkpointNumber&quot;,
+                    &quot;desc&quot;: &quot;The checkpoint number&quot;,
+                    &quot;lua_type&quot;: &quot;number&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;The spawn CFrame, or nil if not found&quot;,
+                    &quot;lua_type&quot;: &quot;CFrame?&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 258,
+                &quot;path&quot;: &quot;src/init.luau&quot;
+            }
+        }
+    ],
+    &quot;properties&quot;: [],
+    &quot;types&quot;: [],
+    &quot;name&quot;: &quot;Attrify&quot;,
+    &quot;desc&quot;: &quot;No-code behavior system for Roblox using CollectionService tags and attributes.\n\nUsage:\n```lua\n-- Server script - Load all watchers\nlocal Attrify = require(ReplicatedStorage.Packages.Attrify)\nAttrify.start()\n\n-- Or load only specific watchers to reduce memory usage\nAttrify.start({\n\tmodules = { \&quot;kill_part\&quot;, \&quot;jump_pad\&quot;, \&quot;checkpoint\&quot; }\n})\n\n-- You can also use category.module format\nAttrify.start({\n\tmodules = { \&quot;Combat.kill_part\&quot;, \&quot;Movement.jump_pad\&quot; }\n})\n```\n\nAvailable behaviors are auto-loaded based on tags:\n- **Combat:** kill_part, damage_zone, heal_part, heal_zone\n- **Movement:** jump_pad, bounce_pad, teleporter, speed_boost, slow_zone, conveyor, push_zone, gravity_zone\n- **Collectibles:** collectible, coin\n- **Animation:** spinner, moving_platform, swing_part, thwomp, bobber, orbiter, shaker, escalator, elevator, path_follower\n- **Obby:** checkpoint, spawn_point, fading_part, cycling_platform, crumbling_part\n- **Visual:** glowing, color_cycler, fader, pulser, trailer, particle_emitter, beamer, spotlighter, billboard, flickerer\n- **Interaction:** prompt_part, clickable, button, pressure_plate\n- **Door:** auto_door, swing_gate, sliding_panel\n- **Destruction:** breakable, respawner, touch_fade_out\n- **Sound:** touch_sound, ambient_sound, proximity_sound\n- **Logic:** toggler, sequencer, timer_part, random_activator\n- **Constraint:** rope_part, hinge_part&quot;,
+    &quot;source&quot;: {
+        &quot;line&quot;: 37,
+        &quot;path&quot;: &quot;src/init.luau&quot;
+    }
+}</pre></details></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#functions" class="table-of-contents__link toc-highlight">Functions</a><ul><li><a href="#getCheckpointPart" class="table-of-contents__link toc-highlight">.getCheckpointPart</a></li><li><a href="#getPlayerCheckpoint" class="table-of-contents__link toc-highlight">.getPlayerCheckpoint</a></li><li><a href="#getSpawnCFrame" class="table-of-contents__link toc-highlight">.getSpawnCFrame</a></li><li><a href="#getTotalCheckpoints" class="table-of-contents__link toc-highlight">.getTotalCheckpoints</a></li><li><a href="#setPlayerCheckpoint" class="table-of-contents__link toc-highlight">.setPlayerCheckpoint</a></li><li><a href="#spawnPlayerAtCheckpoint" class="table-of-contents__link toc-highlight">.spawnPlayerAtCheckpoint</a></li><li><a href="#start" class="table-of-contents__link toc-highlight">.start</a></li></ul></li></ul></div></div></div></div></main></div></div><footer class="footer footer--dark"><div class="container container-fluid"><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2025 dig1t. Built with Moonwave and Docusaurus</div></div></div></footer></div>
+</body>
+</html>

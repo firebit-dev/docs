@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en" dir="ltr" class="docs-wrapper plugin-docs plugin-id-default docs-version-current docs-doc-page docs-doc-id-reference" data-has-hydrated="false">
+<head>
+<meta charset="UTF-8">
+<meta name="generator" content="Docusaurus v3.7.0">
+<title data-rh="true">Watcher Reference | attrify</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://firebit-dev.github.io/attrify/docs/reference"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Watcher Reference | attrify"><meta data-rh="true" name="description" content="Quick reference for all Attrify watchers and their attributes."><meta data-rh="true" property="og:description" content="Quick reference for all Attrify watchers and their attributes."><link data-rh="true" rel="canonical" href="https://firebit-dev.github.io/attrify/docs/reference"><link data-rh="true" rel="alternate" href="https://firebit-dev.github.io/attrify/docs/reference" hreflang="en"><link data-rh="true" rel="alternate" href="https://firebit-dev.github.io/attrify/docs/reference" hreflang="x-default"><link rel="stylesheet" href="/attrify/assets/css/styles.7a4bdbad.css">
+<script src="/attrify/assets/js/runtime~main.ed749d7f.js" defer="defer"></script>
+<script src="/attrify/assets/js/main.eefecefd.js" defer="defer"></script>
+</head>
+<body class="navigation-with-keyboard">
+<script>!function(){function t(t){document.documentElement.setAttribute("data-theme",t)}var e=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme")}catch(t){}}();null!==e?t(e):window.matchMedia("(prefers-color-scheme: dark)").matches?t("dark"):(window.matchMedia("(prefers-color-scheme: light)").matches,t("light"))}(),function(){try{const c=new URLSearchParams(window.location.search).entries();for(var[t,e]of c)if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id="__docusaurus"><div role="region" aria-label="Skip to main content"><a class="skipToContent_fXgn" href="#__docusaurus_skipToContent_fallback">Skip to main content</a></div><nav aria-label="Main" class="navbar navbar--fixed-top"><div class="navbar__inner"><div class="navbar__items"><button aria-label="Toggle navigation bar" aria-expanded="false" class="navbar__toggle clean-btn" type="button"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/attrify/"><b class="navbar__title text--truncate">attrify</b></a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/attrify/docs/intro">Docs</a><a class="navbar__item navbar__link" href="/attrify/api/">API</a></div><div class="navbar__items navbar__items--right"><div class="toggle_vylO colorModeToggle_DEke"><button class="clean-btn toggleButton_gllP toggleButtonDisabled_aARS" type="button" disabled="" title="Switch between dark and light mode (currently light mode)" aria-label="Switch between dark and light mode (currently light mode)" aria-live="polite" aria-pressed="false"><svg viewBox="0 0 24 24" width="24" height="24" class="lightToggleIcon_pyhR"><path fill="currentColor" d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" class="darkToggleIcon_wfgR"><path fill="currentColor" d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z"></path></svg></button></div><div class="navbarSearchContainer_Bca1"><div class="navbar__search"><span aria-label="expand searchbar" role="button" class="search-icon" tabindex="0"></span><input id="search_input_react" type="search" placeholder="Loading..." aria-label="Search" class="navbar__search-input search-bar" disabled=""></div></div></div></div><div role="presentation" class="navbar-sidebar__backdrop"></div></nav><div id="__docusaurus_skipToContent_fallback" class="main-wrapper mainWrapper_z2l0"><div class="docsWrapper_hBAB"><button aria-label="Scroll back to top" class="clean-btn theme-back-to-top-button backToTopButton_sjWU" type="button"></button><div class="docRoot_UBD9"><aside class="theme-doc-sidebar-container docSidebarContainer_YfHR"><div class="sidebarViewport_aRkj"><div class="sidebar_njMd"><nav aria-label="Docs sidebar" class="menu thin-scrollbar menu_SIkG"><ul class="theme-doc-sidebar-menu menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/attrify/docs/intro">Introduction</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/attrify/docs/installation">Installation</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link menu__link--active" aria-current="page" href="/attrify/docs/reference">Watcher Reference</a></li></ul></nav></div></div></aside><main class="docMainContainer_TBSr"><div class="container padding-top--md padding-bottom--lg"><div class="row"><div class="col docItemCol_VOVn"><div class="docItemContainer_Djhp"><article><nav class="theme-doc-breadcrumbs breadcrumbsContainer_Z_bl" aria-label="Breadcrumbs"><ul class="breadcrumbs" itemscope="" itemtype="https://schema.org/BreadcrumbList"><li class="breadcrumbs__item"><a aria-label="Home page" class="breadcrumbs__link" href="/attrify/"><svg viewBox="0 0 24 24" class="breadcrumbHomeIcon_YNFT"><path d="M10 19v-5h4v5c0 .55.45 1 1 1h3c.55 0 1-.45 1-1v-7h1.7c.46 0 .68-.57.33-.87L12.67 3.6c-.38-.34-.96-.34-1.34 0l-8.36 7.53c-.34.3-.13.87.33.87H5v7c0 .55.45 1 1 1h3c.55 0 1-.45 1-1z" fill="currentColor"></path></svg></a></li><li itemscope="" itemprop="itemListElement" itemtype="https://schema.org/ListItem" class="breadcrumbs__item breadcrumbs__item--active"><span class="breadcrumbs__link" itemprop="name">Watcher Reference</span><meta itemprop="position" content="1"></li></ul></nav><div class="tocCollapsible_ETCw theme-doc-toc-mobile tocMobile_ITEo"><button type="button" class="clean-btn tocCollapsibleButton_TO0P">On this page</button></div><div class="theme-doc-markdown markdown"><header><h1>Watcher Reference</h1></header>
+<p>Quick reference for all Attrify watchers and their attributes.</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="feature-navigation">Feature Navigation<a href="#feature-navigation" class="hash-link" aria-label="Direct link to Feature Navigation" title="Direct link to Feature Navigation">​</a></h2>
+<p><a href="#animation">Animation</a> | <a href="#collect">Collect</a> | <a href="#combat">Combat</a> | <a href="#constraint">Constraint</a> | <a href="#destruction">Destruction</a> | <a href="#door">Door</a> | <a href="#interaction">Interaction</a> | <a href="#movement">Movement</a> | <a href="#obby">Obby</a> | <a href="#sound">Sound</a> | <a href="#visual">Visual</a></p>
+<hr>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="animation">Animation<a href="#animation" class="hash-link" aria-label="Direct link to Animation" title="Direct link to Animation">​</a></h2>
+<p>Animation watchers run on the <strong>client</strong> and handle visual movement effects.</p>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="bobber">Bobber<a href="#bobber" class="hash-link" aria-label="Direct link to Bobber" title="Direct link to Bobber">​</a></h3>
+<p><strong>Tag:</strong> <code>attr_bobber</code> | <strong>Runs on:</strong> Client</p>
+<p>Floats an object up and down continuously.</p>
+<table><thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>attr_bob_height</code></td><td>number</td><td>2</td><td>Maximum bob distance in studs</td></tr><tr><td><code>attr_bob_speed</code></td><td>number</td><td>1</td><td>Cycles per second</td></tr></tbody></table>
+<hr>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="elevator">Elevator<a href="#elevator" class="hash-link" aria-label="Direct link to Elevator" title="Direct link to Elevator">​</a></h3>
+<p><strong>Tag:</strong> <code>attr_elevator</code> | <strong>Runs on:</strong> Client</p>
+<p>Multi-floor elevator that moves between stops.</p>
+<p><strong>Requires:</strong> <code>Stop1</code>, <code>Stop2</code>, <code>Stop3</code>... Attachments for floor positions</p>
+<table><thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>attr_move_time</code></td><td>number</td><td>2</td><td>Time to move between floors</td></tr><tr><td><code>attr_wait_time</code></td><td>number</td><td>3</td><td>Time to wait at each floor</td></tr></tbody></table>
+<hr>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="moving-platform">Moving Platform<a href="#moving-platform" class="hash-link" aria-label="Direct link to Moving Platform" title="Direct link to Moving Platform">​</a></h3>
+<p><strong>Tag:</strong> <code>attr_moving_platform</code> | <strong>Runs on:</strong> Client</p>
+<p>Moves a platform between two attachment points.</p>
+<p><strong>Requires:</strong> <code>Point1</code> and <code>Point2</code> Attachments</p>
+<table><thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>attr_studs_per_second</code></td><td>number</td><td>1</td><td>Movement speed</td></tr><tr><td><code>attr_wait_time</code></td><td>number</td><td>1</td><td>Time to wait at each end</td></tr></tbody></table>
+<hr>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="orbiter">Orbiter<a href="#orbiter" class="hash-link" aria-label="Direct link to Orbiter" title="Direct link to Orbiter">​</a></h3>
+<p><strong>Tag:</strong> <code>attr_orbiter</code> | <strong>Runs on:</strong> Client</p>
+<p>Orbits an object around a center point.</p>
+<table><thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>attr_orbit_radius</code></td><td>number</td><td>5</td><td>Radius of the orbit in studs</td></tr><tr><td><code>attr_orbit_speed</code></td><td>number</td><td>1</td><td>Rotations per second</td></tr><tr><td><code>attr_center_name</code></td><td>string</td><td>—</td><td>Name of part to orbit around (optional)</td></tr></tbody></table>
+<hr>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="shaker">Shaker<a href="#shaker" class="hash-link" aria-label="Direct link to Shaker" title="Direct link to Shaker">​</a></h3>
+<p><strong>Tag:</strong> <code>attr_shaker</code> | <strong>Runs on:</strong> Client</p>
+<p>Applies a vibration/jitter effect to an object.</p>
+<table><thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>attr_intensity</code></td><td>number</td><td>0.2</td><td>Maximum shake offset in studs</td></tr><tr><td><code>attr_speed</code></td><td>number</td><td>20</td><td>Shake frequency</td></tr></tbody></table>
+<hr>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="spinner">Spinner<a href="#spinner" class="hash-link" aria-label="Direct link to Spinner" title="Direct link to Spinner">​</a></h3>
+<p><strong>Tag:</strong> <code>attr_spinner</code> | <strong>Runs on:</strong> Client</p>
+<p>Continuously rotates a Model or BasePart around a specified axis.</p>
+<table><thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>attr_seconds_per_round</code></td><td>number</td><td>2.5</td><td>Time for 360° rotation</td></tr><tr><td><code>attr_axis</code></td><td>Vector3</td><td>(0, 1, 0)</td><td>Rotation axis</td></tr></tbody></table>
+<hr>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="swing-part">Swing Part<a href="#swing-part" class="hash-link" aria-label="Direct link to Swing Part" title="Direct link to Swing Part">​</a></h3>
+<p><strong>Tag:</strong> <code>attr_swing_part</code> | <strong>Runs on:</strong> Client</p>
+<p>Swings a Model or BasePart like a pendulum.</p>
+<p><em>Make sure to edit the part&#x27;s &quot;PivotOffset&quot; so it swings from that pivot.</em></p>
+<table><thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>attr_seconds_per_cycle</code></td><td>number</td><td>2.5</td><td>Time for a full swing cycle</td></tr><tr><td><code>attr_swing_angle</code></td><td>number</td><td>30</td><td>Maximum swing angle in degrees</td></tr><tr><td><code>attr_axis</code></td><td>Vector3</td><td>(0, 0, 1)</td><td>Swing axis</td></tr></tbody></table>
+<hr>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="thwomp">Thwomp<a href="#thwomp" class="hash-link" aria-label="Direct link to Thwomp" title="Direct link to Thwomp">​</a></h3>
+<p><strong>Tag:</strong> <code>attr_thwomp</code> | <strong>Runs on:</strong> Client</p>
+<p>Smash/crusher behavior that drops down and rises back up.</p>
+<p><strong>Requires:</strong> <code>Floor</code> Attachment for the target drop position</p>
+<table><thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>attr_animation_time</code></td><td>number</td><td>1</td><td>Time to animate up/down</td></tr><tr><td><code>attr_time_on_floor</code></td><td>number</td><td>1</td><td>Time to stay at floor position</td></tr><tr><td><code>attr_time_between_drops</code></td><td>number</td><td>1</td><td>Wait time before dropping again</td></tr></tbody></table>
+<hr>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="collect">Collect<a href="#collect" class="hash-link" aria-label="Direct link to Collect" title="Direct link to Collect">​</a></h2>
+<p>Collectible watchers run on the <strong>server</strong> (with optional client visuals) and fire signals when collected.</p>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="coin">Coin<a href="#coin" class="hash-link" aria-label="Direct link to Coin" title="Direct link to Coin">​</a></h3>
+<p><strong>Tag:</strong> <code>attr_coin</code> | <strong>Runs on:</strong> Server + Client</p>
+<p>Currency collectible that players can pick up. Spins on the client.</p>
+<p><strong>Signal:</strong> <code>CoinCollected(player, value, part)</code></p>
+<table><thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>attr_value</code></td><td>number</td><td>1</td><td>Coin value</td></tr><tr><td><code>attr_respawn_time</code></td><td>number</td><td>10</td><td>Time before respawning (0 = no respawn)</td></tr><tr><td><code>attr_spin_speed</code></td><td>number</td><td>90</td><td>Degrees per second to spin (client-side)</td></tr><tr><td><code>attr_spin_axis</code></td><td>Vector3</td><td>(0, 1, 0)</td><td>Axis to spin around (client-side)</td></tr></tbody></table>
+<hr>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="collectible">Collectible<a href="#collectible" class="hash-link" aria-label="Direct link to Collectible" title="Direct link to Collectible">​</a></h3>
+<p><strong>Tag:</strong> <code>attr_collectible</code> | <strong>Runs on:</strong> Server</p>
+<p>Generic collectible item that can be picked up by players.</p>
+<p><strong>Signal:</strong> <code>CollectibleCollected(player, type, value, part)</code></p>
+<table><thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>attr_type</code></td><td>string</td><td>&quot;generic&quot;</td><td>Type of collectible</td></tr><tr><td><code>attr_value</code></td><td>any</td><td>—</td><td>Value of the collectible</td></tr><tr><td><code>attr_respawn_time</code></td><td>number</td><td>10</td><td>Time before respawning (0 = no respawn)</td></tr></tbody></table>
+<hr>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="combat">Combat<a href="#combat" class="hash-link" aria-label="Direct link to Combat" title="Direct link to Combat">​</a></h2>
+<p>Combat watchers run on the <strong>server</strong> and handle damage/healing.</p>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="damage-zone">Damage Zone<a href="#damage-zone" class="hash-link" aria-label="Direct link to Damage Zone" title="Direct link to Damage Zone">​</a></h3>
+<p><strong>Tag:</strong> <code>attr_damage_zone</code> | <strong>Runs on:</strong> Server</p>
+<p>Continuously damages players while they remain inside the zone.</p>
+<table><thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>attr_damage_rate</code></td><td>number</td><td>1</td><td>Time between damage ticks (seconds)</td></tr><tr><td><code>attr_damage_amount</code></td><td>number</td><td>10</td><td>Damage dealt per tick</td></tr></tbody></table>
+<hr>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="heal-part">Heal Part<a href="#heal-part" class="hash-link" aria-label="Direct link to Heal Part" title="Direct link to Heal Part">​</a></h3>
+<p><strong>Tag:</strong> <code>attr_heal_part</code> | <strong>Runs on:</strong> Server</p>
+<p>Heals players on touch.</p>
+<table><thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>attr_heal_amount</code></td><td>number</td><td>25</td><td>Amount of health to restore</td></tr><tr><td><code>attr_cooldown</code></td><td>number</td><td>3</td><td>Cooldown between heals per player</td></tr></tbody></table>
+<hr>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="heal-zone">Heal Zone<a href="#heal-zone" class="hash-link" aria-label="Direct link to Heal Zone" title="Direct link to Heal Zone">​</a></h3>
+<p><strong>Tag:</strong> <code>attr_heal_zone</code> | <strong>Runs on:</strong> Server</p>
+<p>Continuously heals players while they remain inside the zone.</p>
+<table><thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>attr_heal_rate</code></td><td>number</td><td>1</td><td>Time between heal ticks (seconds)</td></tr><tr><td><code>attr_heal_amount</code></td><td>number</td><td>5</td><td>Health restored per tick</td></tr></tbody></table>
+<hr>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="kill-part">Kill Part<a href="#kill-part" class="hash-link" aria-label="Direct link to Kill Part" title="Direct link to Kill Part">​</a></h3>
+<p><strong>Tag:</strong> <code>attr_kill_part</code> | <strong>Runs on:</strong> Server</p>
+<p>Damages or kills players on touch.</p>
+<table><thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>attr_damage</code></td><td>number</td><td>100</td><td>Amount of damage to deal</td></tr><tr><td><code>attr_cooldown</code></td><td>number</td><td>3</td><td>Cooldown between damage per player</td></tr></tbody></table>
+<hr>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="constraint">Constraint<a href="#constraint" class="hash-link" aria-label="Direct link to Constraint" title="Direct link to Constraint">​</a></h2>
+<p>Constraint watchers run on the <strong>server</strong> and create physics constraints.</p>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="hinge-part">Hinge Part<a href="#hinge-part" class="hash-link" aria-label="Direct link to Hinge Part" title="Direct link to Hinge Part">​</a></h3>
+<p><strong>Tag:</strong> <code>attr_hinge_part</code> | <strong>Runs on:</strong> Server</p>
+<p>Creates a hinge constraint on this part.</p>
+<table><thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>attr_target_name</code></td><td>string</td><td><strong>required</strong></td><td>Name of the target part to hinge to</td></tr><tr><td><code>attr_hinge_axis</code></td><td>Vector3</td><td>(0, 1, 0)</td><td>Axis of rotation</td></tr><tr><td><code>attr_motor_enabled</code></td><td>boolean</td><td>false</td><td>Enable motor rotation</td></tr><tr><td><code>attr_motor_speed</code></td><td>number</td><td>45</td><td>Motor rotation speed (degrees/second)</td></tr></tbody></table>
+<hr>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="rope-part">Rope Part<a href="#rope-part" class="hash-link" aria-label="Direct link to Rope Part" title="Direct link to Rope Part">​</a></h3>
+<p><strong>Tag:</strong> <code>attr_rope_part</code> | <strong>Runs on:</strong> Server</p>
+<p>Creates a rope constraint between this part and a target.</p>
+<table><thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>attr_target_name</code></td><td>string</td><td><strong>required</strong></td><td>Name of the target part</td></tr><tr><td><code>attr_length</code></td><td>number</td><td>10</td><td>Rope length in studs</td></tr></tbody></table>
+<hr>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="destruction">Destruction<a href="#destruction" class="hash-link" aria-label="Direct link to Destruction" title="Direct link to Destruction">​</a></h2>
+<p>Destruction watchers run on the <strong>server</strong> and handle breaking/respawning.</p>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="breakable">Breakable<a href="#breakable" class="hash-link" aria-label="Direct link to Breakable" title="Direct link to Breakable">​</a></h3>
+<p><strong>Tag:</strong> <code>attr_breakable</code> | <strong>Runs on:</strong> Server</p>
+<p>Part that can be destroyed by taking damage.</p>
+<p><strong>Signal:</strong> <code>PartBroken(part)</code></p>
+<table><thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>attr_health</code></td><td>number</td><td>100</td><td>Part health</td></tr><tr><td><code>attr_respawn_time</code></td><td>number</td><td>10</td><td>Time before respawning (0 = no respawn)</td></tr></tbody></table>
+<p><em>Set <code>attr_current_health</code> attribute to deal damage to the part.</em></p>
+<hr>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="respawner">Respawner<a href="#respawner" class="hash-link" aria-label="Direct link to Respawner" title="Direct link to Respawner">​</a></h3>
+<p><strong>Tag:</strong> <code>attr_respawner</code> | <strong>Runs on:</strong> Server</p>
+<p>Automatically respawns a part after it&#x27;s destroyed.</p>
+<table><thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>attr_respawn_time</code></td><td>number</td><td>5</td><td>Time before respawning</td></tr></tbody></table>
+<hr>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="door">Door<a href="#door" class="hash-link" aria-label="Direct link to Door" title="Direct link to Door">​</a></h2>
+<p>Door watchers run on the <strong>client</strong> and handle automatic doors.</p>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="auto-door">Auto Door<a href="#auto-door" class="hash-link" aria-label="Direct link to Auto Door" title="Direct link to Auto Door">​</a></h3>
+<p><strong>Tag:</strong> <code>attr_auto_door</code> | <strong>Runs on:</strong> Client</p>
+<p>Auto-opening door that slides open when a player approaches.</p>
+<table><thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>attr_open_offset</code></td><td>Vector3</td><td>(0, 5, 0)</td><td>How far the door moves when open</td></tr><tr><td><code>attr_open_time</code></td><td>number</td><td>0.5</td><td>Time to open/close</td></tr><tr><td><code>attr_trigger_distance</code></td><td>number</td><td>10</td><td>Distance to trigger opening</td></tr></tbody></table>
+<hr>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="sliding-panel">Sliding Panel<a href="#sliding-panel" class="hash-link" aria-label="Direct link to Sliding Panel" title="Direct link to Sliding Panel">​</a></h3>
+<p><strong>Tag:</strong> <code>attr_sliding_panel</code> | <strong>Runs on:</strong> Client</p>
+<p>Panel that slides open when triggered.</p>
+<table><thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>attr_slide_offset</code></td><td>Vector3</td><td>(5, 0, 0)</td><td>How far the panel slides</td></tr><tr><td><code>attr_slide_time</code></td><td>number</td><td>0.5</td><td>Time to slide open/close</td></tr><tr><td><code>attr_trigger_distance</code></td><td>number</td><td>10</td><td>Distance to trigger</td></tr></tbody></table>
+<hr>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="swing-gate">Swing Gate<a href="#swing-gate" class="hash-link" aria-label="Direct link to Swing Gate" title="Direct link to Swing Gate">​</a></h3>
+<p><strong>Tag:</strong> <code>attr_swing_gate</code> | <strong>Runs on:</strong> Client</p>
+<p>Rotating gate that swings open when triggered.</p>
+<p><em>Make sure to edit the part&#x27;s &quot;PivotOffset&quot; so it swings from that pivot.</em></p>
+<table><thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>attr_open_angle</code></td><td>number</td><td>90</td><td>Angle to rotate when open</td></tr><tr><td><code>attr_open_time</code></td><td>number</td><td>0.5</td><td>Time to open/close</td></tr><tr><td><code>attr_trigger_distance</code></td><td>number</td><td>10</td><td>Distance to trigger opening</td></tr><tr><td><code>attr_axis</code></td><td>Vector3</td><td>(0, 1, 0)</td><td>Rotation axis</td></tr></tbody></table>
+<hr>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="interaction">Interaction<a href="#interaction" class="hash-link" aria-label="Direct link to Interaction" title="Direct link to Interaction">​</a></h2>
+<p>Interaction watchers run on the <strong>server</strong> and handle player input.</p>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="button">Button<a href="#button" class="hash-link" aria-label="Direct link to Button" title="Direct link to Button">​</a></h3>
+<p><strong>Tag:</strong> <code>attr_button</code> | <strong>Runs on:</strong> Server</p>
+<p>Touch-activated button with optional cooldown.</p>
+<p><strong>Signal:</strong> <code>ButtonPressed(player, part)</code></p>
+<table><thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>attr_cooldown</code></td><td>number</td><td>1</td><td>Cooldown between activations</td></tr></tbody></table>
+<hr>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="clickable">Clickable<a href="#clickable" class="hash-link" aria-label="Direct link to Clickable" title="Direct link to Clickable">​</a></h3>
+<p><strong>Tag:</strong> <code>attr_clickable</code> | <strong>Runs on:</strong> Server</p>
+<p>Adds a ClickDetector to a part.</p>
+<p><strong>Signal:</strong> <code>Clicked(player, part)</code></p>
+<table><thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>attr_max_distance</code></td><td>number</td><td>32</td><td>Maximum click distance</td></tr></tbody></table>
+<hr>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="prompt-part">Prompt Part<a href="#prompt-part" class="hash-link" aria-label="Direct link to Prompt Part" title="Direct link to Prompt Part">​</a></h3>
+<p><strong>Tag:</strong> <code>attr_prompt_part</code> | <strong>Runs on:</strong> Server</p>
+<p>Adds a proximity prompt to a part.</p>
+<p><strong>Signal:</strong> <code>PromptTriggered(player, part)</code></p>
+<table><thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>attr_prompt_text</code></td><td>string</td><td>&quot;Interact&quot;</td><td>Text shown on the prompt</td></tr><tr><td><code>attr_action_text</code></td><td>string</td><td>&quot;Prompt&quot;</td><td>Action key text</td></tr><tr><td><code>attr_hold_duration</code></td><td>number</td><td>0</td><td>Hold duration in seconds</td></tr><tr><td><code>attr_max_distance</code></td><td>number</td><td>10</td><td>Maximum activation distance</td></tr><tr><td><code>attr_destroy_on_trigger</code></td><td>boolean</td><td>false</td><td>Destroy part after activation</td></tr></tbody></table>
+<hr>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="movement">Movement<a href="#movement" class="hash-link" aria-label="Direct link to Movement" title="Direct link to Movement">​</a></h2>
+<p>Movement watchers handle player physics and typically run on the <strong>server</strong>.</p>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="conveyor">Conveyor<a href="#conveyor" class="hash-link" aria-label="Direct link to Conveyor" title="Direct link to Conveyor">​</a></h3>
+<p><strong>Tag:</strong> <code>attr_conveyor</code> | <strong>Runs on:</strong> Server</p>
+<p>Moves players and parts along the conveyor direction.</p>
+<table><thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>attr_speed</code></td><td>number</td><td>10</td><td>Conveyor speed in studs/second</td></tr><tr><td><code>attr_direction</code></td><td>Vector3</td><td>(0, 0, -1)</td><td>Direction relative to part&#x27;s CFrame</td></tr></tbody></table>
+<hr>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="gravity-zone">Gravity Zone<a href="#gravity-zone" class="hash-link" aria-label="Direct link to Gravity Zone" title="Direct link to Gravity Zone">​</a></h3>
+<p><strong>Tag:</strong> <code>attr_gravity_zone</code> | <strong>Runs on:</strong> Server</p>
+<p>Applies custom gravity to players while inside the zone.</p>
+<table><thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>attr_gravity_force</code></td><td>number</td><td>50</td><td>Gravity force (positive = down, negative = up)</td></tr></tbody></table>
+<hr>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="jump-pad">Jump Pad<a href="#jump-pad" class="hash-link" aria-label="Direct link to Jump Pad" title="Direct link to Jump Pad">​</a></h3>
+<p><strong>Tag:</strong> <code>attr_jump_pad</code> | <strong>Runs on:</strong> Server</p>
+<p>Launches players into the air on touch.</p>
+<table><thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>attr_jump_distance</code></td><td>number</td><td>20</td><td>Target studs distance to launch</td></tr><tr><td><code>attr_cooldown</code></td><td>number</td><td>1</td><td>Cooldown between launches per player</td></tr><tr><td><code>attr_push_relative_to_object</code></td><td>boolean</td><td>true</td><td>Push relative to object&#x27;s up vector</td></tr></tbody></table>
+<hr>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="push-zone">Push Zone<a href="#push-zone" class="hash-link" aria-label="Direct link to Push Zone" title="Direct link to Push Zone">​</a></h3>
+<p><strong>Tag:</strong> <code>attr_push_zone</code> | <strong>Runs on:</strong> Server</p>
+<p>Pushes players in a specified direction while inside the zone.</p>
+<table><thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>attr_force</code></td><td>number</td><td>20</td><td>Push force magnitude</td></tr><tr><td><code>attr_direction</code></td><td>Vector3</td><td>(0, 0, 1)</td><td>Push direction relative to part&#x27;s CFrame</td></tr></tbody></table>
+<hr>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="slow-zone">Slow Zone<a href="#slow-zone" class="hash-link" aria-label="Direct link to Slow Zone" title="Direct link to Slow Zone">​</a></h3>
+<p><strong>Tag:</strong> <code>attr_slow_zone</code> | <strong>Runs on:</strong> Server</p>
+<p>Slows player movement while inside the zone.</p>
+<table><thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>attr_multiplier</code></td><td>number</td><td>0.5</td><td>Speed multiplier (0.5 = 50% speed)</td></tr></tbody></table>
+<hr>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="speed-boost">Speed Boost<a href="#speed-boost" class="hash-link" aria-label="Direct link to Speed Boost" title="Direct link to Speed Boost">​</a></h3>
+<p><strong>Tag:</strong> <code>attr_speed_boost</code> | <strong>Runs on:</strong> Server</p>
+<p>Temporarily increases player walk speed when touched.</p>
+<table><thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>attr_multiplier</code></td><td>number</td><td>2</td><td>Speed multiplier</td></tr><tr><td><code>attr_duration</code></td><td>number</td><td>5</td><td>Duration of the boost in seconds</td></tr><tr><td><code>attr_cooldown</code></td><td>number</td><td>10</td><td>Cooldown before player can get another boost</td></tr></tbody></table>
+<hr>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="speed-zone">Speed Zone<a href="#speed-zone" class="hash-link" aria-label="Direct link to Speed Zone" title="Direct link to Speed Zone">​</a></h3>
+<p><strong>Tag:</strong> <code>attr_speed_zone</code> | <strong>Runs on:</strong> Server</p>
+<p>Increases player movement speed while inside the zone.</p>
+<table><thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>attr_multiplier</code></td><td>number</td><td>1.5</td><td>Speed multiplier (1.5 = 150% speed)</td></tr></tbody></table>
+<hr>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="teleporter">Teleporter<a href="#teleporter" class="hash-link" aria-label="Direct link to Teleporter" title="Direct link to Teleporter">​</a></h3>
+<p><strong>Tag:</strong> <code>attr_teleporter</code> | <strong>Runs on:</strong> Server</p>
+<p>Teleports players between two parts within a Model.</p>
+<p><strong>Structure:</strong></p>
+<ul>
+<li>Model (tagged with <code>attr_teleporter</code>)<!-- -->
+<ul>
+<li><code>From</code>: BasePart - Entry point</li>
+<li><code>To</code>: BasePart - Exit point</li>
+</ul>
+</li>
+</ul>
+<table><thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>attr_cooldown</code></td><td>number</td><td>1</td><td>Cooldown between teleports per player</td></tr><tr><td><code>attr_one_way</code></td><td>boolean</td><td>false</td><td>If true, only &quot;From&quot; teleports to &quot;To&quot;</td></tr><tr><td><code>attr_teleport_offset</code></td><td>Vector3</td><td>(0, 0, 0)</td><td>Offset applied when teleporting</td></tr></tbody></table>
+<hr>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="obby">Obby<a href="#obby" class="hash-link" aria-label="Direct link to Obby" title="Direct link to Obby">​</a></h2>
+<p>Obby watchers handle obstacle course mechanics.</p>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="crumbling-part">Crumbling Part<a href="#crumbling-part" class="hash-link" aria-label="Direct link to Crumbling Part" title="Direct link to Crumbling Part">​</a></h3>
+<p><strong>Tag:</strong> <code>attr_crumbling_part</code> | <strong>Runs on:</strong> Client</p>
+<p>Platform that crumbles after being stood on.</p>
+<table><thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>attr_crumble_delay</code></td><td>number</td><td>1</td><td>Time before crumbling after touch</td></tr><tr><td><code>attr_respawn_time</code></td><td>number</td><td>5</td><td>Time before respawning (0 = no respawn)</td></tr></tbody></table>
+<hr>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="cycling-kill-part">Cycling Kill Part<a href="#cycling-kill-part" class="hash-link" aria-label="Direct link to Cycling Kill Part" title="Direct link to Cycling Kill Part">​</a></h3>
+<p><strong>Tag:</strong> <code>attr_cycling_kill_part</code> | <strong>Runs on:</strong> Server + Client</p>
+<p>Kill part that cycles between active and inactive states. Only damages players when visible/active.</p>
+<table><thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>attr_active_time</code></td><td>number</td><td>2</td><td>Time the part is active (visible and deadly)</td></tr><tr><td><code>attr_inactive_time</code></td><td>number</td><td>2</td><td>Time the part is inactive (hidden and safe)</td></tr><tr><td><code>attr_delay</code></td><td>number</td><td>0</td><td>Initial delay before starting cycle</td></tr><tr><td><code>attr_damage</code></td><td>number</td><td>100</td><td>Amount of damage to deal</td></tr><tr><td><code>attr_cooldown</code></td><td>number</td><td>1</td><td>Cooldown between damage applications per player</td></tr></tbody></table>
+<hr>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="cycling-platform">Cycling Platform<a href="#cycling-platform" class="hash-link" aria-label="Direct link to Cycling Platform" title="Direct link to Cycling Platform">​</a></h3>
+<p><strong>Tag:</strong> <code>attr_cycling_platform</code> | <strong>Runs on:</strong> Client</p>
+<p>Platform that cycles between visible and hidden states.</p>
+<table><thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>attr_visible_time</code></td><td>number</td><td>2</td><td>Time the platform is visible</td></tr><tr><td><code>attr_hidden_time</code></td><td>number</td><td>2</td><td>Time the platform is hidden</td></tr><tr><td><code>attr_delay</code></td><td>number</td><td>0</td><td>Initial delay before starting cycle</td></tr></tbody></table>
+<hr>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="fading-part">Fading Part<a href="#fading-part" class="hash-link" aria-label="Direct link to Fading Part" title="Direct link to Fading Part">​</a></h3>
+<p><strong>Tag:</strong> <code>attr_fading_part</code> | <strong>Runs on:</strong> Server or Client</p>
+<p>Part that fades out when touched and optionally reappears after a delay.</p>
+<table><thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>attr_fade_time</code></td><td>number</td><td>1</td><td>Time to fade in/out</td></tr><tr><td><code>attr_respawn_time</code></td><td>number</td><td>3</td><td>Time before fading back in (0 = no respawn)</td></tr><tr><td><code>attr_cooldown</code></td><td>number</td><td>0</td><td>Cooldown after reappearing before can trigger again</td></tr><tr><td><code>attr_per_player</code></td><td>boolean</td><td>false</td><td>If true, runs client-side (per-player state)</td></tr></tbody></table>
+<hr>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="checkpoint">Checkpoint<a href="#checkpoint" class="hash-link" aria-label="Direct link to Checkpoint" title="Direct link to Checkpoint">​</a></h3>
+<p><strong>Tag:</strong> <code>checkpoint</code> | <strong>Runs on:</strong> Server + Client</p>
+<p>Checkpoint system for obby games with persistence support. Players can only progress forward one checkpoint at a time.</p>
+<p><strong>Signals:</strong></p>
+<ul>
+<li><code>PlayerReachedCheckpoint(player, checkpointNumber)</code></li>
+<li><code>PlayerSpawnedAtCheckpoint(player, checkpointNumber)</code></li>
+</ul>
+<table><thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>attr_checkpoint_number</code></td><td>number</td><td><strong>required</strong></td><td>Checkpoint number (1 and up)</td></tr><tr><td><code>attr_checkpoint_effect</code></td><td>boolean</td><td>true</td><td>Show visual effect on reach</td></tr></tbody></table>
+<p><strong>API Methods:</strong></p>
+<ul>
+<li><code>getCheckpointPart(checkpointNumber)</code> - Get the part for a checkpoint number</li>
+<li><code>getTotalCheckpoints()</code> - Get total number of checkpoints</li>
+<li><code>getPlayerCheckpoint(player)</code> - Get player&#x27;s current checkpoint</li>
+<li><code>setPlayerCheckpoint(player, checkpointNumber)</code> - Set player&#x27;s checkpoint and teleport if character exists</li>
+<li><code>spawnPlayerAtCheckpoint(player, checkpointNumber)</code> - Spawn player at checkpoint</li>
+<li><code>getSpawnCFrame(checkpointNumber)</code> - Get spawn CFrame for a checkpoint</li>
+</ul>
+<hr>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="spawn-point">Spawn Point<a href="#spawn-point" class="hash-link" aria-label="Direct link to Spawn Point" title="Direct link to Spawn Point">​</a></h3>
+<p><strong>Tag:</strong> <code>spawn_point</code> | <strong>Runs on:</strong> Server</p>
+<p>Spawn point locations for the checkpoint system. Multiple spawn points per checkpoint are supported (random selection).</p>
+<table><thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>attr_checkpoint_number</code></td><td>number</td><td><strong>required</strong></td><td>Associated checkpoint number</td></tr><tr><td><code>attr_spawn_offset</code></td><td>Vector3</td><td>(0, 3, 0)</td><td>Offset from part center</td></tr></tbody></table>
+<hr>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="sound">Sound<a href="#sound" class="hash-link" aria-label="Direct link to Sound" title="Direct link to Sound">​</a></h2>
+<p>Sound watchers run on the <strong>client</strong> and handle audio.</p>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="ambient-sound">Ambient Sound<a href="#ambient-sound" class="hash-link" aria-label="Direct link to Ambient Sound" title="Direct link to Ambient Sound">​</a></h3>
+<p><strong>Tag:</strong> <code>attr_ambient_sound</code> | <strong>Runs on:</strong> Client</p>
+<p>Plays an ambient looping sound.</p>
+<table><thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>attr_sound_id</code></td><td>string</td><td><strong>required</strong></td><td>Asset ID of the sound</td></tr><tr><td><code>attr_volume</code></td><td>number</td><td>0.5</td><td>Sound volume</td></tr><tr><td><code>attr_range</code></td><td>number</td><td>50</td><td>Maximum audible distance</td></tr></tbody></table>
+<hr>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="proximity-sound">Proximity Sound<a href="#proximity-sound" class="hash-link" aria-label="Direct link to Proximity Sound" title="Direct link to Proximity Sound">​</a></h3>
+<p><strong>Tag:</strong> <code>attr_proximity_sound</code> | <strong>Runs on:</strong> Client</p>
+<p>Plays a sound when a player comes within range.</p>
+<table><thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>attr_sound_id</code></td><td>string</td><td><strong>required</strong></td><td>Asset ID of the sound</td></tr><tr><td><code>attr_volume</code></td><td>number</td><td>0.5</td><td>Sound volume</td></tr><tr><td><code>attr_range</code></td><td>number</td><td>20</td><td>Trigger distance</td></tr><tr><td><code>attr_cooldown</code></td><td>number</td><td>5</td><td>Minimum time between plays</td></tr></tbody></table>
+<hr>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="touch-sound">Touch Sound<a href="#touch-sound" class="hash-link" aria-label="Direct link to Touch Sound" title="Direct link to Touch Sound">​</a></h3>
+<p><strong>Tag:</strong> <code>attr_touch_sound</code> | <strong>Runs on:</strong> Client</p>
+<p>Plays a sound when a player touches the part.</p>
+<table><thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>attr_sound_id</code></td><td>string</td><td><strong>required</strong></td><td>Asset ID of the sound</td></tr><tr><td><code>attr_volume</code></td><td>number</td><td>0.5</td><td>Sound volume</td></tr><tr><td><code>attr_cooldown</code></td><td>number</td><td>0.5</td><td>Minimum time between plays</td></tr></tbody></table>
+<hr>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="visual">Visual<a href="#visual" class="hash-link" aria-label="Direct link to Visual" title="Direct link to Visual">​</a></h2>
+<p>Visual watchers run on the <strong>client</strong> and handle visual effects.</p>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="beamer">Beamer<a href="#beamer" class="hash-link" aria-label="Direct link to Beamer" title="Direct link to Beamer">​</a></h3>
+<p><strong>Tag:</strong> <code>attr_beamer</code> | <strong>Runs on:</strong> Client</p>
+<p>Creates a beam between this part and a target part.</p>
+<table><thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>attr_target_name</code></td><td>string</td><td><strong>required</strong></td><td>Name of the target part</td></tr><tr><td><code>attr_beam_color</code></td><td>Color3</td><td>white</td><td>Color of the beam</td></tr><tr><td><code>attr_width</code></td><td>number</td><td>1</td><td>Width of the beam</td></tr></tbody></table>
+<hr>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="billboard">Billboard<a href="#billboard" class="hash-link" aria-label="Direct link to Billboard" title="Direct link to Billboard">​</a></h3>
+<p><strong>Tag:</strong> <code>attr_billboard</code> | <strong>Runs on:</strong> Client</p>
+<p>Adds a BillboardGui with text above a part.</p>
+<table><thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>attr_text</code></td><td>string</td><td>&quot;&quot;</td><td>Text to display</td></tr><tr><td><code>attr_text_color</code></td><td>Color3</td><td>white</td><td>Text color</td></tr><tr><td><code>attr_text_size</code></td><td>number</td><td>24</td><td>Text size</td></tr><tr><td><code>attr_offset</code></td><td>number</td><td>3</td><td>Offset above the part</td></tr></tbody></table>
+<hr>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="color-cycler">Color Cycler<a href="#color-cycler" class="hash-link" aria-label="Direct link to Color Cycler" title="Direct link to Color Cycler">​</a></h3>
+<p><strong>Tag:</strong> <code>attr_color_cycler</code> | <strong>Runs on:</strong> Client</p>
+<p>Cycles a part through rainbow colors.</p>
+<table><thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>attr_cycle_speed</code></td><td>number</td><td>1</td><td>Full cycles per second</td></tr></tbody></table>
+<hr>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="fader">Fader<a href="#fader" class="hash-link" aria-label="Direct link to Fader" title="Direct link to Fader">​</a></h3>
+<p><strong>Tag:</strong> <code>attr_fader</code> | <strong>Runs on:</strong> Client</p>
+<p>Pulses a part&#x27;s transparency between min and max values.</p>
+<table><thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>attr_min_transparency</code></td><td>number</td><td>0</td><td>Minimum transparency</td></tr><tr><td><code>attr_max_transparency</code></td><td>number</td><td>0.8</td><td>Maximum transparency</td></tr><tr><td><code>attr_fade_speed</code></td><td>number</td><td>1</td><td>Fade cycles per second</td></tr></tbody></table>
+<hr>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="flickerer">Flickerer<a href="#flickerer" class="hash-link" aria-label="Direct link to Flickerer" title="Direct link to Flickerer">​</a></h3>
+<p><strong>Tag:</strong> <code>attr_flickerer</code> | <strong>Runs on:</strong> Client</p>
+<p>Makes a part flicker on and off randomly.</p>
+<table><thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>attr_flicker_speed</code></td><td>number</td><td>10</td><td>Average flickers per second</td></tr><tr><td><code>attr_flicker_chance</code></td><td>number</td><td>0.3</td><td>Chance to be &quot;off&quot; (0-1)</td></tr></tbody></table>
+<hr>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="glowing">Glowing<a href="#glowing" class="hash-link" aria-label="Direct link to Glowing" title="Direct link to Glowing">​</a></h3>
+<p><strong>Tag:</strong> <code>attr_glowing</code> | <strong>Runs on:</strong> Client</p>
+<p>Adds a neon glow effect to a part.</p>
+<table><thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>attr_glow_color</code></td><td>Color3</td><td>—</td><td>Color of the glow (defaults to part color)</td></tr><tr><td><code>attr_brightness</code></td><td>number</td><td>1</td><td>PointLight brightness</td></tr></tbody></table>
+<hr>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="pulser">Pulser<a href="#pulser" class="hash-link" aria-label="Direct link to Pulser" title="Direct link to Pulser">​</a></h3>
+<p><strong>Tag:</strong> <code>attr_pulser</code> | <strong>Runs on:</strong> Client</p>
+<p>Pulses a part&#x27;s size between min and max scale.</p>
+<table><thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>attr_min_scale</code></td><td>number</td><td>0.8</td><td>Minimum size multiplier</td></tr><tr><td><code>attr_max_scale</code></td><td>number</td><td>1.2</td><td>Maximum size multiplier</td></tr><tr><td><code>attr_pulse_speed</code></td><td>number</td><td>1</td><td>Pulse cycles per second</td></tr></tbody></table>
+<hr>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="spotlighter">Spotlighter<a href="#spotlighter" class="hash-link" aria-label="Direct link to Spotlighter" title="Direct link to Spotlighter">​</a></h3>
+<p><strong>Tag:</strong> <code>attr_spotlighter</code> | <strong>Runs on:</strong> Client</p>
+<p>Adds a spotlight to a part.</p>
+<table><thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>attr_range</code></td><td>number</td><td>16</td><td>Light range</td></tr><tr><td><code>attr_angle</code></td><td>number</td><td>90</td><td>Spotlight angle in degrees</td></tr><tr><td><code>attr_light_color</code></td><td>Color3</td><td>white</td><td>Color of the light</td></tr><tr><td><code>attr_brightness</code></td><td>number</td><td>1</td><td>Light brightness</td></tr></tbody></table>
+<hr>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="trail">Trail<a href="#trail" class="hash-link" aria-label="Direct link to Trail" title="Direct link to Trail">​</a></h3>
+<p><strong>Tag:</strong> <code>attr_trail</code> | <strong>Runs on:</strong> Client</p>
+<p>Adds a trail effect to a part.</p>
+<table><thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>attr_trail_color</code></td><td>Color3</td><td>white</td><td>Color of the trail</td></tr><tr><td><code>attr_lifetime</code></td><td>number</td><td>1</td><td>Trail lifetime in seconds</td></tr><tr><td><code>attr_width</code></td><td>number</td><td>1</td><td>Trail width</td></tr><tr><td><code>attr_axis</code></td><td>Vector3</td><td>(0, 1, 0)</td><td>Axis for trail attachments</td></tr></tbody></table></div></article><nav class="pagination-nav docusaurus-mt-lg" aria-label="Docs pages"><a class="pagination-nav__link pagination-nav__link--prev" href="/attrify/docs/installation"><div class="pagination-nav__sublabel">Previous</div><div class="pagination-nav__label">Installation</div></a></nav></div></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#feature-navigation" class="table-of-contents__link toc-highlight">Feature Navigation</a></li><li><a href="#animation" class="table-of-contents__link toc-highlight">Animation</a><ul><li><a href="#bobber" class="table-of-contents__link toc-highlight">Bobber</a></li><li><a href="#elevator" class="table-of-contents__link toc-highlight">Elevator</a></li><li><a href="#moving-platform" class="table-of-contents__link toc-highlight">Moving Platform</a></li><li><a href="#orbiter" class="table-of-contents__link toc-highlight">Orbiter</a></li><li><a href="#shaker" class="table-of-contents__link toc-highlight">Shaker</a></li><li><a href="#spinner" class="table-of-contents__link toc-highlight">Spinner</a></li><li><a href="#swing-part" class="table-of-contents__link toc-highlight">Swing Part</a></li><li><a href="#thwomp" class="table-of-contents__link toc-highlight">Thwomp</a></li></ul></li><li><a href="#collect" class="table-of-contents__link toc-highlight">Collect</a><ul><li><a href="#coin" class="table-of-contents__link toc-highlight">Coin</a></li><li><a href="#collectible" class="table-of-contents__link toc-highlight">Collectible</a></li></ul></li><li><a href="#combat" class="table-of-contents__link toc-highlight">Combat</a><ul><li><a href="#damage-zone" class="table-of-contents__link toc-highlight">Damage Zone</a></li><li><a href="#heal-part" class="table-of-contents__link toc-highlight">Heal Part</a></li><li><a href="#heal-zone" class="table-of-contents__link toc-highlight">Heal Zone</a></li><li><a href="#kill-part" class="table-of-contents__link toc-highlight">Kill Part</a></li></ul></li><li><a href="#constraint" class="table-of-contents__link toc-highlight">Constraint</a><ul><li><a href="#hinge-part" class="table-of-contents__link toc-highlight">Hinge Part</a></li><li><a href="#rope-part" class="table-of-contents__link toc-highlight">Rope Part</a></li></ul></li><li><a href="#destruction" class="table-of-contents__link toc-highlight">Destruction</a><ul><li><a href="#breakable" class="table-of-contents__link toc-highlight">Breakable</a></li><li><a href="#respawner" class="table-of-contents__link toc-highlight">Respawner</a></li></ul></li><li><a href="#door" class="table-of-contents__link toc-highlight">Door</a><ul><li><a href="#auto-door" class="table-of-contents__link toc-highlight">Auto Door</a></li><li><a href="#sliding-panel" class="table-of-contents__link toc-highlight">Sliding Panel</a></li><li><a href="#swing-gate" class="table-of-contents__link toc-highlight">Swing Gate</a></li></ul></li><li><a href="#interaction" class="table-of-contents__link toc-highlight">Interaction</a><ul><li><a href="#button" class="table-of-contents__link toc-highlight">Button</a></li><li><a href="#clickable" class="table-of-contents__link toc-highlight">Clickable</a></li><li><a href="#prompt-part" class="table-of-contents__link toc-highlight">Prompt Part</a></li></ul></li><li><a href="#movement" class="table-of-contents__link toc-highlight">Movement</a><ul><li><a href="#conveyor" class="table-of-contents__link toc-highlight">Conveyor</a></li><li><a href="#gravity-zone" class="table-of-contents__link toc-highlight">Gravity Zone</a></li><li><a href="#jump-pad" class="table-of-contents__link toc-highlight">Jump Pad</a></li><li><a href="#push-zone" class="table-of-contents__link toc-highlight">Push Zone</a></li><li><a href="#slow-zone" class="table-of-contents__link toc-highlight">Slow Zone</a></li><li><a href="#speed-boost" class="table-of-contents__link toc-highlight">Speed Boost</a></li><li><a href="#speed-zone" class="table-of-contents__link toc-highlight">Speed Zone</a></li><li><a href="#teleporter" class="table-of-contents__link toc-highlight">Teleporter</a></li></ul></li><li><a href="#obby" class="table-of-contents__link toc-highlight">Obby</a><ul><li><a href="#crumbling-part" class="table-of-contents__link toc-highlight">Crumbling Part</a></li><li><a href="#cycling-kill-part" class="table-of-contents__link toc-highlight">Cycling Kill Part</a></li><li><a href="#cycling-platform" class="table-of-contents__link toc-highlight">Cycling Platform</a></li><li><a href="#fading-part" class="table-of-contents__link toc-highlight">Fading Part</a></li><li><a href="#checkpoint" class="table-of-contents__link toc-highlight">Checkpoint</a></li><li><a href="#spawn-point" class="table-of-contents__link toc-highlight">Spawn Point</a></li></ul></li><li><a href="#sound" class="table-of-contents__link toc-highlight">Sound</a><ul><li><a href="#ambient-sound" class="table-of-contents__link toc-highlight">Ambient Sound</a></li><li><a href="#proximity-sound" class="table-of-contents__link toc-highlight">Proximity Sound</a></li><li><a href="#touch-sound" class="table-of-contents__link toc-highlight">Touch Sound</a></li></ul></li><li><a href="#visual" class="table-of-contents__link toc-highlight">Visual</a><ul><li><a href="#beamer" class="table-of-contents__link toc-highlight">Beamer</a></li><li><a href="#billboard" class="table-of-contents__link toc-highlight">Billboard</a></li><li><a href="#color-cycler" class="table-of-contents__link toc-highlight">Color Cycler</a></li><li><a href="#fader" class="table-of-contents__link toc-highlight">Fader</a></li><li><a href="#flickerer" class="table-of-contents__link toc-highlight">Flickerer</a></li><li><a href="#glowing" class="table-of-contents__link toc-highlight">Glowing</a></li><li><a href="#pulser" class="table-of-contents__link toc-highlight">Pulser</a></li><li><a href="#spotlighter" class="table-of-contents__link toc-highlight">Spotlighter</a></li><li><a href="#trail" class="table-of-contents__link toc-highlight">Trail</a></li></ul></li></ul></div></div></div></div></main></div></div></div><footer class="footer footer--dark"><div class="container container-fluid"><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2025 dig1t. Built with Moonwave and Docusaurus</div></div></div></footer></div>
+</body>
+</html>
