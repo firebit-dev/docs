@@ -1,0 +1,1182 @@
+<!doctype html>
+<html lang="en" dir="ltr" class="plugin-moonwave plugin-id-moonwave" data-has-hydrated="false">
+<head>
+<meta charset="UTF-8">
+<meta name="generator" content="Docusaurus v3.10.1">
+<title data-rh="true">BaseUtil | Murder Escape</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://firebit-dev.github.io/docs/murder-escape/api/BaseUtil"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docusaurus_tag" content="default"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docsearch:docusaurus_tag" content="default"><meta data-rh="true" property="og:title" content="BaseUtil | Murder Escape"><meta data-rh="true" name="description" content="Author: Javi M (dig1t)
+
+Shared vocabulary for the base (player farm) system: the constants both realms
+must agree on, the persisted data schema, and the pure maths that converts
+between world CFrames and plot grid coordinates. It holds no state and creates
+no props — [PropBaseClass] and the Base service do that.
+
+### Coordinate model
+
+A *base* owns one or more *plots*; a plot is a `GRID_UNITS` × `GRID_UNITS`
+square of `GRID_UNIT`-stud cells. Prop positions are stored as a
+[PositionData] — plot-relative `X`/`Y` (`Y` being world Z) plus a rotation `R`
+constrained to multiples of `ROTATION_STEP`. Nothing persists world CFrames,
+so a base can be re-instantiated anywhere in the world.
+
+`getPositionDataFromPivot` is the one-way funnel from a dragged pivot into
+that grid: it takes the pivot into the plot&#x27;s object space, snaps translation
+to the nearest half stud and yaw to the nearest `ROTATION_STEP`, and
+normalizes 360° back to 0. `getOffsetFromPositionData` is the inverse.
+
+:::caution
+`getPositionIndex` and `positionIndexToPositionData` are **not** inverses of
+each other — the former is 1-based on `Y` (`x + GRID_UNITS * (y - 1)`) while
+the latter reconstructs `y` as `floor(index / GRID_UNITS) + 1` and `x` via a
+modulo that maps a full row back to 0. Round-tripping a position through them
+does not return the original.
+:::
+
+### Containers and tags
+
+Two Workspace containers are created on the server and waited for on the
+client: `PROP_CONTAINER` (client-side visual models, persistent so it never
+streams out) and `HITBOX_CONTAINER` (server-side bounding boxes, one
+sub-model per base). CollectionService tags — `BASE_TAG`, `PLOT_TAG`,
+`PROP_TAG`, `PROP_MODEL_TAG`, `GRID_FLOOR_TAG`, `PROP_IGNORE_TAG` — are how
+controllers find those instances without holding references, and the two
+`*_REPLICA_CLASS` strings are the Replica class names the base and its props
+register under.
+
+### Persistence
+
+`getDataTemplate` produces a fresh [BaseData] for a new player and
+`reconcileBaseData` is the forward-migration pass: it fills in any top-level
+key the template has and the save does not, returning whether it changed
+anything so the caller can decide to write. It is shallow by design — nested
+plot and prop records are not reconciled.
+
+Gated by [FeatureFlags].BaseEnabled — disabled by default; per-project forks
+enable it deliberately.
+
+Copyright (c) 2026 firebit. All rights reserved.
+firebit/murder-escape - proprietary and confidential."><meta data-rh="true" property="og:description" content="Author: Javi M (dig1t)
+
+Shared vocabulary for the base (player farm) system: the constants both realms
+must agree on, the persisted data schema, and the pure maths that converts
+between world CFrames and plot grid coordinates. It holds no state and creates
+no props — [PropBaseClass] and the Base service do that.
+
+### Coordinate model
+
+A *base* owns one or more *plots*; a plot is a `GRID_UNITS` × `GRID_UNITS`
+square of `GRID_UNIT`-stud cells. Prop positions are stored as a
+[PositionData] — plot-relative `X`/`Y` (`Y` being world Z) plus a rotation `R`
+constrained to multiples of `ROTATION_STEP`. Nothing persists world CFrames,
+so a base can be re-instantiated anywhere in the world.
+
+`getPositionDataFromPivot` is the one-way funnel from a dragged pivot into
+that grid: it takes the pivot into the plot&#x27;s object space, snaps translation
+to the nearest half stud and yaw to the nearest `ROTATION_STEP`, and
+normalizes 360° back to 0. `getOffsetFromPositionData` is the inverse.
+
+:::caution
+`getPositionIndex` and `positionIndexToPositionData` are **not** inverses of
+each other — the former is 1-based on `Y` (`x + GRID_UNITS * (y - 1)`) while
+the latter reconstructs `y` as `floor(index / GRID_UNITS) + 1` and `x` via a
+modulo that maps a full row back to 0. Round-tripping a position through them
+does not return the original.
+:::
+
+### Containers and tags
+
+Two Workspace containers are created on the server and waited for on the
+client: `PROP_CONTAINER` (client-side visual models, persistent so it never
+streams out) and `HITBOX_CONTAINER` (server-side bounding boxes, one
+sub-model per base). CollectionService tags — `BASE_TAG`, `PLOT_TAG`,
+`PROP_TAG`, `PROP_MODEL_TAG`, `GRID_FLOOR_TAG`, `PROP_IGNORE_TAG` — are how
+controllers find those instances without holding references, and the two
+`*_REPLICA_CLASS` strings are the Replica class names the base and its props
+register under.
+
+### Persistence
+
+`getDataTemplate` produces a fresh [BaseData] for a new player and
+`reconcileBaseData` is the forward-migration pass: it fills in any top-level
+key the template has and the save does not, returning whether it changed
+anything so the caller can decide to write. It is shallow by design — nested
+plot and prop records are not reconciled.
+
+Gated by [FeatureFlags].BaseEnabled — disabled by default; per-project forks
+enable it deliberately.
+
+Copyright (c) 2026 firebit. All rights reserved.
+firebit/murder-escape - proprietary and confidential."><link data-rh="true" rel="canonical" href="https://firebit-dev.github.io/docs/murder-escape/api/BaseUtil"><link data-rh="true" rel="alternate" href="https://firebit-dev.github.io/docs/murder-escape/api/BaseUtil" hreflang="en"><link data-rh="true" rel="alternate" href="https://firebit-dev.github.io/docs/murder-escape/api/BaseUtil" hreflang="x-default"><link rel="stylesheet" href="/docs/murder-escape/assets/css/styles.3f63b0bb.css">
+<script src="/docs/murder-escape/assets/js/runtime~main.eb72bda3.js" defer="defer"></script>
+<script src="/docs/murder-escape/assets/js/main.dab95a80.js" defer="defer"></script>
+</head>
+<body>
+<svg style="display: none;"><defs>
+<symbol id="theme-svg-external-link" viewBox="0 0 24 24"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"/></symbol>
+</defs></svg>
+<script>!function(){var t=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme")}catch(t){}}();document.documentElement.setAttribute("data-theme",t||(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light")),document.documentElement.setAttribute("data-theme-choice",t||"system")}(),function(){try{const c=new URLSearchParams(window.location.search).entries();for(var[t,e]of c)if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id="__docusaurus"><div role="region" aria-label="Skip to main content"><a class="skipToContent_fXgn" href="#__docusaurus_skipToContent_fallback">Skip to main content</a></div><nav aria-label="Main" class="theme-layout-navbar navbar navbar--fixed-top"><div class="navbar__inner"><div class="theme-layout-navbar-left navbar__items"><button aria-label="Toggle navigation bar" aria-expanded="false" class="navbar__toggle clean-btn" type="button"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/docs/murder-escape/"><b class="navbar__title text--truncate">Murder Escape</b></a><a class="navbar__item navbar__link" href="/docs/murder-escape/docs/intro">Docs</a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/docs/murder-escape/api/">API</a></div><div class="theme-layout-navbar-right navbar__items navbar__items--right"><a href="https://github.com/firebit-dev/murder-escape" target="_blank" rel="noopener noreferrer" class="navbar__item navbar__link">GitHub<svg width="13.5" height="13.5" aria-label="(opens in new tab)" class="iconExternalLink_nPIU"><use href="#theme-svg-external-link"></use></svg></a><div class="toggle_vylO colorModeToggle_DEke"><button class="clean-btn toggleButton_gllP toggleButtonDisabled_aARS" type="button" disabled="" title="system mode" aria-label="Switch between dark and light mode (currently system mode)"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP lightToggleIcon_pyhR"><path fill="currentColor" d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP darkToggleIcon_wfgR"><path fill="currentColor" d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP systemToggleIcon_QzmC"><path fill="currentColor" d="m12 21c4.971 0 9-4.029 9-9s-4.029-9-9-9-9 4.029-9 9 4.029 9 9 9zm4.95-13.95c1.313 1.313 2.05 3.093 2.05 4.95s-0.738 3.637-2.05 4.95c-1.313 1.313-3.093 2.05-4.95 2.05v-14c1.857 0 3.637 0.737 4.95 2.05z"></path></svg></button></div><div class="navbarSearchContainer_Bca1"><div class="navbar__search"><span aria-label="expand searchbar" role="button" class="search-icon" tabindex="0"></span><input id="search_input_react" type="search" placeholder="Loading..." aria-label="Search" class="navbar__search-input search-bar" disabled=""></div></div></div></div><div role="presentation" class="navbar-sidebar__backdrop"></div></nav><div id="__docusaurus_skipToContent_fallback" class="theme-layout-main main-wrapper mainWrapper_z2l0 docPageContainer_wNNk"><div class="docPage_Dpn1"><div class="docSidebarContainer_o_re"><div class="sidebar_njMd"><nav aria-label="Docs sidebar" class="menu thin-scrollbar menu_SIkG"><ul class="theme-doc-sidebar-menu menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Actions"><span title="​Actions" class="linkLabel_WmDU">​Actions</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/AdminService"><span title="​Admin​Service" class="linkLabel_WmDU">​Admin​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Analytics"><span title="​Analytics" class="linkLabel_WmDU">​Analytics</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/AnalyticsService"><span title="​Analytics​Service" class="linkLabel_WmDU">​Analytics​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/AnchorDescendants"><span title="​Anchor​Descendants" class="linkLabel_WmDU">​Anchor​Descendants</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/AnimalPen"><span title="​Animal​Pen" class="linkLabel_WmDU">​Animal​Pen</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/AnimalPenBaseClass"><span title="​Animal​Pen​Base​Class" class="linkLabel_WmDU">​Animal​Pen​Base​Class</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Attrify"><span title="​Attrify" class="linkLabel_WmDU">​Attrify</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/AutoCanvasSize"><span title="​Auto​Canvas​Size" class="linkLabel_WmDU">​Auto​Canvas​Size</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/BaseGameMode"><span title="​Base​Game​Mode" class="linkLabel_WmDU">​Base​Game​Mode</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link menu__link--active" aria-current="page" href="/docs/murder-escape/api/BaseUtil"><span title="​Base​Util" class="linkLabel_WmDU">​Base​Util</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Bezier"><span title="​Bezier" class="linkLabel_WmDU">​Bezier</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Blur"><span title="​Blur" class="linkLabel_WmDU">​Blur</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Bootstrap"><span title="​Bootstrap" class="linkLabel_WmDU">​Bootstrap</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/BoxService"><span title="​Box​Service" class="linkLabel_WmDU">​Box​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/BuySkillNodeHandler"><span title="​Buy​Skill​Node​Handler" class="linkLabel_WmDU">​Buy​Skill​Node​Handler</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Character"><span title="​Character" class="linkLabel_WmDU">​Character</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/CharacterGrip"><span title="​Character​Grip" class="linkLabel_WmDU">​Character​Grip</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ChatCommand"><span title="​Chat​Command" class="linkLabel_WmDU">​Chat​Command</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ClientState"><span title="​Client​State" class="linkLabel_WmDU">​Client​State</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/CollectionObject"><span title="​Collection​Object" class="linkLabel_WmDU">​Collection​Object</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/CollectionWatcher"><span title="​Collection​Watcher" class="linkLabel_WmDU">​Collection​Watcher</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/CollectionWatcherController"><span title="​Collection​Watcher​Controller" class="linkLabel_WmDU">​Collection​Watcher​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/CollisionService"><span title="​Collision​Service" class="linkLabel_WmDU">​Collision​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Colors"><span title="​Colors" class="linkLabel_WmDU">​Colors</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ConeCast"><span title="​Cone​Cast" class="linkLabel_WmDU">​Cone​Cast</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Confetti"><span title="​Confetti" class="linkLabel_WmDU">​Confetti</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ControlsData"><span title="​Controls​Data" class="linkLabel_WmDU">​Controls​Data</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Cooldown"><span title="​Cooldown" class="linkLabel_WmDU">​Cooldown</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/CoreService"><span title="​Core​Service" class="linkLabel_WmDU">​Core​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/CoreState"><span title="​Core​State" class="linkLabel_WmDU">​Core​State</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/CosmeticService"><span title="​Cosmetic​Service" class="linkLabel_WmDU">​Cosmetic​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/CreateCharacterWeld"><span title="​Create​Character​Weld" class="linkLabel_WmDU">​Create​Character​Weld</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/CreateFullViewport"><span title="​Create​Full​Viewport" class="linkLabel_WmDU">​Create​Full​Viewport</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/CreateNumberTween"><span title="​Create​Number​Tween" class="linkLabel_WmDU">​Create​Number​Tween</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/CreateTween"><span title="​Create​Tween" class="linkLabel_WmDU">​Create​Tween</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/CreateWeld"><span title="​Create​Weld" class="linkLabel_WmDU">​Create​Weld</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/CropTypes"><span title="​Crop​Types" class="linkLabel_WmDU">​Crop​Types</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/CrownGrab"><span title="​Crown​Grab" class="linkLabel_WmDU">​Crown​Grab</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/CurrencyService"><span title="​Currency​Service" class="linkLabel_WmDU">​Currency​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/DailyRewards"><span title="​Daily​Rewards" class="linkLabel_WmDU">​Daily​Rewards</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/DailyRotationService"><span title="​Daily​Rotation​Service" class="linkLabel_WmDU">​Daily​Rotation​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/DataController"><span title="​Data​Controller" class="linkLabel_WmDU">​Data​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/DefaultProps"><span title="​Default​Props" class="linkLabel_WmDU">​Default​Props</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Device"><span title="​Device" class="linkLabel_WmDU">​Device</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/DocumentDB"><span title="​Document​D​B" class="linkLabel_WmDU">​Document​D​B</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/DodgeTheTeapots"><span title="​Dodge​The​Teapots" class="linkLabel_WmDU">​Dodge​The​Teapots</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Door"><span title="​Door" class="linkLabel_WmDU">​Door</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/DropsController"><span title="​Drops​Controller" class="linkLabel_WmDU">​Drops​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Effects"><span title="​Effects" class="linkLabel_WmDU">​Effects</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/FeatureFlags"><span title="​Feature​Flags" class="linkLabel_WmDU">​Feature​Flags</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/GameService"><span title="​Game​Service" class="linkLabel_WmDU">​Game​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/GearController"><span title="​Gear​Controller" class="linkLabel_WmDU">​Gear​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/GearDebugService"><span title="​Gear​Debug​Service" class="linkLabel_WmDU">​Gear​Debug​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/GearService"><span title="​Gear​Service" class="linkLabel_WmDU">​Gear​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/GearkitSetup"><span title="​Gearkit​Setup" class="linkLabel_WmDU">​Gearkit​Setup</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/HealthBar"><span title="​Health​Bar" class="linkLabel_WmDU">​Health​Bar</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/HighlightedPrompt"><span title="​Highlighted​Prompt" class="linkLabel_WmDU">​Highlighted​Prompt</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/InstanceSync"><span title="​Instance​Sync" class="linkLabel_WmDU">​Instance​Sync</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/InventoryHandler"><span title="​Inventory​Handler" class="linkLabel_WmDU">​Inventory​Handler</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/InventoryService"><span title="​Inventory​Service" class="linkLabel_WmDU">​Inventory​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/InventoryTypes"><span title="​Inventory​Types" class="linkLabel_WmDU">​Inventory​Types</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/InventoryUtil"><span title="​Inventory​Util" class="linkLabel_WmDU">​Inventory​Util</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/InviteFriends"><span title="​Invite​Friends" class="linkLabel_WmDU">​Invite​Friends</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ItemProcessor"><span title="​Item​Processor" class="linkLabel_WmDU">​Item​Processor</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ItemSlotIcon"><span title="​Item​Slot​Icon" class="linkLabel_WmDU">​Item​Slot​Icon</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ItemTypes"><span title="​Item​Types" class="linkLabel_WmDU">​Item​Types</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/LeaderboardService"><span title="​Leaderboard​Service" class="linkLabel_WmDU">​Leaderboard​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Leaderstats"><span title="​Leaderstats" class="linkLabel_WmDU">​Leaderstats</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Level"><span title="​Level" class="linkLabel_WmDU">​Level</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/LevelService"><span title="​Level​Service" class="linkLabel_WmDU">​Level​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/LevelTeleport"><span title="​Level​Teleport" class="linkLabel_WmDU">​Level​Teleport</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ListenForKey"><span title="​Listen​For​Key" class="linkLabel_WmDU">​Listen​For​Key</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/MarketplaceData"><span title="​Marketplace​Data" class="linkLabel_WmDU">​Marketplace​Data</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/MarketplaceService"><span title="​Marketplace​Service" class="linkLabel_WmDU">​Marketplace​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/MemoryStoreService"><span title="​Memory​Store​Service" class="linkLabel_WmDU">​Memory​Store​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/MessageController"><span title="​Message​Controller" class="linkLabel_WmDU">​Message​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/MineablesController"><span title="​Mineables​Controller" class="linkLabel_WmDU">​Mineables​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/MinigameData"><span title="​Minigame​Data" class="linkLabel_WmDU">​Minigame​Data</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/MinigameService"><span title="​Minigame​Service" class="linkLabel_WmDU">​Minigame​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/MinigameUtil"><span title="​Minigame​Util" class="linkLabel_WmDU">​Minigame​Util</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Minigames"><span title="​Minigames" class="linkLabel_WmDU">​Minigames</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ModelWrap"><span title="​Model​Wrap" class="linkLabel_WmDU">​Model​Wrap</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Monetization"><span title="​Monetization" class="linkLabel_WmDU">​Monetization</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/MonetizationController"><span title="​Monetization​Controller" class="linkLabel_WmDU">​Monetization​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/MonetizationService"><span title="​Monetization​Service" class="linkLabel_WmDU">​Monetization​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/MurderEscape"><span title="​Murder​Escape" class="linkLabel_WmDU">​Murder​Escape</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/NPC"><span title="​N​P​C" class="linkLabel_WmDU">​N​P​C</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/NavigationController"><span title="​Navigation​Controller" class="linkLabel_WmDU">​Navigation​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Nuisance"><span title="​Nuisance" class="linkLabel_WmDU">​Nuisance</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/OrderedDB"><span title="​Ordered​D​B" class="linkLabel_WmDU">​Ordered​D​B</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/PlaceUtility"><span title="​Place​Utility" class="linkLabel_WmDU">​Place​Utility</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/PlaySFX"><span title="​Play​S​F​X" class="linkLabel_WmDU">​Play​S​F​X</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/PlayerOverhead"><span title="​Player​Overhead" class="linkLabel_WmDU">​Player​Overhead</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/PlayerService"><span title="​Player​Service" class="linkLabel_WmDU">​Player​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/PlayerState"><span title="​Player​State" class="linkLabel_WmDU">​Player​State</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/PoissonDisk"><span title="​Poisson​Disk" class="linkLabel_WmDU">​Poisson​Disk</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ProfileService"><span title="​Profile​Service" class="linkLabel_WmDU">​Profile​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ProfileTypes"><span title="​Profile​Types" class="linkLabel_WmDU">​Profile​Types</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ProgressBar"><span title="​Progress​Bar" class="linkLabel_WmDU">​Progress​Bar</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/PropBaseClass"><span title="​Prop​Base​Class" class="linkLabel_WmDU">​Prop​Base​Class</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/PropTypes"><span title="​Prop​Types" class="linkLabel_WmDU">​Prop​Types</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/QueueService"><span title="​Queue​Service" class="linkLabel_WmDU">​Queue​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/RandomizeYOrientation"><span title="​Randomize​Y​Orientation" class="linkLabel_WmDU">​Randomize​Y​Orientation</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Range"><span title="​Range" class="linkLabel_WmDU">​Range</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/RarityData"><span title="​Rarity​Data" class="linkLabel_WmDU">​Rarity​Data</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Rng"><span title="​Rng" class="linkLabel_WmDU">​Rng</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Round"><span title="​Round" class="linkLabel_WmDU">​Round</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Router"><span title="​Router" class="linkLabel_WmDU">​Router</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/RunMode"><span title="​Run​Mode" class="linkLabel_WmDU">​Run​Mode</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/SafeSet"><span title="​Safe​Set" class="linkLabel_WmDU">​Safe​Set</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Sanitation"><span title="​Sanitation" class="linkLabel_WmDU">​Sanitation</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ScaleTween"><span title="​Scale​Tween" class="linkLabel_WmDU">​Scale​Tween</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ScalingButton"><span title="​Scaling​Button" class="linkLabel_WmDU">​Scaling​Button</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/SeasonData"><span title="​Season​Data" class="linkLabel_WmDU">​Season​Data</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/SeasonService"><span title="​Season​Service" class="linkLabel_WmDU">​Season​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/SecurityController"><span title="​Security​Controller" class="linkLabel_WmDU">​Security​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/SecurityService"><span title="​Security​Service" class="linkLabel_WmDU">​Security​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ShopController"><span title="​Shop​Controller" class="linkLabel_WmDU">​Shop​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ShopHandler"><span title="​Shop​Handler" class="linkLabel_WmDU">​Shop​Handler</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ShopItems"><span title="​Shop​Items" class="linkLabel_WmDU">​Shop​Items</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ShopService"><span title="​Shop​Service" class="linkLabel_WmDU">​Shop​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ShopTypes"><span title="​Shop​Types" class="linkLabel_WmDU">​Shop​Types</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Shuffle"><span title="​Shuffle" class="linkLabel_WmDU">​Shuffle</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/SkillTreeData"><span title="​Skill​Tree​Data" class="linkLabel_WmDU">​Skill​Tree​Data</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/SkillTreeService"><span title="​Skill​Tree​Service" class="linkLabel_WmDU">​Skill​Tree​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Smoothstep"><span title="​Smoothstep" class="linkLabel_WmDU">​Smoothstep</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/SocialController"><span title="​Social​Controller" class="linkLabel_WmDU">​Social​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Soil"><span title="​Soil" class="linkLabel_WmDU">​Soil</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/SoundController"><span title="​Sound​Controller" class="linkLabel_WmDU">​Sound​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Sounds"><span title="​Sounds" class="linkLabel_WmDU">​Sounds</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Spring"><span title="​Spring" class="linkLabel_WmDU">​Spring</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/StatsController"><span title="​Stats​Controller" class="linkLabel_WmDU">​Stats​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/TeleportPad"><span title="​Teleport​Pad" class="linkLabel_WmDU">​Teleport​Pad</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Town"><span title="​Town" class="linkLabel_WmDU">​Town</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/TrackedPlayerValues"><span title="​Tracked​Player​Values" class="linkLabel_WmDU">​Tracked​Player​Values</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/UITypes"><span title="​U​I​Types" class="linkLabel_WmDU">​U​I​Types</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Vehicle"><span title="​Vehicle" class="linkLabel_WmDU">​Vehicle</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/VehicleAttachmentData"><span title="​Vehicle​Attachment​Data" class="linkLabel_WmDU">​Vehicle​Attachment​Data</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/VehicleController"><span title="​Vehicle​Controller" class="linkLabel_WmDU">​Vehicle​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/VehicleService"><span title="​Vehicle​Service" class="linkLabel_WmDU">​Vehicle​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/VehicleTypes"><span title="​Vehicle​Types" class="linkLabel_WmDU">​Vehicle​Types</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/VoteService"><span title="​Vote​Service" class="linkLabel_WmDU">​Vote​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/WaitForPrimaryPart"><span title="​Wait​For​Primary​Part" class="linkLabel_WmDU">​Wait​For​Primary​Part</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Zombie"><span title="​Zombie" class="linkLabel_WmDU">​Zombie</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Zone"><span title="​Zone" class="linkLabel_WmDU">​Zone</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/adjustValueByUserPriceLevel"><span title="adjust​Value​By​User​Price​Level" class="linkLabel_WmDU">adjust​Value​By​User​Price​Level</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/breakJoints"><span title="break​Joints" class="linkLabel_WmDU">break​Joints</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/getFirstTaggedDescendant"><span title="get​First​Tagged​Descendant" class="linkLabel_WmDU">get​First​Tagged​Descendant</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/getFriendsInServer"><span title="get​Friends​In​Server" class="linkLabel_WmDU">get​Friends​In​Server</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/getPriceLevel"><span title="get​Price​Level" class="linkLabel_WmDU">get​Price​Level</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/getProductInfo"><span title="get​Product​Info" class="linkLabel_WmDU">get​Product​Info</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/quantityToUrgencyText"><span title="quantity​To​Urgency​Text" class="linkLabel_WmDU">quantity​To​Urgency​Text</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/spawnParticle"><span title="spawn​Particle" class="linkLabel_WmDU">spawn​Particle</span></a></li></ul></nav></div></div><main class="docMainContainer_HJE1"><div class="container padding-vert--lg"><div class="row"><div class="col docItemCol_MU3C"><div class="docItemContainer_Wv98"><article><div class="member_J0w1 markdown"><div class="tocCollapsible_ETCw theme-doc-toc-mobile tocMobile_oUs_"><button type="button" class="clean-btn tocCollapsibleButton_TO0P">On this page</button></div><header><h1 class="docTitle_mZRt" style="text-decoration:none"><span style="display:inline-block">Base</span><span style="display:inline-block">Util</span></h1><div class="luaClassTags_EipM"><span class="docTag__6UZ" style="border-color:#ff5252;color:#ff5252">dormant</span></div><div>
+<p>Author: Javi M (dig1t)</p>
+<p>
+  Shared vocabulary for the base (player farm) system: the constants both realms
+  must agree on, the persisted data schema, and the pure maths that converts
+  between world CFrames and plot grid coordinates. It holds no state and creates
+  no props — <a href="/docs/murder-escape/api/PropBaseClass">PropBaseClass</a> and the Base service do that.
+</p>
+<h3>Coordinate model</h3>
+<p>
+  A <em>base</em> owns one or more <em>plots</em>; a plot is a <code>GRID_UNITS</code> × <code>GRID_UNITS</code>
+  square of <code>GRID_UNIT</code>-stud cells. Prop positions are stored as a
+  <a href="/docs/murder-escape/api/BaseUtil#PositionData">PositionData</a> — plot-relative <code>X</code>/<code>Y</code> (<code>Y</code> being world Z) plus a rotation <code>R</code>
+  constrained to multiples of <code>ROTATION_STEP</code>. Nothing persists world CFrames,
+  so a base can be re-instantiated anywhere in the world.
+</p>
+<p>
+  <code>getPositionDataFromPivot</code> is the one-way funnel from a dragged pivot into
+  that grid: it takes the pivot into the plot's object space, snaps translation
+  to the nearest half stud and yaw to the nearest <code>ROTATION_STEP</code>, and
+  normalizes 360° back to 0. <code>getOffsetFromPositionData</code> is the inverse.
+</p>
+
+  
+    
+    
+      <div class="admonition admonition-caution alert alert--warning">
+        <div class="admonition-heading">
+          <h5><span class="admonition-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+                <path d="M8.893 1.5c-.183-.31-.52-.5-.887-.5s-.703.19-.886.5L.138 13.499a.98.98 0 0 0 0 1.001c.193.31.53.501.886.501h13.964c.367 0 .704-.19.877-.5a1.03 1.03 0 0 0 .01-1.002L8.893 1.5zm.133 11.497H6.987v-2.003h2.039v2.003zm0-3.004H6.987V5.987h2.039v4.006z"></path>
+              </svg></span><span class="admonition-title">CAUTION</span></h5>
+        </div>
+        <div class="admonition-content">
+          <p>
+            <code>getPositionIndex</code> and <code>positionIndexToPositionData</code> are <strong>not</strong> inverses of
+            each other — the former is 1-based on <code>Y</code> (<code>x + GRID_UNITS * (y - 1)</code>) while
+            the latter reconstructs <code>y</code> as <code>floor(index / GRID_UNITS) + 1</code> and <code>x</code> via a
+            modulo that maps a full row back to 0. Round-tripping a position through them
+            does not return the original.
+          </p>
+        </div>
+      </div>
+    
+  
+
+<h3>Containers and tags</h3>
+<p>
+  Two Workspace containers are created on the server and waited for on the
+  client: <code>PROP_CONTAINER</code> (client-side visual models, persistent so it never
+  streams out) and <code>HITBOX_CONTAINER</code> (server-side bounding boxes, one
+  sub-model per base). CollectionService tags — <code>BASE_TAG</code>, <code>PLOT_TAG</code>,
+  <code>PROP_TAG</code>, <code>PROP_MODEL_TAG</code>, <code>GRID_FLOOR_TAG</code>, <code>PROP_IGNORE_TAG</code> — are how
+  controllers find those instances without holding references, and the two
+  <code>*_REPLICA_CLASS</code> strings are the Replica class names the base and its props
+  register under.
+</p>
+<h3>Persistence</h3>
+<p>
+  <code>getDataTemplate</code> produces a fresh <a href="/docs/murder-escape/api/BaseUtil#BaseData">BaseData</a> for a new player and
+  <code>reconcileBaseData</code> is the forward-migration pass: it fills in any top-level
+  key the template has and the save does not, returning whether it changed
+  anything so the caller can decide to write. It is shallow by design — nested
+  plot and prop records are not reconciled.
+</p>
+<p>
+  Gated by <a href="/docs/murder-escape/api/FeatureFlags">FeatureFlags</a>.BaseEnabled — disabled by default; per-project forks
+  enable it deliberately.
+</p>
+<p>
+  Copyright (c) 2026 firebit. All rights reserved.
+  firebit/murder-escape - proprietary and confidential.
+</p>
+</div></header><h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="types">Types<a href="#types" class="hash-link" aria-label="Direct link to Types" title="Direct link to Types" translate="no">​</a></h2><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="PositionData"><code style="text-decoration:none">PositionData</code><a href="#PositionData" class="hash-link" aria-label="Direct link to PositionData" title="Direct link to PositionData" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Class/Base/BaseUtil.luau#L136"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>PositionData<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>X<!-- -->: </code><code class="blue_P4bS">number</code><span class="inlineDescription_G7Er">-- <span>
+<p>Plot-relative offset along the plot's X axis, in studs</p>
+</span></span></div><div><code>Y<!-- -->: </code><code class="blue_P4bS">number</code><span class="inlineDescription_G7Er">-- <span>
+<p>Plot-relative offset along the plot's <strong>Z</strong> axis, in studs</p>
+</span></span></div><div><code>R<!-- -->: </code><code class="blue_P4bS">number</code><span class="inlineDescription_G7Er">-- <span>
+<p>Yaw in degrees; only valid at multiples of <code>ROTATION_STEP</code></p>
+</span></span></div></div><code>}</code></div><div>
+<p>
+  A prop's placement within a plot. Deliberately not a CFrame: storing
+  plot-relative grid coordinates is what lets a base be rebuilt at any world
+  position, and what makes two placements comparable with
+  <a href="/docs/murder-escape/api/BaseUtil#isPositionDataEqual">BaseUtil.isPositionDataEqual</a>.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="SavedPropDataProps"><code style="text-decoration:none">SavedPropDataProps</code><a href="#SavedPropDataProps" class="hash-link" aria-label="Direct link to SavedPropDataProps" title="Direct link to SavedPropDataProps" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Class/Base/BaseUtil.luau#L152"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>SavedPropDataProps<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>[string]<!-- -->: </code><code class="blue_P4bS">any</code><span class="inlineDescription_G7Er">-- <span>
+<p>Prop-class-specific persisted state</p>
+</span></span></div></div><code>}</code></div><div>
+<p>
+  Free-form bag of per-prop-type state — <a href="/docs/murder-escape/api/Soil#Soil">Soil</a> stores <code>crops</code> here,
+  <a href="/docs/murder-escape/api/AnimalPenBaseClass">AnimalPenBaseClass</a> stores <code>eggs</code>/<code>animals</code>/<code>drops</code>, and the base class
+  itself stores <code>buildStartTime</code>/<code>destroyStartTime</code>. Untyped on purpose so prop
+  classes can evolve their own schema without touching the base save format.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="SavedPropData"><code style="text-decoration:none">SavedPropData</code><a href="#SavedPropData" class="hash-link" aria-label="Direct link to SavedPropData" title="Direct link to SavedPropData" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Class/Base/BaseUtil.luau#L169"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>SavedPropData<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>propId<!-- -->: </code><code class="blue_P4bS">string</code><span class="inlineDescription_G7Er">-- <span>
+<p>Unique id for this placed prop</p>
+</span></span></div><div><code>propItemId<!-- -->: </code><code class="blue_P4bS">string</code><span class="inlineDescription_G7Er">-- <span>
+<p>Item id it was placed from</p>
+</span></span></div><div><code>position<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/docs/murder-escape/api/BaseUtil#PositionData">PositionData</a></code><span class="inlineDescription_G7Er">-- <span>
+<p>Position relative to the plot</p>
+</span></span></div><div><code>createdAt<!-- -->: </code><code class="blue_P4bS">string</code><span class="inlineDescription_G7Er">-- <span>
+<p>ISO timestamp of when the prop was placed</p>
+</span></span></div><div><code>plotId<!-- -->: </code><code class="blue_P4bS">string?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Plot the prop belongs to</p>
+</span></span></div><div><code>level<!-- -->: </code><code class="blue_P4bS">number</code><span class="inlineDescription_G7Er">-- <span>
+<p>Upgrade level; every prop starts at 1</p>
+</span></span></div><div><code>props<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/docs/murder-escape/api/BaseUtil#SavedPropDataProps">SavedPropDataProps?</a></code><span class="inlineDescription_G7Er">-- <span>
+<p>Prop-specific persisted state</p>
+</span></span></div></div><code>}</code></div><div>
+<p>One placed prop as it is stored on the player's profile.</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="PlotData"><code style="text-decoration:none">PlotData</code><a href="#PlotData" class="hash-link" aria-label="Direct link to PlotData" title="Direct link to PlotData" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Class/Base/BaseUtil.luau#L191"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>PlotData<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>plotId<!-- -->: </code><code class="blue_P4bS">string</code></div><div><code>props<!-- -->: </code><code class="purple_ieR2">{</code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/docs/murder-escape/api/BaseUtil#SavedPropData">SavedPropData</a></code><code class="purple_ieR2">}</code><span class="inlineDescription_G7Er">-- <span>
+<p>Everything placed on this plot</p>
+</span></span></div><div><code>createdAt<!-- -->: </code><code class="blue_P4bS">string</code><span class="inlineDescription_G7Er">-- <span>
+<p>ISO timestamp of when the plot was created</p>
+</span></span></div></div><code>}</code></div><div>
+<p>
+  One buildable plot within a base. Plots are unlocked individually; <code>PLOTS</code>
+  lists the plot slots a base can have and which one is granted by default.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="PropNumber"><code style="text-decoration:none">PropNumber</code><a href="#PropNumber" class="hash-link" aria-label="Direct link to PropNumber" title="Direct link to PropNumber" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Class/Base/BaseUtil.luau#L205"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">type</code> <code>PropNumber<!-- --> = </code> <code class="blue_P4bS">number</code></div><div>
+<p>
+  Index of a plot slot within <code>BaseUtil.PLOTS</code>. Used as the key of
+  <a href="/docs/murder-escape/api/BaseUtil#BaseData">BaseData</a>.plots and to look up the matching <code>Plot__&#x3C;n></code> point on the base
+  style model.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="BaseData"><code style="text-decoration:none">BaseData</code><a href="#BaseData" class="hash-link" aria-label="Direct link to BaseData" title="Direct link to BaseData" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Class/Base/BaseUtil.luau#L224"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>BaseData<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>baseId<!-- -->: </code><code class="blue_P4bS">string</code></div><div><code>name<!-- -->: </code><code class="blue_P4bS">string</code><span class="inlineDescription_G7Er">-- <span>
+<p>Player-facing farm name; filtered before it is stored</p>
+</span></span></div><div><code>plots<!-- -->: </code><code class="purple_ieR2">{</code><span><code>[</code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/docs/murder-escape/api/BaseUtil#PropNumber">PropNumber</a></code><code>]</code></span><code>: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/docs/murder-escape/api/BaseUtil#PlotData">PlotData</a></code><code class="purple_ieR2">}</code><span class="inlineDescription_G7Er">-- <span>
+<p>Plots, keyed by slot number</p>
+</span></span></div><div><code>style<!-- -->: </code><code class="blue_P4bS">string?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Base style model to build from</p>
+</span></span></div><div><code>fence<!-- -->: </code><code class="blue_P4bS">string?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Applied fence variant</p>
+</span></span></div><div><code>ground<!-- -->: </code><code class="blue_P4bS">string?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Applied ground variant</p>
+</span></span></div><div><code>likes<!-- -->: </code><code class="blue_P4bS">number</code><span class="inlineDescription_G7Er">-- <span>
+<p>Visitor likes accumulated</p>
+</span></span></div><div><code>lootCartBonus<!-- -->: </code><code class="blue_P4bS">number</code><span class="inlineDescription_G7Er">-- <span>
+<p>Percentage bonus applied to loot cart payouts</p>
+</span></span></div><div><code>createdAt<!-- -->: </code><code class="blue_P4bS">string</code><span class="inlineDescription_G7Er">-- <span>
+<p>ISO timestamp of when the base was created</p>
+</span></span></div></div><code>}</code></div><div>
+<p>
+  A player's whole base as persisted on their profile. Produced by
+  <a href="/docs/murder-escape/api/BaseUtil#getDataTemplate">BaseUtil.getDataTemplate</a> and forward-migrated by
+  <a href="/docs/murder-escape/api/BaseUtil#reconcileBaseData">BaseUtil.reconcileBaseData</a>.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="PositionIndex"><code style="text-decoration:none">PositionIndex</code><a href="#PositionIndex" class="hash-link" aria-label="Direct link to PositionIndex" title="Direct link to PositionIndex" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Class/Base/BaseUtil.luau#L244"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">type</code> <code>PositionIndex<!-- --> = </code> <code class="blue_P4bS">number</code></div><div>
+<p>
+  Flattened index of a cell within a plot's grid, as produced by
+  <a href="/docs/murder-escape/api/BaseUtil#getPositionIndex">BaseUtil.getPositionIndex</a>. See the caution on <a href="/docs/murder-escape/api/BaseUtil">BaseUtil</a> about round-tripping
+  these.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="Points"><code style="text-decoration:none">Points</code><a href="#Points" class="hash-link" aria-label="Direct link to Points" title="Direct link to Points" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Class/Base/BaseUtil.luau#L262"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>Points<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>Spawn<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/CFrame" target="_blank" rel="noopener noreferrer">CFrame<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
+<p>Where a visitor is placed when entering the base</p>
+</span></span></div><div><code>LootCart<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/CFrame" target="_blank" rel="noopener noreferrer">CFrame<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
+<p>Loot cart / trade post</p>
+</span></span></div><div><code>OwnerGui<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/CFrame" target="_blank" rel="noopener noreferrer">CFrame<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
+<p>Owner nameplate display</p>
+</span></span></div><div><code>SignSpawn<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/CFrame" target="_blank" rel="noopener noreferrer">CFrame<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
+<p>Base sign</p>
+</span></span></div><div><code>GrowAll<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/CFrame" target="_blank" rel="noopener noreferrer">CFrame<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
+<p>"Grow All" interaction point</p>
+</span></span></div><div><code>HarvestAll<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/CFrame" target="_blank" rel="noopener noreferrer">CFrame<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
+<p>"Harvest All" interaction point</p>
+</span></span></div><div><code>[string]<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/CFrame" target="_blank" rel="noopener noreferrer">CFrame<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
+<p>Any other authored point, including <code>Plot__&#x3C;n></code></p>
+</span></span></div></div><code>}</code></div><div>
+<p>
+  Named anchor points extracted from a base style model by
+  <a href="/docs/murder-escape/api/BaseUtil#formatModelPoints">BaseUtil.formatModelPoints</a>. Every value is the <em>bottom surface</em> of the
+  authored part, so a point can be placed on directly without accounting for the
+  marker's own height.
+</p>
+</div><h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="functions">Functions<a href="#functions" class="hash-link" aria-label="Direct link to Functions" title="Direct link to Functions" translate="no">​</a></h2><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="roundToNearestHalf"><code style="text-decoration:none">roundToNearestHalf</code><a href="#roundToNearestHalf" class="hash-link" aria-label="Direct link to roundToNearestHalf" title="Direct link to roundToNearestHalf" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Class/Base/BaseUtil.luau#L284"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BaseUtil<!-- -->.</code><code class="green_DgR4">roundToNearestHalf</code><code>(</code><code>value<!-- -->: </code><code class="blue_P4bS">number</code><code>) → </code><code class="blue_P4bS">number</code></div><div>
+<p>
+  Snaps a stud value to the nearest 0.5. Half-stud resolution — rather than
+  whole <code>GRID_UNIT</code> cells — is what lets props sit centred between grid lines as
+  well as on them.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="roundToNearestDegree"><code style="text-decoration:none">roundToNearestDegree</code><a href="#roundToNearestDegree" class="hash-link" aria-label="Direct link to roundToNearestDegree" title="Direct link to roundToNearestDegree" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Class/Base/BaseUtil.luau#L299"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BaseUtil<!-- -->.</code><code class="green_DgR4">roundToNearestDegree</code><code>(</code><div class="inset_uKQm"><div><code>rotation<!-- -->: </code><code class="blue_P4bS">number</code><span class="inlineDescription_G7Er">-- <span>
+<p>Yaw in degrees</p>
+</span></span></div></div><code>) → </code><code class="blue_P4bS">number</code></div><div>
+<p>
+  Snaps a yaw in degrees to the nearest multiple of <code>ROTATION_STEP</code> (90°). Note
+  this can return 360 for inputs near a full turn — callers that store the
+  result normalize it back to 0.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="getDefaultFarmName"><code style="text-decoration:none">getDefaultFarmName</code><a href="#getDefaultFarmName" class="hash-link" aria-label="Direct link to getDefaultFarmName" title="Direct link to getDefaultFarmName" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Class/Base/BaseUtil.luau#L319"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BaseUtil<!-- -->.</code><code class="green_DgR4">getDefaultFarmName</code><code>(</code><code>player<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/Player" target="_blank" rel="noopener noreferrer">Player<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code>) → </code><code class="blue_P4bS">string</code></div><div>
+<p>Returns the default farm name for a player (<code>"&#x3C;DisplayName>'s Farm"</code>).</p>
+<p>
+  On the server the name is run through text filtering before being returned,
+  since it embeds a user-controlled display name and ends up on a public sign.
+  On the client filtering is unavailable, so the raw name is returned — that
+  path is for optimistic UI only and must not be persisted.
+</p>
+<p><strong>Yields on the server</strong> for the filter call.</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="getDataTemplate"><code style="text-decoration:none">getDataTemplate</code><a href="#getDataTemplate" class="hash-link" aria-label="Direct link to getDataTemplate" title="Direct link to getDataTemplate" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Class/Base/BaseUtil.luau#L343"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BaseUtil<!-- -->.</code><code class="green_DgR4">getDataTemplate</code><code>(</code><code>player<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/Player" target="_blank" rel="noopener noreferrer">Player<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/docs/murder-escape/api/BaseUtil#BaseData">BaseData</a></code></div><div>
+<p>
+  Builds a fresh <a href="/docs/murder-escape/api/BaseUtil#BaseData">BaseData</a> for a player who has no base yet — a new id, the
+  default farm name and style, no plots, and the starting <code>lootCartBonus</code>.
+</p>
+<p>
+  Also serves as the source of truth for <a href="/docs/murder-escape/api/BaseUtil#reconcileBaseData">BaseUtil.reconcileBaseData</a>, so adding
+  a key here is what makes it appear on existing saves.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="reconcileBaseData"><code style="text-decoration:none">reconcileBaseData</code><a href="#reconcileBaseData" class="hash-link" aria-label="Direct link to reconcileBaseData" title="Direct link to reconcileBaseData" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Class/Base/BaseUtil.luau#L373"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BaseUtil<!-- -->.</code><code class="green_DgR4">reconcileBaseData</code><code>(</code><div class="inset_uKQm"><div><code>player<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/Player" target="_blank" rel="noopener noreferrer">Player<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code>,</code><span class="inlineDescription_G7Er">-- <span>
+<p>Used to build the comparison template</p>
+</span></span></div><div><code>data<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/docs/murder-escape/api/BaseUtil#BaseData">BaseData</a></code><span class="inlineDescription_G7Er">-- <span>
+<p>Mutated in place</p>
+</span></span></div></div><code>) → </code><code class="blue_P4bS">boolean</code><span class="inlineDescription_G7Er">-- <span>
+<p>Whether anything was added, so the caller can skip a write</p>
+</span></span></div><div>
+<p>
+  Forward-migrates a loaded base in place: any top-level key present in
+  <a href="/docs/murder-escape/api/BaseUtil#getDataTemplate">BaseUtil.getDataTemplate</a> but missing from <code>data</code> is filled in from the
+  template.
+</p>
+<p>
+  Shallow by design — nested plot and prop records are left untouched, since
+  those have their own per-class schemas. Existing values are never overwritten,
+  so this is safe to run on every load.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="createPlotData"><code style="text-decoration:none">createPlotData</code><a href="#createPlotData" class="hash-link" aria-label="Direct link to createPlotData" title="Direct link to createPlotData" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Class/Base/BaseUtil.luau#L397"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BaseUtil<!-- -->.</code><code class="green_DgR4">createPlotData</code><code>(</code><code>plotId<!-- -->: </code><code class="blue_P4bS">string</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/docs/murder-escape/api/BaseUtil#PlotData">PlotData</a></code></div><div>
+<p>Creates an empty <a href="/docs/murder-escape/api/BaseUtil#PlotData">PlotData</a> record for a newly unlocked plot.</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="createSavedPropData"><code style="text-decoration:none">createSavedPropData</code><a href="#createSavedPropData" class="hash-link" aria-label="Direct link to createSavedPropData" title="Direct link to createSavedPropData" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Class/Base/BaseUtil.luau#L419"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BaseUtil<!-- -->.</code><code class="green_DgR4">createSavedPropData</code><code>(</code><code>data<!-- -->: </code><code class="purple_ieR2">{</code><div class="inset_uKQm"><code>propItemId<!-- -->: </code><code class="blue_P4bS">string</code><code class="purple_ieR2">,</code></div><div class="inset_uKQm"><code>position<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/docs/murder-escape/api/BaseUtil#PositionData">PositionData?</a></code><code class="purple_ieR2">,</code></div><div class="inset_uKQm"><code>plotId<!-- -->: </code><code class="blue_P4bS">string?</code><code class="purple_ieR2">,</code></div><div class="inset_uKQm"><code>props<!-- -->: </code><code class="green_DgR4">{</code><span><code>[</code><code class="blue_P4bS">string</code><code>]</code></span><code>: </code><code class="blue_P4bS">any</code><code class="green_DgR4">}</code><code class="blue_P4bS">?</code></div><code class="purple_ieR2">}</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/docs/murder-escape/api/BaseUtil#SavedPropData">SavedPropData</a></code></div><div>
+<p>
+  Creates a persisted record for a newly placed prop: a fresh <code>propId</code>, level 1,
+  and the supplied position/plot/props (each defaulting to empty).
+</p>
+<p>
+  This mints the identity a prop keeps for its whole life — the same <code>propId</code>
+  appears on the prop's bounding box attributes, its Replica, and every
+  client-to-server request about it.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="getPositionIndex"><code style="text-decoration:none">getPositionIndex</code><a href="#getPositionIndex" class="hash-link" aria-label="Direct link to getPositionIndex" title="Direct link to getPositionIndex" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Class/Base/BaseUtil.luau#L452"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BaseUtil<!-- -->.</code><code class="green_DgR4">getPositionIndex</code><code>(</code><div class="inset_uKQm"><div><code>x<!-- -->: </code><code class="blue_P4bS">number</code><code>,</code><span class="inlineDescription_G7Er">-- <span>
+<p>Column, 1-based</p>
+</span></span></div><div><code>y<!-- -->: </code><code class="blue_P4bS">number</code><span class="inlineDescription_G7Er">-- <span>
+<p>Row, 1-based</p>
+</span></span></div></div><code>) → </code><code class="blue_P4bS">number</code></div><div>
+<p>
+  Flattens a 1-based grid coordinate into a single <a href="/docs/murder-escape/api/BaseUtil#PositionIndex">PositionIndex</a>
+  (<code>x + GRID_UNITS * (y - 1)</code>).
+</p>
+
+  
+    
+    
+      <div class="admonition admonition-caution alert alert--warning">
+        <div class="admonition-heading">
+          <h5><span class="admonition-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+                <path d="M8.893 1.5c-.183-.31-.52-.5-.887-.5s-.703.19-.886.5L.138 13.499a.98.98 0 0 0 0 1.001c.193.31.53.501.886.501h13.964c.367 0 .704-.19.877-.5a1.03 1.03 0 0 0 .01-1.002L8.893 1.5zm.133 11.497H6.987v-2.003h2.039v2.003zm0-3.004H6.987V5.987h2.039v4.006z"></path>
+              </svg></span><span class="admonition-title">CAUTION</span></h5>
+        </div>
+        <div class="admonition-content">
+          <p>
+            <a href="/docs/murder-escape/api/BaseUtil#positionIndexToPositionData">BaseUtil.positionIndexToPositionData</a> is not a true inverse of this — see the
+            caution on <a href="/docs/murder-escape/api/BaseUtil">BaseUtil</a>.
+          </p>
+        </div>
+      </div>
+    
+  
+
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="positionIndexToPositionData"><code style="text-decoration:none">positionIndexToPositionData</code><a href="#positionIndexToPositionData" class="hash-link" aria-label="Direct link to positionIndexToPositionData" title="Direct link to positionIndexToPositionData" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Class/Base/BaseUtil.luau#L471"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BaseUtil<!-- -->.</code><code class="green_DgR4">positionIndexToPositionData</code><code>(</code><code>index<!-- -->: </code><code class="blue_P4bS">number</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/docs/murder-escape/api/BaseUtil#PositionData">PositionData</a></code></div><div>
+<p>Expands a flattened grid index back into a <a href="/docs/murder-escape/api/BaseUtil#PositionData">PositionData</a> with zero rotation.</p>
+
+  
+    
+    
+      <div class="admonition admonition-caution alert alert--warning">
+        <div class="admonition-heading">
+          <h5><span class="admonition-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+                <path d="M8.893 1.5c-.183-.31-.52-.5-.887-.5s-.703.19-.886.5L.138 13.499a.98.98 0 0 0 0 1.001c.193.31.53.501.886.501h13.964c.367 0 .704-.19.877-.5a1.03 1.03 0 0 0 .01-1.002L8.893 1.5zm.133 11.497H6.987v-2.003h2.039v2.003zm0-3.004H6.987V5.987h2.039v4.006z"></path>
+              </svg></span><span class="admonition-title">CAUTION</span></h5>
+        </div>
+        <div class="admonition-content">
+          <p>
+            Not an exact inverse of [BaseUtil.getPositionIndex]: an index that lands on the
+            last column of a row (<code>index % GRID_UNITS == 0</code>) comes back as column 0 of the
+            <em>next</em> row. Do not rely on a round trip.
+          </p>
+        </div>
+      </div>
+    
+  
+
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="getPositionDataFromPivot"><code style="text-decoration:none">getPositionDataFromPivot</code><a href="#getPositionDataFromPivot" class="hash-link" aria-label="Direct link to getPositionDataFromPivot" title="Direct link to getPositionDataFromPivot" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Class/Base/BaseUtil.luau#L497"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BaseUtil<!-- -->.</code><code class="green_DgR4">getPositionDataFromPivot</code><code>(</code><div class="inset_uKQm"><div><code>origin<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/CFrame" target="_blank" rel="noopener noreferrer">CFrame<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code>,</code><span class="inlineDescription_G7Er">-- <span>
+<p>The plot's origin</p>
+</span></span></div><div><code>pivot<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/CFrame" target="_blank" rel="noopener noreferrer">CFrame<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
+<p>World pivot of the prop being placed</p>
+</span></span></div></div><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/docs/murder-escape/api/BaseUtil#PositionData">PositionData</a></code></div><div>
+<p>
+  Converts a world pivot into snapped, plot-relative <a href="/docs/murder-escape/api/BaseUtil#PositionData">PositionData</a> — the single
+  funnel every placement goes through.
+</p>
+<p>
+  Takes <code>pivot</code> into <code>origin</code>'s object space, snaps X and Z to the nearest half
+  stud and the yaw to the nearest <code>ROTATION_STEP</code>, and normalizes a 360° result
+  back to 0 so rotations compare equal.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="getOffsetFromPositionData"><code style="text-decoration:none">getOffsetFromPositionData</code><a href="#getOffsetFromPositionData" class="hash-link" aria-label="Direct link to getOffsetFromPositionData" title="Direct link to getOffsetFromPositionData" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Class/Base/BaseUtil.luau#L524"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BaseUtil<!-- -->.</code><code class="green_DgR4">getOffsetFromPositionData</code><code>(</code><code>position<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/docs/murder-escape/api/BaseUtil#PositionData">PositionData</a></code><code>) → </code><code>(</code><div class="inset_uKQm"><div><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/CFrame" target="_blank" rel="noopener noreferrer">CFrame<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code>,</code><span class="inlineDescription_G7Er">-- <span>
+<p>Translation</p>
+</span></span></div><div><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/CFrame" target="_blank" rel="noopener noreferrer">CFrame<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
+<p>Rotation</p>
+</span></span></div></div><code>)</code></div><div>
+<p>
+  Inverse of [BaseUtil.getPositionDataFromPivot]: expands stored grid coordinates
+  back into a translation and a rotation, returned <strong>separately</strong> so callers can
+  compose them around the prop's own pivot offset rather than being handed a
+  pre-multiplied CFrame.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="isPositionDataEqual"><code style="text-decoration:none">isPositionDataEqual</code><a href="#isPositionDataEqual" class="hash-link" aria-label="Direct link to isPositionDataEqual" title="Direct link to isPositionDataEqual" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Class/Base/BaseUtil.luau#L544"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BaseUtil<!-- -->.</code><code class="green_DgR4">isPositionDataEqual</code><code>(</code><div class="inset_uKQm"><div><code>position1<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/docs/murder-escape/api/BaseUtil#PositionData">PositionData</a></code><code>,</code></div><div><code>position2<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/docs/murder-escape/api/BaseUtil#PositionData">PositionData</a></code></div></div><code>) → </code><code class="blue_P4bS">boolean</code></div><div>
+<p>
+  Whether two placements are the same. Used by <a href="/docs/murder-escape/api/PropBaseClass#MoveTo">PropBaseClass:MoveTo</a> to discard
+  no-op moves.
+</p>
+<p>
+  Rotation is compared by absolute value, so <code>-90</code> and <code>90</code> count as equal even
+  though they are visually different. That is deliberate for the intended shapes
+  but means a 180° flip of an asymmetric prop can be treated as no move.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="validatePositionData"><code style="text-decoration:none">validatePositionData</code><a href="#validatePositionData" class="hash-link" aria-label="Direct link to validatePositionData" title="Direct link to validatePositionData" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Class/Base/BaseUtil.luau#L566"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BaseUtil<!-- -->.</code><code class="green_DgR4">validatePositionData</code><code>(</code><code>position<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/docs/murder-escape/api/BaseUtil#PositionData">PositionData</a></code><code>) → </code><code class="blue_P4bS">boolean</code></div><div>
+<p>
+  Shape-checks a <a href="/docs/murder-escape/api/BaseUtil#PositionData">PositionData</a> that arrived from a client: all three fields
+  must be numbers and <code>R</code> must be an exact multiple of <code>ROTATION_STEP</code>.
+</p>
+<p>
+  This validates the <em>format</em> only — it says nothing about whether the position
+  is inside the plot or free of collisions. Those checks live with the caller.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="formatModelPoints"><code style="text-decoration:none">formatModelPoints</code><a href="#formatModelPoints" class="hash-link" aria-label="Direct link to formatModelPoints" title="Direct link to formatModelPoints" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Class/Base/BaseUtil.luau#L611"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BaseUtil<!-- -->.</code><code class="green_DgR4">formatModelPoints</code><code>(</code><div class="inset_uKQm"><div><code>model<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/Model" target="_blank" rel="noopener noreferrer">Model?<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code>,</code><span class="inlineDescription_G7Er">-- <span>
+<p>The style model; warns and returns nil if absent</p>
+</span></span></div><div><code>style<!-- -->: </code><code class="blue_P4bS">string</code><span class="inlineDescription_G7Er">-- <span>
+<p>Style name, used in the assertion messages</p>
+</span></span></div></div><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/docs/murder-escape/api/BaseUtil#Points">Points?</a></code></div><div>
+<p>
+  Extracts the named anchor points from a base style model and returns them as
+  <a href="/docs/murder-escape/api/BaseUtil#Points">Points</a>, keyed by part name. Parts nested one folder deep are flattened to
+  <code>&#x3C;Folder>__&#x3C;Child></code> — which is how per-plot points end up as <code>Plot__1</code>,
+  <code>Plot__2</code> and so on.
+</p>
+<p>
+  Every value is the part's <em>bottom surface</em>, so callers can place directly on
+  it.
+</p>
+<p>
+  The <code>Points</code> folder is <strong>destroyed</strong> afterwards: the markers are build-time
+  metadata and must not survive into the live base.
+</p>
+<p>
+  Asserts that <code>Spawn</code>, <code>LootCart</code> and a point for every entry in <code>PLOTS</code> exist,
+  so a mis-authored style model fails loudly at load rather than producing a
+  base with unreachable plots.
+</p>
+<p><strong>Yields</strong> waiting for the <code>Points</code> folder.</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="generatePlot"><code style="text-decoration:none">generatePlot</code><a href="#generatePlot" class="hash-link" aria-label="Direct link to generatePlot" title="Direct link to generatePlot" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Class/Base/BaseUtil.luau#L674"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BaseUtil<!-- -->.</code><code class="green_DgR4">generatePlot</code><code>(</code><div class="inset_uKQm"><div><code>origin<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/CFrame" target="_blank" rel="noopener noreferrer">CFrame<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
+<p>Plot origin</p>
+</span></span></div></div><code>) → </code><code>(</code><div class="inset_uKQm"><div><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/BasePart" target="_blank" rel="noopener noreferrer">BasePart<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code>,</code><span class="inlineDescription_G7Er">-- <span>
+<p>The grid floor</p>
+</span></span></div><div><code class="purple_ieR2">{</code><span><code>[</code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/docs/murder-escape/api/BaseUtil#PositionIndex">PositionIndex</a></code><code>]</code></span><code>: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/BasePart" target="_blank" rel="noopener noreferrer">BasePart<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code class="purple_ieR2">}</code><span class="inlineDescription_G7Er">-- <span>
+<p>Per-cell parts; presently empty</p>
+</span></span></div></div><code>)</code></div><div>
+<p>
+  Builds a plot's floor: one invisible <code>GRID_UNITS × GRID_UNITS</code> cell part
+  tagged <code>GRID_FLOOR_TAG</code>, wearing a tiled checker texture that draws the grid
+  rather than instancing a part per cell.
+</p>
+<p>
+  The second return value is the per-cell part map. It is currently allocated
+  but never filled — cells are computed arithmetically, so the map exists for a
+  future implementation that needs addressable cell instances (per-cell
+  highlighting, say). Treat it as empty.
+</p>
+<p>The caller is responsible for parenting the returned floor.</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="randomizeColorShade"><code style="text-decoration:none">randomizeColorShade</code><a href="#randomizeColorShade" class="hash-link" aria-label="Direct link to randomizeColorShade" title="Direct link to randomizeColorShade" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Class/Base/BaseUtil.luau#L711"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BaseUtil<!-- -->.</code><code class="green_DgR4">randomizeColorShade</code><code>(</code><code>color<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/Color3" target="_blank" rel="noopener noreferrer">Color3<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/Color3" target="_blank" rel="noopener noreferrer">Color3<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code></div><div>
+<p>
+  Jitters a colour's saturation and value slightly (hue is left alone — the
+  variance constant for it is 0) so repeated instances of the same asset do not
+  read as identical clones.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="isHitboxIntersecting"><code style="text-decoration:none">isHitboxIntersecting</code><a href="#isHitboxIntersecting" class="hash-link" aria-label="Direct link to isHitboxIntersecting" title="Direct link to isHitboxIntersecting" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Class/Base/BaseUtil.luau#L748"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BaseUtil<!-- -->.</code><code class="green_DgR4">isHitboxIntersecting</code><code>(</code><div class="inset_uKQm"><div><code>hitbox<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/BasePart" target="_blank" rel="noopener noreferrer">BasePart<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code>,</code><span class="inlineDescription_G7Er">-- <span>
+<p>Hitbox being tested</p>
+</span></span></div><div><code>origin<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/CFrame" target="_blank" rel="noopener noreferrer">CFrame?<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code>,</code><span class="inlineDescription_G7Er">-- <span>
+<p>Position to test at; defaults to the hitbox's own</p>
+</span></span></div><div><code>propIdToIgnore<!-- -->: </code><code class="blue_P4bS">string?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Prop id to exclude, e.g. the one being moved</p>
+</span></span></div></div><code>) → </code><code class="blue_P4bS">boolean</code></div><div>
+<p>
+  Whether a prop hitbox would overlap any other prop hitbox — the collision test
+  that gates placement.
+</p>
+<p>
+  Builds an <em>include</em> filter of every <code>PROP_TAG</code>-tagged part in
+  <code>HITBOX_CONTAINER</code> except <code>hitbox</code> itself, then block-casts a temporary part
+  of the same size at <code>origin</code> (defaulting to the hitbox's own CFrame, which is
+  how a stationary prop is re-validated). Include-filtering means terrain,
+  characters and decoration are ignored by construction.
+</p>
+<p>
+  <code>propIdToIgnore</code> additionally drops the prop with that id from the results —
+  needed when a prop is being <em>moved</em>, since its own hitbox is still parented in
+  the container at its old position.
+</p>
+</div></div></article></div><details><summary>Show raw api</summary><pre style="max-width:100%;white-space:pre-wrap">{
+    &quot;functions&quot;: [
+        {
+            &quot;name&quot;: &quot;roundToNearestHalf&quot;,
+            &quot;desc&quot;: &quot;Snaps a stud value to the nearest 0.5. Half-stud resolution — rather than\nwhole `GRID_UNIT` cells — is what lets props sit centred between grid lines as\nwell as on them.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;value&quot;,
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;number&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;number&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 284,
+                &quot;path&quot;: &quot;src/Shared/Class/Base/BaseUtil.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;roundToNearestDegree&quot;,
+            &quot;desc&quot;: &quot;Snaps a yaw in degrees to the nearest multiple of `ROTATION_STEP` (90°). Note\nthis can return 360 for inputs near a full turn — callers that store the\nresult normalize it back to 0.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;rotation&quot;,
+                    &quot;desc&quot;: &quot;Yaw in degrees&quot;,
+                    &quot;lua_type&quot;: &quot;number&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;number&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 299,
+                &quot;path&quot;: &quot;src/Shared/Class/Base/BaseUtil.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;getDefaultFarmName&quot;,
+            &quot;desc&quot;: &quot;Returns the default farm name for a player (`\&quot;&lt;DisplayName&gt;&#x27;s Farm\&quot;`).\n\nOn the server the name is run through text filtering before being returned,\nsince it embeds a user-controlled display name and ends up on a public sign.\nOn the client filtering is unavailable, so the raw name is returned — that\npath is for optimistic UI only and must not be persisted.\n\n**Yields on the server** for the filter call.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;player&quot;,
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;Player&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 319,
+                &quot;path&quot;: &quot;src/Shared/Class/Base/BaseUtil.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;getDataTemplate&quot;,
+            &quot;desc&quot;: &quot;Builds a fresh [BaseData] for a player who has no base yet — a new id, the\ndefault farm name and style, no plots, and the starting `lootCartBonus`.\n\nAlso serves as the source of truth for [BaseUtil.reconcileBaseData], so adding\na key here is what makes it appear on existing saves.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;player&quot;,
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;Player&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;BaseData&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 343,
+                &quot;path&quot;: &quot;src/Shared/Class/Base/BaseUtil.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;reconcileBaseData&quot;,
+            &quot;desc&quot;: &quot;Forward-migrates a loaded base in place: any top-level key present in\n[BaseUtil.getDataTemplate] but missing from `data` is filled in from the\ntemplate.\n\nShallow by design — nested plot and prop records are left untouched, since\nthose have their own per-class schemas. Existing values are never overwritten,\nso this is safe to run on every load.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;player&quot;,
+                    &quot;desc&quot;: &quot;Used to build the comparison template&quot;,
+                    &quot;lua_type&quot;: &quot;Player&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;data&quot;,
+                    &quot;desc&quot;: &quot;Mutated in place&quot;,
+                    &quot;lua_type&quot;: &quot;BaseData&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;Whether anything was added, so the caller can skip a write&quot;,
+                    &quot;lua_type&quot;: &quot;boolean&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 373,
+                &quot;path&quot;: &quot;src/Shared/Class/Base/BaseUtil.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;createPlotData&quot;,
+            &quot;desc&quot;: &quot;Creates an empty [PlotData] record for a newly unlocked plot.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;plotId&quot;,
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;PlotData&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 397,
+                &quot;path&quot;: &quot;src/Shared/Class/Base/BaseUtil.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;createSavedPropData&quot;,
+            &quot;desc&quot;: &quot;Creates a persisted record for a newly placed prop: a fresh `propId`, level 1,\nand the supplied position/plot/props (each defaulting to empty).\n\nThis mints the identity a prop keeps for its whole life — the same `propId`\nappears on the prop&#x27;s bounding box attributes, its Replica, and every\nclient-to-server request about it.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;data&quot;,
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;{ propItemId: string, position: PositionData?, plotId: string?, props: { [string]: any }? }&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;SavedPropData&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 419,
+                &quot;path&quot;: &quot;src/Shared/Class/Base/BaseUtil.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;getPositionIndex&quot;,
+            &quot;desc&quot;: &quot;Flattens a 1-based grid coordinate into a single [PositionIndex]\n(`x + GRID_UNITS * (y - 1)`).\n\n:::caution\n[BaseUtil.positionIndexToPositionData] is not a true inverse of this — see the\ncaution on [BaseUtil].\n:::&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;x&quot;,
+                    &quot;desc&quot;: &quot;Column, 1-based&quot;,
+                    &quot;lua_type&quot;: &quot;number&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;y&quot;,
+                    &quot;desc&quot;: &quot;Row, 1-based&quot;,
+                    &quot;lua_type&quot;: &quot;number&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;number&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 452,
+                &quot;path&quot;: &quot;src/Shared/Class/Base/BaseUtil.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;positionIndexToPositionData&quot;,
+            &quot;desc&quot;: &quot;Expands a flattened grid index back into a [PositionData] with zero rotation.\n\n:::caution\nNot an exact inverse of [BaseUtil.getPositionIndex]: an index that lands on the\nlast column of a row (`index % GRID_UNITS == 0`) comes back as column 0 of the\n*next* row. Do not rely on a round trip.\n:::&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;index&quot;,
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;number&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;PositionData&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 471,
+                &quot;path&quot;: &quot;src/Shared/Class/Base/BaseUtil.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;getPositionDataFromPivot&quot;,
+            &quot;desc&quot;: &quot;Converts a world pivot into snapped, plot-relative [PositionData] — the single\nfunnel every placement goes through.\n\nTakes `pivot` into `origin`&#x27;s object space, snaps X and Z to the nearest half\nstud and the yaw to the nearest `ROTATION_STEP`, and normalizes a 360° result\nback to 0 so rotations compare equal.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;origin&quot;,
+                    &quot;desc&quot;: &quot;The plot&#x27;s origin&quot;,
+                    &quot;lua_type&quot;: &quot;CFrame&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;pivot&quot;,
+                    &quot;desc&quot;: &quot;World pivot of the prop being placed&quot;,
+                    &quot;lua_type&quot;: &quot;CFrame&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;PositionData&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 497,
+                &quot;path&quot;: &quot;src/Shared/Class/Base/BaseUtil.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;getOffsetFromPositionData&quot;,
+            &quot;desc&quot;: &quot;Inverse of [BaseUtil.getPositionDataFromPivot]: expands stored grid coordinates\nback into a translation and a rotation, returned **separately** so callers can\ncompose them around the prop&#x27;s own pivot offset rather than being handed a\npre-multiplied CFrame.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;position&quot;,
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;PositionData&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;Translation&quot;,
+                    &quot;lua_type&quot;: &quot;CFrame&quot;
+                },
+                {
+                    &quot;desc&quot;: &quot;Rotation&quot;,
+                    &quot;lua_type&quot;: &quot;CFrame&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 524,
+                &quot;path&quot;: &quot;src/Shared/Class/Base/BaseUtil.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;isPositionDataEqual&quot;,
+            &quot;desc&quot;: &quot;Whether two placements are the same. Used by [PropBaseClass:MoveTo] to discard\nno-op moves.\n\nRotation is compared by absolute value, so `-90` and `90` count as equal even\nthough they are visually different. That is deliberate for the intended shapes\nbut means a 180° flip of an asymmetric prop can be treated as no move.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;position1&quot;,
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;PositionData&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;position2&quot;,
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;PositionData&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;boolean&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 544,
+                &quot;path&quot;: &quot;src/Shared/Class/Base/BaseUtil.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;validatePositionData&quot;,
+            &quot;desc&quot;: &quot;Shape-checks a [PositionData] that arrived from a client: all three fields\nmust be numbers and `R` must be an exact multiple of `ROTATION_STEP`.\n\nThis validates the *format* only — it says nothing about whether the position\nis inside the plot or free of collisions. Those checks live with the caller.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;position&quot;,
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;PositionData&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;boolean&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 566,
+                &quot;path&quot;: &quot;src/Shared/Class/Base/BaseUtil.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;formatModelPoints&quot;,
+            &quot;desc&quot;: &quot;Extracts the named anchor points from a base style model and returns them as\n[Points], keyed by part name. Parts nested one folder deep are flattened to\n`&lt;Folder&gt;__&lt;Child&gt;` — which is how per-plot points end up as `Plot__1`,\n`Plot__2` and so on.\n\nEvery value is the part&#x27;s *bottom surface*, so callers can place directly on\nit.\n\nThe `Points` folder is **destroyed** afterwards: the markers are build-time\nmetadata and must not survive into the live base.\n\nAsserts that `Spawn`, `LootCart` and a point for every entry in `PLOTS` exist,\nso a mis-authored style model fails loudly at load rather than producing a\nbase with unreachable plots.\n\n**Yields** waiting for the `Points` folder.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;model&quot;,
+                    &quot;desc&quot;: &quot;The style model; warns and returns nil if absent&quot;,
+                    &quot;lua_type&quot;: &quot;Model?&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;style&quot;,
+                    &quot;desc&quot;: &quot;Style name, used in the assertion messages&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;Points?&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 611,
+                &quot;path&quot;: &quot;src/Shared/Class/Base/BaseUtil.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;generatePlot&quot;,
+            &quot;desc&quot;: &quot;Builds a plot&#x27;s floor: one invisible `GRID_UNITS × GRID_UNITS` cell part\ntagged `GRID_FLOOR_TAG`, wearing a tiled checker texture that draws the grid\nrather than instancing a part per cell.\n\nThe second return value is the per-cell part map. It is currently allocated\nbut never filled — cells are computed arithmetically, so the map exists for a\nfuture implementation that needs addressable cell instances (per-cell\nhighlighting, say). Treat it as empty.\n\nThe caller is responsible for parenting the returned floor.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;origin&quot;,
+                    &quot;desc&quot;: &quot;Plot origin&quot;,
+                    &quot;lua_type&quot;: &quot;CFrame&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;The grid floor&quot;,
+                    &quot;lua_type&quot;: &quot;BasePart&quot;
+                },
+                {
+                    &quot;desc&quot;: &quot;Per-cell parts; presently empty&quot;,
+                    &quot;lua_type&quot;: &quot;{ [PositionIndex]: BasePart }&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 674,
+                &quot;path&quot;: &quot;src/Shared/Class/Base/BaseUtil.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;randomizeColorShade&quot;,
+            &quot;desc&quot;: &quot;Jitters a colour&#x27;s saturation and value slightly (hue is left alone — the\nvariance constant for it is 0) so repeated instances of the same asset do not\nread as identical clones.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;color&quot;,
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;Color3&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;Color3&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 711,
+                &quot;path&quot;: &quot;src/Shared/Class/Base/BaseUtil.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;isHitboxIntersecting&quot;,
+            &quot;desc&quot;: &quot;Whether a prop hitbox would overlap any other prop hitbox — the collision test\nthat gates placement.\n\nBuilds an *include* filter of every `PROP_TAG`-tagged part in\n`HITBOX_CONTAINER` except `hitbox` itself, then block-casts a temporary part\nof the same size at `origin` (defaulting to the hitbox&#x27;s own CFrame, which is\nhow a stationary prop is re-validated). Include-filtering means terrain,\ncharacters and decoration are ignored by construction.\n\n`propIdToIgnore` additionally drops the prop with that id from the results —\nneeded when a prop is being *moved*, since its own hitbox is still parented in\nthe container at its old position.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;hitbox&quot;,
+                    &quot;desc&quot;: &quot;Hitbox being tested&quot;,
+                    &quot;lua_type&quot;: &quot;BasePart&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;origin&quot;,
+                    &quot;desc&quot;: &quot;Position to test at; defaults to the hitbox&#x27;s own&quot;,
+                    &quot;lua_type&quot;: &quot;CFrame?&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;propIdToIgnore&quot;,
+                    &quot;desc&quot;: &quot;Prop id to exclude, e.g. the one being moved&quot;,
+                    &quot;lua_type&quot;: &quot;string?&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;boolean&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 748,
+                &quot;path&quot;: &quot;src/Shared/Class/Base/BaseUtil.luau&quot;
+            }
+        }
+    ],
+    &quot;properties&quot;: [],
+    &quot;types&quot;: [
+        {
+            &quot;name&quot;: &quot;PositionData&quot;,
+            &quot;desc&quot;: &quot;A prop&#x27;s placement within a plot. Deliberately not a CFrame: storing\nplot-relative grid coordinates is what lets a base be rebuilt at any world\nposition, and what makes two placements comparable with\n[BaseUtil.isPositionDataEqual].&quot;,
+            &quot;fields&quot;: [
+                {
+                    &quot;name&quot;: &quot;X&quot;,
+                    &quot;lua_type&quot;: &quot;number&quot;,
+                    &quot;desc&quot;: &quot;Plot-relative offset along the plot&#x27;s X axis, in studs&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;Y&quot;,
+                    &quot;lua_type&quot;: &quot;number&quot;,
+                    &quot;desc&quot;: &quot;Plot-relative offset along the plot&#x27;s **Z** axis, in studs&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;R&quot;,
+                    &quot;lua_type&quot;: &quot;number&quot;,
+                    &quot;desc&quot;: &quot;Yaw in degrees; only valid at multiples of `ROTATION_STEP`&quot;
+                }
+            ],
+            &quot;source&quot;: {
+                &quot;line&quot;: 136,
+                &quot;path&quot;: &quot;src/Shared/Class/Base/BaseUtil.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;SavedPropDataProps&quot;,
+            &quot;desc&quot;: &quot;Free-form bag of per-prop-type state — [Soil] stores `crops` here,\n[AnimalPenBaseClass] stores `eggs`/`animals`/`drops`, and the base class\nitself stores `buildStartTime`/`destroyStartTime`. Untyped on purpose so prop\nclasses can evolve their own schema without touching the base save format.&quot;,
+            &quot;fields&quot;: [
+                {
+                    &quot;name&quot;: &quot;[string]&quot;,
+                    &quot;lua_type&quot;: &quot;any&quot;,
+                    &quot;desc&quot;: &quot;Prop-class-specific persisted state&quot;
+                }
+            ],
+            &quot;source&quot;: {
+                &quot;line&quot;: 152,
+                &quot;path&quot;: &quot;src/Shared/Class/Base/BaseUtil.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;SavedPropData&quot;,
+            &quot;desc&quot;: &quot;One placed prop as it is stored on the player&#x27;s profile.&quot;,
+            &quot;fields&quot;: [
+                {
+                    &quot;name&quot;: &quot;propId&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;,
+                    &quot;desc&quot;: &quot;Unique id for this placed prop&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;propItemId&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;,
+                    &quot;desc&quot;: &quot;Item id it was placed from&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;position&quot;,
+                    &quot;lua_type&quot;: &quot;PositionData&quot;,
+                    &quot;desc&quot;: &quot;Position relative to the plot&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;createdAt&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;,
+                    &quot;desc&quot;: &quot;ISO timestamp of when the prop was placed&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;plotId&quot;,
+                    &quot;lua_type&quot;: &quot;string?&quot;,
+                    &quot;desc&quot;: &quot;Plot the prop belongs to&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;level&quot;,
+                    &quot;lua_type&quot;: &quot;number&quot;,
+                    &quot;desc&quot;: &quot;Upgrade level; every prop starts at 1&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;props&quot;,
+                    &quot;lua_type&quot;: &quot;SavedPropDataProps?&quot;,
+                    &quot;desc&quot;: &quot;Prop-specific persisted state&quot;
+                }
+            ],
+            &quot;source&quot;: {
+                &quot;line&quot;: 169,
+                &quot;path&quot;: &quot;src/Shared/Class/Base/BaseUtil.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;PlotData&quot;,
+            &quot;desc&quot;: &quot;One buildable plot within a base. Plots are unlocked individually; `PLOTS`\nlists the plot slots a base can have and which one is granted by default.&quot;,
+            &quot;fields&quot;: [
+                {
+                    &quot;name&quot;: &quot;plotId&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;,
+                    &quot;desc&quot;: &quot;&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;props&quot;,
+                    &quot;lua_type&quot;: &quot;{ SavedPropData }&quot;,
+                    &quot;desc&quot;: &quot;Everything placed on this plot&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;createdAt&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;,
+                    &quot;desc&quot;: &quot;ISO timestamp of when the plot was created&quot;
+                }
+            ],
+            &quot;source&quot;: {
+                &quot;line&quot;: 191,
+                &quot;path&quot;: &quot;src/Shared/Class/Base/BaseUtil.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;PropNumber&quot;,
+            &quot;desc&quot;: &quot;Index of a plot slot within `BaseUtil.PLOTS`. Used as the key of\n[BaseData].plots and to look up the matching `Plot__&lt;n&gt;` point on the base\nstyle model.&quot;,
+            &quot;lua_type&quot;: &quot;number&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 205,
+                &quot;path&quot;: &quot;src/Shared/Class/Base/BaseUtil.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;BaseData&quot;,
+            &quot;desc&quot;: &quot;A player&#x27;s whole base as persisted on their profile. Produced by\n[BaseUtil.getDataTemplate] and forward-migrated by\n[BaseUtil.reconcileBaseData].&quot;,
+            &quot;fields&quot;: [
+                {
+                    &quot;name&quot;: &quot;baseId&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;,
+                    &quot;desc&quot;: &quot;&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;name&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;,
+                    &quot;desc&quot;: &quot;Player-facing farm name; filtered before it is stored&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;plots&quot;,
+                    &quot;lua_type&quot;: &quot;{ [PropNumber]: PlotData }&quot;,
+                    &quot;desc&quot;: &quot;Plots, keyed by slot number&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;style&quot;,
+                    &quot;lua_type&quot;: &quot;string?&quot;,
+                    &quot;desc&quot;: &quot;Base style model to build from&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;fence&quot;,
+                    &quot;lua_type&quot;: &quot;string?&quot;,
+                    &quot;desc&quot;: &quot;Applied fence variant&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;ground&quot;,
+                    &quot;lua_type&quot;: &quot;string?&quot;,
+                    &quot;desc&quot;: &quot;Applied ground variant&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;likes&quot;,
+                    &quot;lua_type&quot;: &quot;number&quot;,
+                    &quot;desc&quot;: &quot;Visitor likes accumulated&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;lootCartBonus&quot;,
+                    &quot;lua_type&quot;: &quot;number&quot;,
+                    &quot;desc&quot;: &quot;Percentage bonus applied to loot cart payouts&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;createdAt&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;,
+                    &quot;desc&quot;: &quot;ISO timestamp of when the base was created&quot;
+                }
+            ],
+            &quot;source&quot;: {
+                &quot;line&quot;: 224,
+                &quot;path&quot;: &quot;src/Shared/Class/Base/BaseUtil.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;PositionIndex&quot;,
+            &quot;desc&quot;: &quot;Flattened index of a cell within a plot&#x27;s grid, as produced by\n[BaseUtil.getPositionIndex]. See the caution on [BaseUtil] about round-tripping\nthese.&quot;,
+            &quot;lua_type&quot;: &quot;number&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 244,
+                &quot;path&quot;: &quot;src/Shared/Class/Base/BaseUtil.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;Points&quot;,
+            &quot;desc&quot;: &quot;Named anchor points extracted from a base style model by\n[BaseUtil.formatModelPoints]. Every value is the *bottom surface* of the\nauthored part, so a point can be placed on directly without accounting for the\nmarker&#x27;s own height.&quot;,
+            &quot;fields&quot;: [
+                {
+                    &quot;name&quot;: &quot;Spawn&quot;,
+                    &quot;lua_type&quot;: &quot;CFrame&quot;,
+                    &quot;desc&quot;: &quot;Where a visitor is placed when entering the base&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;LootCart&quot;,
+                    &quot;lua_type&quot;: &quot;CFrame&quot;,
+                    &quot;desc&quot;: &quot;Loot cart / trade post&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;OwnerGui&quot;,
+                    &quot;lua_type&quot;: &quot;CFrame&quot;,
+                    &quot;desc&quot;: &quot;Owner nameplate display&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;SignSpawn&quot;,
+                    &quot;lua_type&quot;: &quot;CFrame&quot;,
+                    &quot;desc&quot;: &quot;Base sign&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;GrowAll&quot;,
+                    &quot;lua_type&quot;: &quot;CFrame&quot;,
+                    &quot;desc&quot;: &quot;\&quot;Grow All\&quot; interaction point&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;HarvestAll&quot;,
+                    &quot;lua_type&quot;: &quot;CFrame&quot;,
+                    &quot;desc&quot;: &quot;\&quot;Harvest All\&quot; interaction point&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;[string]&quot;,
+                    &quot;lua_type&quot;: &quot;CFrame&quot;,
+                    &quot;desc&quot;: &quot;Any other authored point, including `Plot__&lt;n&gt;`&quot;
+                }
+            ],
+            &quot;source&quot;: {
+                &quot;line&quot;: 262,
+                &quot;path&quot;: &quot;src/Shared/Class/Base/BaseUtil.luau&quot;
+            }
+        }
+    ],
+    &quot;name&quot;: &quot;BaseUtil&quot;,
+    &quot;desc&quot;: &quot;Author: Javi M (dig1t)\n\nShared vocabulary for the base (player farm) system: the constants both realms\nmust agree on, the persisted data schema, and the pure maths that converts\nbetween world CFrames and plot grid coordinates. It holds no state and creates\nno props — [PropBaseClass] and the Base service do that.\n\n### Coordinate model\n\nA *base* owns one or more *plots*; a plot is a `GRID_UNITS` × `GRID_UNITS`\nsquare of `GRID_UNIT`-stud cells. Prop positions are stored as a\n[PositionData] — plot-relative `X`/`Y` (`Y` being world Z) plus a rotation `R`\nconstrained to multiples of `ROTATION_STEP`. Nothing persists world CFrames,\nso a base can be re-instantiated anywhere in the world.\n\n`getPositionDataFromPivot` is the one-way funnel from a dragged pivot into\nthat grid: it takes the pivot into the plot&#x27;s object space, snaps translation\nto the nearest half stud and yaw to the nearest `ROTATION_STEP`, and\nnormalizes 360° back to 0. `getOffsetFromPositionData` is the inverse.\n\n:::caution\n`getPositionIndex` and `positionIndexToPositionData` are **not** inverses of\neach other — the former is 1-based on `Y` (`x + GRID_UNITS * (y - 1)`) while\nthe latter reconstructs `y` as `floor(index / GRID_UNITS) + 1` and `x` via a\nmodulo that maps a full row back to 0. Round-tripping a position through them\ndoes not return the original.\n:::\n\n### Containers and tags\n\nTwo Workspace containers are created on the server and waited for on the\nclient: `PROP_CONTAINER` (client-side visual models, persistent so it never\nstreams out) and `HITBOX_CONTAINER` (server-side bounding boxes, one\nsub-model per base). CollectionService tags — `BASE_TAG`, `PLOT_TAG`,\n`PROP_TAG`, `PROP_MODEL_TAG`, `GRID_FLOOR_TAG`, `PROP_IGNORE_TAG` — are how\ncontrollers find those instances without holding references, and the two\n`*_REPLICA_CLASS` strings are the Replica class names the base and its props\nregister under.\n\n### Persistence\n\n`getDataTemplate` produces a fresh [BaseData] for a new player and\n`reconcileBaseData` is the forward-migration pass: it fills in any top-level\nkey the template has and the save does not, returning whether it changed\nanything so the caller can decide to write. It is shallow by design — nested\nplot and prop records are not reconciled.\n\nGated by [FeatureFlags].BaseEnabled — disabled by default; per-project forks\nenable it deliberately.\n\nCopyright (c) 2026 firebit. All rights reserved.\nfirebit/murder-escape - proprietary and confidential.&quot;,
+    &quot;tags&quot;: [
+        &quot;dormant&quot;
+    ],
+    &quot;source&quot;: {
+        &quot;line&quot;: 58,
+        &quot;path&quot;: &quot;src/Shared/Class/Base/BaseUtil.luau&quot;
+    }
+}</pre></details></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#types" class="table-of-contents__link toc-highlight">Types</a><ul><li><a href="#BaseData" class="table-of-contents__link toc-highlight">BaseData</a></li><li><a href="#PlotData" class="table-of-contents__link toc-highlight">PlotData</a></li><li><a href="#Points" class="table-of-contents__link toc-highlight">Points</a></li><li><a href="#PositionData" class="table-of-contents__link toc-highlight">PositionData</a></li><li><a href="#PositionIndex" class="table-of-contents__link toc-highlight">PositionIndex</a></li><li><a href="#PropNumber" class="table-of-contents__link toc-highlight">PropNumber</a></li><li><a href="#SavedPropData" class="table-of-contents__link toc-highlight">SavedPropData</a></li><li><a href="#SavedPropDataProps" class="table-of-contents__link toc-highlight">SavedPropDataProps</a></li></ul></li><li><a href="#functions" class="table-of-contents__link toc-highlight">Functions</a><ul><li><a href="#createPlotData" class="table-of-contents__link toc-highlight">.createPlotData</a></li><li><a href="#createSavedPropData" class="table-of-contents__link toc-highlight">.createSavedPropData</a></li><li><a href="#formatModelPoints" class="table-of-contents__link toc-highlight">.formatModelPoints</a></li><li><a href="#generatePlot" class="table-of-contents__link toc-highlight">.generatePlot</a></li><li><a href="#getDataTemplate" class="table-of-contents__link toc-highlight">.getDataTemplate</a></li><li><a href="#getDefaultFarmName" class="table-of-contents__link toc-highlight">.getDefaultFarmName</a></li><li><a href="#getOffsetFromPositionData" class="table-of-contents__link toc-highlight">.getOffsetFromPositionData</a></li><li><a href="#getPositionDataFromPivot" class="table-of-contents__link toc-highlight">.getPositionDataFromPivot</a></li><li><a href="#getPositionIndex" class="table-of-contents__link toc-highlight">.getPositionIndex</a></li><li><a href="#isHitboxIntersecting" class="table-of-contents__link toc-highlight">.isHitboxIntersecting</a></li><li><a href="#isPositionDataEqual" class="table-of-contents__link toc-highlight">.isPositionDataEqual</a></li><li><a href="#positionIndexToPositionData" class="table-of-contents__link toc-highlight">.positionIndexToPositionData</a></li><li><a href="#randomizeColorShade" class="table-of-contents__link toc-highlight">.randomizeColorShade</a></li><li><a href="#reconcileBaseData" class="table-of-contents__link toc-highlight">.reconcileBaseData</a></li><li><a href="#roundToNearestDegree" class="table-of-contents__link toc-highlight">.roundToNearestDegree</a></li><li><a href="#roundToNearestHalf" class="table-of-contents__link toc-highlight">.roundToNearestHalf</a></li><li><a href="#validatePositionData" class="table-of-contents__link toc-highlight">.validatePositionData</a></li></ul></li></ul></div></div></div></div></main></div></div><footer class="theme-layout-footer footer footer--dark"><div class="container container-fluid"><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2026 firebit-dev. Built with Moonwave and Docusaurus.</div></div></div></footer></div>
+</body>
+</html>

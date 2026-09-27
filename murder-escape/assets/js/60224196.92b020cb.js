@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkdocs=self.webpackChunkdocs||[]).push([[3769],{84410:e=>{e.exports=JSON.parse('{"sourceUrl":"https://github.com/firebit-dev/murder-escape/blob/main","baseUrl":"/docs/murder-escape/","classOrder":[],"apiCategories":[]}')}}]);

@@ -1,0 +1,1119 @@
+<!doctype html>
+<html lang="en" dir="ltr" class="plugin-moonwave plugin-id-moonwave" data-has-hydrated="false">
+<head>
+<meta charset="UTF-8">
+<meta name="generator" content="Docusaurus v3.10.1">
+<title data-rh="true">PropBaseClass | Murder Escape</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://firebit-dev.github.io/docs/murder-escape/api/PropBaseClass"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docusaurus_tag" content="default"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docsearch:docusaurus_tag" content="default"><meta data-rh="true" property="og:title" content="PropBaseClass | Murder Escape"><meta data-rh="true" name="description" content="Base class for every prop that can be placed on a player&#x27;s base — soil plots,
+animal pens, nuisances (rocks/trees/fields), town buildings, and so on.
+Subclasses call [PropBaseClass.new] with their own extra fields and inherit
+everything below.
+
+**Realms.** The same class is constructed on both the server and the client,
+and `new()` branches into `InitServer` or `InitClient` accordingly. The two
+halves own different things:
+
+- Server owns the **bounding box** (a clone of the model&#x27;s `PrimaryPart`,
+  tagged and parented under `BaseUtil.HITBOX_CONTAINER`) and the authoritative
+  [Replica]. It never builds a visual model.
+- Client owns the **visual model** (a clone of the prop&#x27;s asset, parented to
+  `BaseUtil.PROP_CONTAINER`) plus every progress bar, particle, outline and
+  ProximityPrompt. Its bounding box is handed in by PropController.
+
+**Data flow.** All shared state travels through a single Replica of class
+`BaseUtil.PROP_REPLICA_CLASS`. The server writes with `Set`, the client reacts
+with `GetKeyChangedSignal`. Persisted, prop-specific state lives under the
+`props` key and is reached with [PropBaseClass:GetSavedProps] /
+[PropBaseClass:SetSavedProp] rather than by touching the replica directly.
+Nothing the client does mutates state on its own — see below.
+
+**Client → server calls.** The client cannot call methods on the server prop.
+It calls [PropBaseClass:DispatchRemoteEvent], which dispatches a
+`PROP_REMOTE_INPUT` action naming a method; the server routes it through
+[PropBaseClass:_processRemoteInput], which refuses any method not present in
+the prop&#x27;s `_allowedClientFunctions` allowlist. Subclasses extend that
+allowlist by passing `_allowedClientFunctions` in the `props` table of
+`new()` (or by calling [PropBaseClass:AllowClientFunction]). Allow-listed
+methods receive `player` as their first argument and **must** verify
+ownership themselves with [PropBaseClass:IsOwner] — the allowlist only gates
+*which* method may be called, not *by whom*.
+
+Gated by [FeatureFlags].BaseEnabled — disabled by default; per-project forks
+enable it deliberately.
+
+Copyright (c) 2026 firebit. All rights reserved.
+firebit/murder-escape - proprietary and confidential."><meta data-rh="true" property="og:description" content="Base class for every prop that can be placed on a player&#x27;s base — soil plots,
+animal pens, nuisances (rocks/trees/fields), town buildings, and so on.
+Subclasses call [PropBaseClass.new] with their own extra fields and inherit
+everything below.
+
+**Realms.** The same class is constructed on both the server and the client,
+and `new()` branches into `InitServer` or `InitClient` accordingly. The two
+halves own different things:
+
+- Server owns the **bounding box** (a clone of the model&#x27;s `PrimaryPart`,
+  tagged and parented under `BaseUtil.HITBOX_CONTAINER`) and the authoritative
+  [Replica]. It never builds a visual model.
+- Client owns the **visual model** (a clone of the prop&#x27;s asset, parented to
+  `BaseUtil.PROP_CONTAINER`) plus every progress bar, particle, outline and
+  ProximityPrompt. Its bounding box is handed in by PropController.
+
+**Data flow.** All shared state travels through a single Replica of class
+`BaseUtil.PROP_REPLICA_CLASS`. The server writes with `Set`, the client reacts
+with `GetKeyChangedSignal`. Persisted, prop-specific state lives under the
+`props` key and is reached with [PropBaseClass:GetSavedProps] /
+[PropBaseClass:SetSavedProp] rather than by touching the replica directly.
+Nothing the client does mutates state on its own — see below.
+
+**Client → server calls.** The client cannot call methods on the server prop.
+It calls [PropBaseClass:DispatchRemoteEvent], which dispatches a
+`PROP_REMOTE_INPUT` action naming a method; the server routes it through
+[PropBaseClass:_processRemoteInput], which refuses any method not present in
+the prop&#x27;s `_allowedClientFunctions` allowlist. Subclasses extend that
+allowlist by passing `_allowedClientFunctions` in the `props` table of
+`new()` (or by calling [PropBaseClass:AllowClientFunction]). Allow-listed
+methods receive `player` as their first argument and **must** verify
+ownership themselves with [PropBaseClass:IsOwner] — the allowlist only gates
+*which* method may be called, not *by whom*.
+
+Gated by [FeatureFlags].BaseEnabled — disabled by default; per-project forks
+enable it deliberately.
+
+Copyright (c) 2026 firebit. All rights reserved.
+firebit/murder-escape - proprietary and confidential."><link data-rh="true" rel="canonical" href="https://firebit-dev.github.io/docs/murder-escape/api/PropBaseClass"><link data-rh="true" rel="alternate" href="https://firebit-dev.github.io/docs/murder-escape/api/PropBaseClass" hreflang="en"><link data-rh="true" rel="alternate" href="https://firebit-dev.github.io/docs/murder-escape/api/PropBaseClass" hreflang="x-default"><link rel="stylesheet" href="/docs/murder-escape/assets/css/styles.3f63b0bb.css">
+<script src="/docs/murder-escape/assets/js/runtime~main.eb72bda3.js" defer="defer"></script>
+<script src="/docs/murder-escape/assets/js/main.dab95a80.js" defer="defer"></script>
+</head>
+<body>
+<svg style="display: none;"><defs>
+<symbol id="theme-svg-external-link" viewBox="0 0 24 24"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"/></symbol>
+</defs></svg>
+<script>!function(){var t=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme")}catch(t){}}();document.documentElement.setAttribute("data-theme",t||(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light")),document.documentElement.setAttribute("data-theme-choice",t||"system")}(),function(){try{const c=new URLSearchParams(window.location.search).entries();for(var[t,e]of c)if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id="__docusaurus"><div role="region" aria-label="Skip to main content"><a class="skipToContent_fXgn" href="#__docusaurus_skipToContent_fallback">Skip to main content</a></div><nav aria-label="Main" class="theme-layout-navbar navbar navbar--fixed-top"><div class="navbar__inner"><div class="theme-layout-navbar-left navbar__items"><button aria-label="Toggle navigation bar" aria-expanded="false" class="navbar__toggle clean-btn" type="button"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/docs/murder-escape/"><b class="navbar__title text--truncate">Murder Escape</b></a><a class="navbar__item navbar__link" href="/docs/murder-escape/docs/intro">Docs</a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/docs/murder-escape/api/">API</a></div><div class="theme-layout-navbar-right navbar__items navbar__items--right"><a href="https://github.com/firebit-dev/murder-escape" target="_blank" rel="noopener noreferrer" class="navbar__item navbar__link">GitHub<svg width="13.5" height="13.5" aria-label="(opens in new tab)" class="iconExternalLink_nPIU"><use href="#theme-svg-external-link"></use></svg></a><div class="toggle_vylO colorModeToggle_DEke"><button class="clean-btn toggleButton_gllP toggleButtonDisabled_aARS" type="button" disabled="" title="system mode" aria-label="Switch between dark and light mode (currently system mode)"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP lightToggleIcon_pyhR"><path fill="currentColor" d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP darkToggleIcon_wfgR"><path fill="currentColor" d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP systemToggleIcon_QzmC"><path fill="currentColor" d="m12 21c4.971 0 9-4.029 9-9s-4.029-9-9-9-9 4.029-9 9 4.029 9 9 9zm4.95-13.95c1.313 1.313 2.05 3.093 2.05 4.95s-0.738 3.637-2.05 4.95c-1.313 1.313-3.093 2.05-4.95 2.05v-14c1.857 0 3.637 0.737 4.95 2.05z"></path></svg></button></div><div class="navbarSearchContainer_Bca1"><div class="navbar__search"><span aria-label="expand searchbar" role="button" class="search-icon" tabindex="0"></span><input id="search_input_react" type="search" placeholder="Loading..." aria-label="Search" class="navbar__search-input search-bar" disabled=""></div></div></div></div><div role="presentation" class="navbar-sidebar__backdrop"></div></nav><div id="__docusaurus_skipToContent_fallback" class="theme-layout-main main-wrapper mainWrapper_z2l0 docPageContainer_wNNk"><div class="docPage_Dpn1"><div class="docSidebarContainer_o_re"><div class="sidebar_njMd"><nav aria-label="Docs sidebar" class="menu thin-scrollbar menu_SIkG"><ul class="theme-doc-sidebar-menu menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Actions"><span title="​Actions" class="linkLabel_WmDU">​Actions</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/AdminService"><span title="​Admin​Service" class="linkLabel_WmDU">​Admin​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Analytics"><span title="​Analytics" class="linkLabel_WmDU">​Analytics</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/AnalyticsService"><span title="​Analytics​Service" class="linkLabel_WmDU">​Analytics​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/AnchorDescendants"><span title="​Anchor​Descendants" class="linkLabel_WmDU">​Anchor​Descendants</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/AnimalPen"><span title="​Animal​Pen" class="linkLabel_WmDU">​Animal​Pen</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/AnimalPenBaseClass"><span title="​Animal​Pen​Base​Class" class="linkLabel_WmDU">​Animal​Pen​Base​Class</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Attrify"><span title="​Attrify" class="linkLabel_WmDU">​Attrify</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/AutoCanvasSize"><span title="​Auto​Canvas​Size" class="linkLabel_WmDU">​Auto​Canvas​Size</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/BaseGameMode"><span title="​Base​Game​Mode" class="linkLabel_WmDU">​Base​Game​Mode</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/BaseUtil"><span title="​Base​Util" class="linkLabel_WmDU">​Base​Util</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Bezier"><span title="​Bezier" class="linkLabel_WmDU">​Bezier</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Blur"><span title="​Blur" class="linkLabel_WmDU">​Blur</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Bootstrap"><span title="​Bootstrap" class="linkLabel_WmDU">​Bootstrap</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/BoxService"><span title="​Box​Service" class="linkLabel_WmDU">​Box​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/BuySkillNodeHandler"><span title="​Buy​Skill​Node​Handler" class="linkLabel_WmDU">​Buy​Skill​Node​Handler</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Character"><span title="​Character" class="linkLabel_WmDU">​Character</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/CharacterGrip"><span title="​Character​Grip" class="linkLabel_WmDU">​Character​Grip</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ChatCommand"><span title="​Chat​Command" class="linkLabel_WmDU">​Chat​Command</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ClientState"><span title="​Client​State" class="linkLabel_WmDU">​Client​State</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/CollectionObject"><span title="​Collection​Object" class="linkLabel_WmDU">​Collection​Object</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/CollectionWatcher"><span title="​Collection​Watcher" class="linkLabel_WmDU">​Collection​Watcher</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/CollectionWatcherController"><span title="​Collection​Watcher​Controller" class="linkLabel_WmDU">​Collection​Watcher​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/CollisionService"><span title="​Collision​Service" class="linkLabel_WmDU">​Collision​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Colors"><span title="​Colors" class="linkLabel_WmDU">​Colors</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ConeCast"><span title="​Cone​Cast" class="linkLabel_WmDU">​Cone​Cast</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Confetti"><span title="​Confetti" class="linkLabel_WmDU">​Confetti</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ControlsData"><span title="​Controls​Data" class="linkLabel_WmDU">​Controls​Data</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Cooldown"><span title="​Cooldown" class="linkLabel_WmDU">​Cooldown</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/CoreService"><span title="​Core​Service" class="linkLabel_WmDU">​Core​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/CoreState"><span title="​Core​State" class="linkLabel_WmDU">​Core​State</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/CosmeticService"><span title="​Cosmetic​Service" class="linkLabel_WmDU">​Cosmetic​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/CreateCharacterWeld"><span title="​Create​Character​Weld" class="linkLabel_WmDU">​Create​Character​Weld</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/CreateFullViewport"><span title="​Create​Full​Viewport" class="linkLabel_WmDU">​Create​Full​Viewport</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/CreateNumberTween"><span title="​Create​Number​Tween" class="linkLabel_WmDU">​Create​Number​Tween</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/CreateTween"><span title="​Create​Tween" class="linkLabel_WmDU">​Create​Tween</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/CreateWeld"><span title="​Create​Weld" class="linkLabel_WmDU">​Create​Weld</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/CropTypes"><span title="​Crop​Types" class="linkLabel_WmDU">​Crop​Types</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/CrownGrab"><span title="​Crown​Grab" class="linkLabel_WmDU">​Crown​Grab</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/CurrencyService"><span title="​Currency​Service" class="linkLabel_WmDU">​Currency​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/DailyRewards"><span title="​Daily​Rewards" class="linkLabel_WmDU">​Daily​Rewards</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/DailyRotationService"><span title="​Daily​Rotation​Service" class="linkLabel_WmDU">​Daily​Rotation​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/DataController"><span title="​Data​Controller" class="linkLabel_WmDU">​Data​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/DefaultProps"><span title="​Default​Props" class="linkLabel_WmDU">​Default​Props</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Device"><span title="​Device" class="linkLabel_WmDU">​Device</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/DocumentDB"><span title="​Document​D​B" class="linkLabel_WmDU">​Document​D​B</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/DodgeTheTeapots"><span title="​Dodge​The​Teapots" class="linkLabel_WmDU">​Dodge​The​Teapots</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Door"><span title="​Door" class="linkLabel_WmDU">​Door</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/DropsController"><span title="​Drops​Controller" class="linkLabel_WmDU">​Drops​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Effects"><span title="​Effects" class="linkLabel_WmDU">​Effects</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/FeatureFlags"><span title="​Feature​Flags" class="linkLabel_WmDU">​Feature​Flags</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/GameService"><span title="​Game​Service" class="linkLabel_WmDU">​Game​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/GearController"><span title="​Gear​Controller" class="linkLabel_WmDU">​Gear​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/GearDebugService"><span title="​Gear​Debug​Service" class="linkLabel_WmDU">​Gear​Debug​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/GearService"><span title="​Gear​Service" class="linkLabel_WmDU">​Gear​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/GearkitSetup"><span title="​Gearkit​Setup" class="linkLabel_WmDU">​Gearkit​Setup</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/HealthBar"><span title="​Health​Bar" class="linkLabel_WmDU">​Health​Bar</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/HighlightedPrompt"><span title="​Highlighted​Prompt" class="linkLabel_WmDU">​Highlighted​Prompt</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/InstanceSync"><span title="​Instance​Sync" class="linkLabel_WmDU">​Instance​Sync</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/InventoryHandler"><span title="​Inventory​Handler" class="linkLabel_WmDU">​Inventory​Handler</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/InventoryService"><span title="​Inventory​Service" class="linkLabel_WmDU">​Inventory​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/InventoryTypes"><span title="​Inventory​Types" class="linkLabel_WmDU">​Inventory​Types</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/InventoryUtil"><span title="​Inventory​Util" class="linkLabel_WmDU">​Inventory​Util</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/InviteFriends"><span title="​Invite​Friends" class="linkLabel_WmDU">​Invite​Friends</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ItemProcessor"><span title="​Item​Processor" class="linkLabel_WmDU">​Item​Processor</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ItemSlotIcon"><span title="​Item​Slot​Icon" class="linkLabel_WmDU">​Item​Slot​Icon</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ItemTypes"><span title="​Item​Types" class="linkLabel_WmDU">​Item​Types</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/LeaderboardService"><span title="​Leaderboard​Service" class="linkLabel_WmDU">​Leaderboard​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Leaderstats"><span title="​Leaderstats" class="linkLabel_WmDU">​Leaderstats</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Level"><span title="​Level" class="linkLabel_WmDU">​Level</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/LevelService"><span title="​Level​Service" class="linkLabel_WmDU">​Level​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/LevelTeleport"><span title="​Level​Teleport" class="linkLabel_WmDU">​Level​Teleport</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ListenForKey"><span title="​Listen​For​Key" class="linkLabel_WmDU">​Listen​For​Key</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/MarketplaceData"><span title="​Marketplace​Data" class="linkLabel_WmDU">​Marketplace​Data</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/MarketplaceService"><span title="​Marketplace​Service" class="linkLabel_WmDU">​Marketplace​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/MemoryStoreService"><span title="​Memory​Store​Service" class="linkLabel_WmDU">​Memory​Store​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/MessageController"><span title="​Message​Controller" class="linkLabel_WmDU">​Message​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/MineablesController"><span title="​Mineables​Controller" class="linkLabel_WmDU">​Mineables​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/MinigameData"><span title="​Minigame​Data" class="linkLabel_WmDU">​Minigame​Data</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/MinigameService"><span title="​Minigame​Service" class="linkLabel_WmDU">​Minigame​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/MinigameUtil"><span title="​Minigame​Util" class="linkLabel_WmDU">​Minigame​Util</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Minigames"><span title="​Minigames" class="linkLabel_WmDU">​Minigames</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ModelWrap"><span title="​Model​Wrap" class="linkLabel_WmDU">​Model​Wrap</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Monetization"><span title="​Monetization" class="linkLabel_WmDU">​Monetization</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/MonetizationController"><span title="​Monetization​Controller" class="linkLabel_WmDU">​Monetization​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/MonetizationService"><span title="​Monetization​Service" class="linkLabel_WmDU">​Monetization​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/MurderEscape"><span title="​Murder​Escape" class="linkLabel_WmDU">​Murder​Escape</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/NPC"><span title="​N​P​C" class="linkLabel_WmDU">​N​P​C</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/NavigationController"><span title="​Navigation​Controller" class="linkLabel_WmDU">​Navigation​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Nuisance"><span title="​Nuisance" class="linkLabel_WmDU">​Nuisance</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/OrderedDB"><span title="​Ordered​D​B" class="linkLabel_WmDU">​Ordered​D​B</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/PlaceUtility"><span title="​Place​Utility" class="linkLabel_WmDU">​Place​Utility</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/PlaySFX"><span title="​Play​S​F​X" class="linkLabel_WmDU">​Play​S​F​X</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/PlayerOverhead"><span title="​Player​Overhead" class="linkLabel_WmDU">​Player​Overhead</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/PlayerService"><span title="​Player​Service" class="linkLabel_WmDU">​Player​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/PlayerState"><span title="​Player​State" class="linkLabel_WmDU">​Player​State</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/PoissonDisk"><span title="​Poisson​Disk" class="linkLabel_WmDU">​Poisson​Disk</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ProfileService"><span title="​Profile​Service" class="linkLabel_WmDU">​Profile​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ProfileTypes"><span title="​Profile​Types" class="linkLabel_WmDU">​Profile​Types</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ProgressBar"><span title="​Progress​Bar" class="linkLabel_WmDU">​Progress​Bar</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link menu__link--active" aria-current="page" href="/docs/murder-escape/api/PropBaseClass"><span title="​Prop​Base​Class" class="linkLabel_WmDU">​Prop​Base​Class</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/PropTypes"><span title="​Prop​Types" class="linkLabel_WmDU">​Prop​Types</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/QueueService"><span title="​Queue​Service" class="linkLabel_WmDU">​Queue​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/RandomizeYOrientation"><span title="​Randomize​Y​Orientation" class="linkLabel_WmDU">​Randomize​Y​Orientation</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Range"><span title="​Range" class="linkLabel_WmDU">​Range</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/RarityData"><span title="​Rarity​Data" class="linkLabel_WmDU">​Rarity​Data</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Rng"><span title="​Rng" class="linkLabel_WmDU">​Rng</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Round"><span title="​Round" class="linkLabel_WmDU">​Round</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Router"><span title="​Router" class="linkLabel_WmDU">​Router</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/RunMode"><span title="​Run​Mode" class="linkLabel_WmDU">​Run​Mode</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/SafeSet"><span title="​Safe​Set" class="linkLabel_WmDU">​Safe​Set</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Sanitation"><span title="​Sanitation" class="linkLabel_WmDU">​Sanitation</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ScaleTween"><span title="​Scale​Tween" class="linkLabel_WmDU">​Scale​Tween</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ScalingButton"><span title="​Scaling​Button" class="linkLabel_WmDU">​Scaling​Button</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/SeasonData"><span title="​Season​Data" class="linkLabel_WmDU">​Season​Data</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/SeasonService"><span title="​Season​Service" class="linkLabel_WmDU">​Season​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/SecurityController"><span title="​Security​Controller" class="linkLabel_WmDU">​Security​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/SecurityService"><span title="​Security​Service" class="linkLabel_WmDU">​Security​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ShopController"><span title="​Shop​Controller" class="linkLabel_WmDU">​Shop​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ShopHandler"><span title="​Shop​Handler" class="linkLabel_WmDU">​Shop​Handler</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ShopItems"><span title="​Shop​Items" class="linkLabel_WmDU">​Shop​Items</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ShopService"><span title="​Shop​Service" class="linkLabel_WmDU">​Shop​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ShopTypes"><span title="​Shop​Types" class="linkLabel_WmDU">​Shop​Types</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Shuffle"><span title="​Shuffle" class="linkLabel_WmDU">​Shuffle</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/SkillTreeData"><span title="​Skill​Tree​Data" class="linkLabel_WmDU">​Skill​Tree​Data</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/SkillTreeService"><span title="​Skill​Tree​Service" class="linkLabel_WmDU">​Skill​Tree​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Smoothstep"><span title="​Smoothstep" class="linkLabel_WmDU">​Smoothstep</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/SocialController"><span title="​Social​Controller" class="linkLabel_WmDU">​Social​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Soil"><span title="​Soil" class="linkLabel_WmDU">​Soil</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/SoundController"><span title="​Sound​Controller" class="linkLabel_WmDU">​Sound​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Sounds"><span title="​Sounds" class="linkLabel_WmDU">​Sounds</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Spring"><span title="​Spring" class="linkLabel_WmDU">​Spring</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/StatsController"><span title="​Stats​Controller" class="linkLabel_WmDU">​Stats​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/TeleportPad"><span title="​Teleport​Pad" class="linkLabel_WmDU">​Teleport​Pad</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Town"><span title="​Town" class="linkLabel_WmDU">​Town</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/TrackedPlayerValues"><span title="​Tracked​Player​Values" class="linkLabel_WmDU">​Tracked​Player​Values</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/UITypes"><span title="​U​I​Types" class="linkLabel_WmDU">​U​I​Types</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Vehicle"><span title="​Vehicle" class="linkLabel_WmDU">​Vehicle</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/VehicleAttachmentData"><span title="​Vehicle​Attachment​Data" class="linkLabel_WmDU">​Vehicle​Attachment​Data</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/VehicleController"><span title="​Vehicle​Controller" class="linkLabel_WmDU">​Vehicle​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/VehicleService"><span title="​Vehicle​Service" class="linkLabel_WmDU">​Vehicle​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/VehicleTypes"><span title="​Vehicle​Types" class="linkLabel_WmDU">​Vehicle​Types</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/VoteService"><span title="​Vote​Service" class="linkLabel_WmDU">​Vote​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/WaitForPrimaryPart"><span title="​Wait​For​Primary​Part" class="linkLabel_WmDU">​Wait​For​Primary​Part</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Zombie"><span title="​Zombie" class="linkLabel_WmDU">​Zombie</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Zone"><span title="​Zone" class="linkLabel_WmDU">​Zone</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/adjustValueByUserPriceLevel"><span title="adjust​Value​By​User​Price​Level" class="linkLabel_WmDU">adjust​Value​By​User​Price​Level</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/breakJoints"><span title="break​Joints" class="linkLabel_WmDU">break​Joints</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/getFirstTaggedDescendant"><span title="get​First​Tagged​Descendant" class="linkLabel_WmDU">get​First​Tagged​Descendant</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/getFriendsInServer"><span title="get​Friends​In​Server" class="linkLabel_WmDU">get​Friends​In​Server</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/getPriceLevel"><span title="get​Price​Level" class="linkLabel_WmDU">get​Price​Level</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/getProductInfo"><span title="get​Product​Info" class="linkLabel_WmDU">get​Product​Info</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/quantityToUrgencyText"><span title="quantity​To​Urgency​Text" class="linkLabel_WmDU">quantity​To​Urgency​Text</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/spawnParticle"><span title="spawn​Particle" class="linkLabel_WmDU">spawn​Particle</span></a></li></ul></nav></div></div><main class="docMainContainer_HJE1"><div class="container padding-vert--lg"><div class="row"><div class="col docItemCol_MU3C"><div class="docItemContainer_Wv98"><article><div class="member_J0w1 markdown"><div class="tocCollapsible_ETCw theme-doc-toc-mobile tocMobile_oUs_"><button type="button" class="clean-btn tocCollapsibleButton_TO0P">On this page</button></div><header><h1 class="docTitle_mZRt" style="text-decoration:none"><span style="display:inline-block">Prop</span><span style="display:inline-block">Base</span><span style="display:inline-block">Class</span></h1><div class="luaClassTags_EipM"><span class="docTag__6UZ" style="border-color:#ff5252;color:#ff5252">dormant</span></div><label class="privateToggle_lmfE"><span class="privateCheckboxContainer_psRa"><input class="privateCheckboxInternal_IKP2" type="checkbox" name="checkbox"><span class="privateCheckboxControl_Ov8U"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-width="3" d="M4 11.91l5.37 5.37L19.79 5.59"></path></svg></span></span><span class="privateCheckboxLabel_Vmvs">Show Private</span></label><div>
+<p>
+  Base class for every prop that can be placed on a player's base — soil plots,
+  animal pens, nuisances (rocks/trees/fields), town buildings, and so on.
+  Subclasses call <a href="/docs/murder-escape/api/PropBaseClass#new">PropBaseClass.new</a> with their own extra fields and inherit
+  everything below.
+</p>
+<p>
+  <strong>Realms.</strong> The same class is constructed on both the server and the client,
+  and <code>new()</code> branches into <code>InitServer</code> or <code>InitClient</code> accordingly. The two
+  halves own different things:
+</p>
+<ul>
+  <li>
+    Server owns the <strong>bounding box</strong> (a clone of the model's <code>PrimaryPart</code>,
+    tagged and parented under <code>BaseUtil.HITBOX_CONTAINER</code>) and the authoritative
+    [Replica]. It never builds a visual model.
+  </li>
+  <li>
+    Client owns the <strong>visual model</strong> (a clone of the prop's asset, parented to
+    <code>BaseUtil.PROP_CONTAINER</code>) plus every progress bar, particle, outline and
+    ProximityPrompt. Its bounding box is handed in by PropController.
+  </li>
+</ul>
+<p>
+  <strong>Data flow.</strong> All shared state travels through a single Replica of class
+  <code>BaseUtil.PROP_REPLICA_CLASS</code>. The server writes with <code>Set</code>, the client reacts
+  with <code>GetKeyChangedSignal</code>. Persisted, prop-specific state lives under the
+  <code>props</code> key and is reached with <a href="/docs/murder-escape/api/PropBaseClass#GetSavedProps">PropBaseClass:GetSavedProps</a> /
+  <a href="/docs/murder-escape/api/PropBaseClass#SetSavedProp">PropBaseClass:SetSavedProp</a> rather than by touching the replica directly.
+  Nothing the client does mutates state on its own — see below.
+</p>
+<p>
+  <strong>Client → server calls.</strong> The client cannot call methods on the server prop.
+  It calls <a href="/docs/murder-escape/api/PropBaseClass#DispatchRemoteEvent">PropBaseClass:DispatchRemoteEvent</a>, which dispatches a
+  <code>PROP_REMOTE_INPUT</code> action naming a method; the server routes it through
+  <a href="/docs/murder-escape/api/PropBaseClass#_processRemoteInput">PropBaseClass:_processRemoteInput</a>, which refuses any method not present in
+  the prop's <code>_allowedClientFunctions</code> allowlist. Subclasses extend that
+  allowlist by passing <code>_allowedClientFunctions</code> in the <code>props</code> table of
+  <code>new()</code> (or by calling <a href="/docs/murder-escape/api/PropBaseClass#AllowClientFunction">PropBaseClass:AllowClientFunction</a>). Allow-listed
+  methods receive <code>player</code> as their first argument and <strong>must</strong> verify
+  ownership themselves with <a href="/docs/murder-escape/api/PropBaseClass#IsOwner">PropBaseClass:IsOwner</a> — the allowlist only gates
+  <em>which</em> method may be called, not <em>by whom</em>.
+</p>
+<p>
+  Gated by <a href="/docs/murder-escape/api/FeatureFlags">FeatureFlags</a>.BaseEnabled — disabled by default; per-project forks
+  enable it deliberately.
+</p>
+<p>
+  Copyright (c) 2026 firebit. All rights reserved.
+  firebit/murder-escape - proprietary and confidential.
+</p>
+</div></header><h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="types">Types<a href="#types" class="hash-link" aria-label="Direct link to Types" title="Direct link to Types" translate="no">​</a></h2><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="Prop"><code style="text-decoration:none">Prop</code><a href="#Prop" class="hash-link" aria-label="Direct link to Prop" title="Direct link to Prop" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Class/Base/Props/PropBaseClass.luau#L217"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>Prop<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>propId<!-- -->: </code><code class="blue_P4bS">string</code><span class="inlineDescription_G7Er">-- <span>
+<p>Unique id for this placed prop instance</p>
+</span></span></div><div><code>propItemId<!-- -->: </code><code class="blue_P4bS">string</code><span class="inlineDescription_G7Er">-- <span>
+<p>Item id the prop was placed from (key into <code>Data.Items.Props</code>)</p>
+</span></span></div><div><code>plotId<!-- -->: </code><code class="blue_P4bS">string</code><span class="inlineDescription_G7Er">-- <span>
+<p>Plot the prop sits on</p>
+</span></span></div><div><code>baseId<!-- -->: </code><code class="blue_P4bS">string</code><span class="inlineDescription_G7Er">-- <span>
+<p>Base the plot belongs to</p>
+</span></span></div><div><code>ownerId<!-- -->: </code><code class="blue_P4bS">number</code><span class="inlineDescription_G7Er">-- <span>
+<p>UserId of the base owner</p>
+</span></span></div><div><code>_allowedClientFunctions<!-- -->: </code><code class="purple_ieR2">{</code><code class="blue_P4bS">string</code><code class="purple_ieR2">}</code><span class="inlineDescription_G7Er">-- <span>
+<p>Method names the client may invoke</p>
+</span></span></div><div><code>boundingBox<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/BasePart" target="_blank" rel="noopener noreferrer">BasePart<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
+<p>Collision/query volume; authored on the server, streamed to the client</p>
+</span></span></div><div><code>Moved<!-- -->: </code><code class="blue_P4bS">Signal</code><span class="inlineDescription_G7Er">-- <span>
+<p>Fires after the model finishes moving to a new origin (client)</p>
+</span></span></div><div><code>Destroyed<!-- -->: </code><code class="blue_P4bS">Signal</code><span class="inlineDescription_G7Er">-- <span>
+<p>Fires once when the prop is torn down on either realm</p>
+</span></span></div><div><code>serverReplica<!-- -->: </code><code class="blue_P4bS">ReplicaServer?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Authoritative state (server only)</p>
+</span></span></div><div><code>savedPropData<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/docs/murder-escape/api/BaseUtil#SavedPropData">SavedPropData?</a></code><span class="inlineDescription_G7Er">-- <span>
+<p>Persisted record this prop was loaded from (server only)</p>
+</span></span></div><div><code>itemRecord<!-- -->: </code><code class="blue_P4bS">ItemRecord?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Inventory record consumed to place it; nil when loaded from save</p>
+</span></span></div><div><code>positionData<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/docs/murder-escape/api/BaseUtil#PositionData">PositionData?</a></code><span class="inlineDescription_G7Er">-- <span>
+<p>Grid position within the plot (server only)</p>
+</span></span></div><div><code>clientReplica<!-- -->: </code><code class="blue_P4bS">ReplicaClient?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Read-only mirror of the server state (client only)</p>
+</span></span></div><div><code>model<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/Model" target="_blank" rel="noopener noreferrer">Model?<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
+<p>Visual model (client only)</p>
+</span></span></div><div><code>placementParticles<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/ParticleEmitter" target="_blank" rel="noopener noreferrer">ParticleEmitter?<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
+<p>Emitted on move, owner's client only</p>
+</span></span></div><div><code>propDisplayPaths<!-- -->: </code><code class="blue_P4bS">boolean</code><span class="inlineDescription_G7Er">-- <span>
+<p>Whether the prop renders path decals under it</p>
+</span></span></div><div><code>buildingProgressBar<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/docs/murder-escape/api/ProgressBar">ProgressBar?</a></code><span class="inlineDescription_G7Er">-- <span>
+<p>"Building" bar while <code>isBuilding</code> is set</p>
+</span></span></div><div><code>destructionProgressBar<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/docs/murder-escape/api/ProgressBar">ProgressBar?</a></code><span class="inlineDescription_G7Er">-- <span>
+<p>"Demolishing" bar while <code>destroyStartTime</code> is set</p>
+</span></span></div><div><code>connections<!-- -->: </code><code class="purple_ieR2">{</code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/RBXScriptConnection" target="_blank" rel="noopener noreferrer">RBXScriptConnection<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code class="purple_ieR2">}</code><span class="inlineDescription_G7Er">-- <span>
+<p>Connections torn down with the prop</p>
+</span></span></div></div><code>}</code></div><div>
+<p>
+  Instance shape shared by every prop. Fields are grouped by realm: a server
+  prop has <code>serverReplica</code>/<code>savedPropData</code> and no <code>model</code>, a client prop has
+  <code>clientReplica</code>/<code>model</code> and no <code>savedPropData</code>.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="PropData"><code style="text-decoration:none">PropData</code><a href="#PropData" class="hash-link" aria-label="Direct link to PropData" title="Direct link to PropData" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Class/Base/Props/PropBaseClass.luau#L286"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>PropData<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>propId<!-- -->: </code><code class="blue_P4bS">string</code></div><div><code>propItemId<!-- -->: </code><code class="blue_P4bS">string</code></div><div><code>plotId<!-- -->: </code><code class="blue_P4bS">string</code></div><div><code>baseId<!-- -->: </code><code class="blue_P4bS">string</code></div><div><code>ownerId<!-- -->: </code><code class="blue_P4bS">number</code></div><div><code>origin<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/CFrame" target="_blank" rel="noopener noreferrer">CFrame<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
+<p>World CFrame the prop should sit at</p>
+</span></span></div><div><code>serverReplica<!-- -->: </code><code class="blue_P4bS">ReplicaServer?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Unused by <code>new()</code>; the server builds its own</p>
+</span></span></div><div><code>savedPropData<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/docs/murder-escape/api/BaseUtil#SavedPropData">SavedPropData?</a></code><span class="inlineDescription_G7Er">-- <span>
+<p>Persisted record to restore from (server)</p>
+</span></span></div><div><code>itemRecord<!-- -->: </code><code class="blue_P4bS">ItemRecord?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Inventory record being consumed (server, new placements only)</p>
+</span></span></div><div><code>initialReplicaData<!-- -->: </code><code class="purple_ieR2">{</code><span><code>[</code><code class="blue_P4bS">string</code><code>]</code></span><code>: </code><code class="blue_P4bS">any</code><code class="purple_ieR2">}</code><code class="blue_P4bS">?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Extra keys merged into the initial replica data</p>
+</span></span></div><div><code>positionData<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/docs/murder-escape/api/BaseUtil#PositionData">PositionData?</a></code><span class="inlineDescription_G7Er">-- <span>
+<p>Grid position within the plot (server)</p>
+</span></span></div><div><code>clientReplica<!-- -->: </code><code class="blue_P4bS">ReplicaClient?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Required on the client</p>
+</span></span></div><div><code>_boundingBox<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/BasePart" target="_blank" rel="noopener noreferrer">BasePart?<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
+<p>Required on the client; supplied by PropController</p>
+</span></span></div></div><code>}</code></div><div>
+<p>
+  Construction payload for <a href="/docs/murder-escape/api/PropBaseClass#new">PropBaseClass.new</a>. Subclasses use
+  <code>initialReplicaData</code> to seed their own replica keys in the same dispatch that
+  creates the replica, instead of writing them immediately afterwards.
+</p>
+</div><h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="functions">Functions<a href="#functions" class="hash-link" aria-label="Direct link to Functions" title="Direct link to Functions" translate="no">​</a></h2><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="new"><code style="text-decoration:none">new</code><a href="#new" class="hash-link" aria-label="Direct link to new" title="Direct link to new" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Class/Base/Props/PropBaseClass.luau#L332"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>PropBaseClass<!-- -->.</code><code class="green_DgR4">new</code><code>(</code><div class="inset_uKQm"><div><code>propData<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/docs/murder-escape/api/PropBaseClass#PropData">PropData</a></code><code>,</code><span class="inlineDescription_G7Er">-- <span>
+<p>Identity, placement and realm-specific handles</p>
+</span></span></div><div><code>props<!-- -->: </code><code class="purple_ieR2">{</code><span><code>[</code><code class="blue_P4bS">string</code><code>]</code></span><code>: </code><code class="blue_P4bS">any</code><code class="purple_ieR2">}</code><code class="blue_P4bS">?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Extra fields for the subclass instance</p>
+</span></span></div></div><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/docs/murder-escape/api/PropBaseClass#Prop">Prop</a></code></div><div>
+<p>
+  Constructs a new Prop instance and immediately initializes the realm-specific
+  half of it — <a href="/docs/murder-escape/api/PropBaseClass#InitServer">PropBaseClass:InitServer</a> on the server,
+  <a href="/docs/murder-escape/api/PropBaseClass#InitClient">PropBaseClass:InitClient</a> on the client.
+</p>
+<p>Subclasses call this and re-<code>setmetatable</code> the result onto themselves:</p>
+<pre class="language-lua"><code class="language-lua"><span class="token keyword">local</span> self <span class="token operator">=</span> <span class="token function">setmetatable</span><span class="token punctuation">(</span>
+	PropBaseClass<span class="token punctuation">.</span><span class="token function">new</span><span class="token punctuation">(</span>propData<span class="token punctuation">,</span> <span class="token punctuation">{</span>
+		_allowedClientFunctions <span class="token operator">=</span> <span class="token punctuation">{</span> <span class="token string">"HarvestCrop"</span> <span class="token punctuation">}</span><span class="token punctuation">,</span>
+		Harvested <span class="token operator">=</span> Signal<span class="token punctuation">.</span><span class="token function">new</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+	<span class="token punctuation">}</span><span class="token punctuation">)</span> <span class="token punctuation">::</span> any<span class="token punctuation">,</span>
+	Soil
+<span class="token punctuation">)</span> <span class="token punctuation">::</span> Soil
+</code></pre>
+<p>
+  <code>props</code> is copied onto the instance verbatim with one exception:
+  <code>_allowedClientFunctions</code> is <em>merged</em> into the base allowlist rather than
+  replacing it, so subclasses keep <code>CompleteBuilding</code> for free.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="GetData"><code style="text-decoration:none">GetData</code><a href="#GetData" class="hash-link" aria-label="Direct link to GetData" title="Direct link to GetData" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Class/Base/Props/PropBaseClass.luau#L704"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>PropBaseClass<!-- -->:</code><code class="green_DgR4">GetData</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/docs/murder-escape/api/PropTypes#PropReplicaData">PropReplicaData</a></code></div><div>
+<p>
+  Returns the prop's current replica data, reading from whichever replica this
+  realm owns. Both realms see the same shape and (modulo replication latency)
+  the same values.
+</p>
+<p>
+  Errors if the prop somehow has no replica — that is a construction bug, not a
+  recoverable state.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="GetSavedProps"><code style="text-decoration:none">GetSavedProps</code><a href="#GetSavedProps" class="hash-link" aria-label="Direct link to GetSavedProps" title="Direct link to GetSavedProps" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Class/Base/Props/PropBaseClass.luau#L930"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>PropBaseClass<!-- -->:</code><code class="green_DgR4">GetSavedProps</code><code>(</code><code>) → </code><code class="purple_ieR2">{</code><span><code>[</code><code class="blue_P4bS">string</code><code>]</code></span><code>: </code><code class="blue_P4bS">any</code><code class="purple_ieR2">}</code></div><div>
+<p>
+  Returns the prop's persisted, prop-specific state — the <code>props</code> table on the
+  replica. Callable from either realm; reads whichever replica exists here.
+</p>
+<p>
+  This is the table that gets written back to the player's datastore, so
+  subclasses keep their durable state (crops, animals, drops) inside it rather
+  than as plain instance fields.
+</p>
+<p>Errors if the prop has no replica.</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="GetSavedProp"><code style="text-decoration:none">GetSavedProp</code><a href="#GetSavedProp" class="hash-link" aria-label="Direct link to GetSavedProp" title="Direct link to GetSavedProp" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Class/Base/Props/PropBaseClass.luau#L950"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>PropBaseClass<!-- -->:</code><code class="green_DgR4">GetSavedProp</code><code>(</code><div class="inset_uKQm"><div><code>key<!-- -->: </code><code class="blue_P4bS">string</code><span class="inlineDescription_G7Er">-- <span>
+<p>Key within the persisted <code>props</code> table</p>
+</span></span></div></div><code>) → </code><code class="blue_P4bS">any</code></div><div>
+<p>
+  Reads a single key out of <a href="/docs/murder-escape/api/PropBaseClass#GetSavedProps">PropBaseClass:GetSavedProps</a>. Callable from either
+  realm.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="IsOwner"><code style="text-decoration:none">IsOwner</code><a href="#IsOwner" class="hash-link" aria-label="Direct link to IsOwner" title="Direct link to IsOwner" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Class/Base/Props/PropBaseClass.luau#L968"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>PropBaseClass<!-- -->:</code><code class="green_DgR4">IsOwner</code><code>(</code><div class="inset_uKQm"><div><code>player<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/Player" target="_blank" rel="noopener noreferrer">Player?<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
+<p>Defaults to the local player on the client</p>
+</span></span></div></div><code>) → </code><code class="blue_P4bS">boolean</code></div><div>
+<p>Returns whether <code>player</code> owns the base this prop sits on.</p>
+<p>
+  The <code>player</code> argument is optional <strong>on the client only</strong>, where it defaults to
+  <code>Players.LocalPlayer</code>. On the server, omitting it returns <code>false</code> — there is
+  no sensible default, and silently answering <code>true</code> would defeat the ownership
+  checks that allow-listed client-callable methods rely on.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="GetLevel"><code style="text-decoration:none">GetLevel</code><a href="#GetLevel" class="hash-link" aria-label="Direct link to GetLevel" title="Direct link to GetLevel" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Class/Base/Props/PropBaseClass.luau#L989"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>PropBaseClass<!-- -->:</code><code class="green_DgR4">GetLevel</code><code>(</code><code>) → </code><code class="blue_P4bS">number</code></div><div>
+<p>
+  Returns the prop's current upgrade level, read from the replica. Levels start
+  at 1. Callable from either realm.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="DispatchRemoteEvent"><code style="text-decoration:none">DispatchRemoteEvent</code><a href="#DispatchRemoteEvent" class="hash-link" aria-label="Direct link to DispatchRemoteEvent" title="Direct link to DispatchRemoteEvent" translate="no">​</a></h3><span class="badge_Ba2I" style="color:#349AD5"><span class="badgeTooltip_cWXP">This item only works when running on the client.</span><span class="badgeToolTipTail_H9D_"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 337 304" fill="#349AD5" role="img" aria-label="This item only works when running on the client."><path d="M0 201h337v36H0v-36zm0 0zM0 0v188h337V0H0zM218 287h30c12 0 12 17 0 17H88c-11 0-11-17 0-17h31l10-39h79l10 39z"></path></svg> <!-- -->Client</span></span><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Class/Base/Props/PropBaseClass.luau#L1025"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>PropBaseClass<!-- -->:</code><code class="green_DgR4">DispatchRemoteEvent</code><code>(</code><div class="inset_uKQm"><div><code>eventName<!-- -->: </code><code class="blue_P4bS">string</code><code>,</code><span class="inlineDescription_G7Er">-- <span>
+<p>Name of the server method to invoke</p>
+</span></span></div><div><code>...<!-- -->: </code><code class="blue_P4bS">any</code><span class="inlineDescription_G7Er">-- <span>
+<p>Arguments forwarded after the <code>player</code> argument</p>
+</span></span></div></div><code>) → </code><code>(</code><code>)</code></div><div>
+<p>Asks the server to run one of this prop's methods.</p>
+<p>
+  Dispatches a <code>PROP_REMOTE_INPUT</code> action carrying <code>propId</code>, the method name and
+  the varargs. The server looks the prop up and hands the action to
+  <a href="/docs/murder-escape/api/PropBaseClass#_processRemoteInput">PropBaseClass:_processRemoteInput</a>, which rejects any name that is not in
+  <code>_allowedClientFunctions</code>.
+</p>
+<pre class="language-lua"><code class="language-lua">self<span class="token punctuation">:</span><span class="token function">DispatchRemoteEvent</span><span class="token punctuation">(</span><span class="token string">"HarvestCrop"</span><span class="token punctuation">,</span> cropId<span class="token punctuation">)</span>
+</code></pre>
+<p>
+  Fire-and-forget: there is no reply channel. Observe the result by watching the
+  replica.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="SetSavedProp"><code style="text-decoration:none">SetSavedProp</code><a href="#SetSavedProp" class="hash-link" aria-label="Direct link to SetSavedProp" title="Direct link to SetSavedProp" translate="no">​</a></h3><span class="badge_Ba2I" style="color:#00CC67"><span class="badgeTooltip_cWXP">This item only works when running on the server.</span><span class="badgeToolTipTail_H9D_"><svg fill="#00CC67" xmlns="http://www.w3.org/2000/svg" version="1.1" x="0px" y="0px" viewBox="0 0 90 90" role="img" aria-label="This item only works when running on the server."><polygon points="6.125,72.421 58.544,88.523 58.544,24.372 6.125,8.269 "></polygon><polygon points="79.818,15.77 79.868,15.755 29.615,1.453 10.328,6.318 60.102,21.609 "></polygon><path d="M61.643,78.738l22.232-6.582V17.801l-22.232,6.584V78.738z M73.811,69.257c-1.174,0-2.125-1.19-2.125-2.659  c0-1.468,0.951-2.658,2.125-2.658c1.172,0,2.123,1.19,2.123,2.658C75.934,68.066,74.982,69.257,73.811,69.257z M64.898,32.121  l16.336-4.41v7.117l-16.336,4.409V32.121z M64.898,41.292l16.336-4.41v7.116l-16.336,4.409V41.292z M64.898,50.463l16.336-4.411  v7.116l-16.336,4.411V50.463z"></path><polygon points="83.875,74.893 61.643,81.477 61.643,88.547 83.875,81.963 "></polygon></svg> <!-- -->Server</span></span><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Class/Base/Props/PropBaseClass.luau#L1051"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>PropBaseClass<!-- -->:</code><code class="green_DgR4">SetSavedProp</code><code>(</code><div class="inset_uKQm"><div><code>key<!-- -->: </code><code class="blue_P4bS">string</code><code>,</code></div><div><code>value<!-- -->: </code><code class="blue_P4bS">any</code><span class="inlineDescription_G7Er">-- <span>
+<p>Pass <code>nil</code> to clear the key</p>
+</span></span></div></div><code>) → </code><code>(</code><code>)</code></div><div>
+<p>
+  Writes one key into the persisted <code>props</code> table and republishes the whole
+  table through the replica, which is what notifies the client.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="SetSavedProps"><code style="text-decoration:none">SetSavedProps</code><a href="#SetSavedProps" class="hash-link" aria-label="Direct link to SetSavedProps" title="Direct link to SetSavedProps" translate="no">​</a></h3><span class="badge_Ba2I" style="color:#00CC67"><span class="badgeTooltip_cWXP">This item only works when running on the server.</span><span class="badgeToolTipTail_H9D_"><svg fill="#00CC67" xmlns="http://www.w3.org/2000/svg" version="1.1" x="0px" y="0px" viewBox="0 0 90 90" role="img" aria-label="This item only works when running on the server."><polygon points="6.125,72.421 58.544,88.523 58.544,24.372 6.125,8.269 "></polygon><polygon points="79.818,15.77 79.868,15.755 29.615,1.453 10.328,6.318 60.102,21.609 "></polygon><path d="M61.643,78.738l22.232-6.582V17.801l-22.232,6.584V78.738z M73.811,69.257c-1.174,0-2.125-1.19-2.125-2.659  c0-1.468,0.951-2.658,2.125-2.658c1.172,0,2.123,1.19,2.123,2.658C75.934,68.066,74.982,69.257,73.811,69.257z M64.898,32.121  l16.336-4.41v7.117l-16.336,4.409V32.121z M64.898,41.292l16.336-4.41v7.116l-16.336,4.409V41.292z M64.898,50.463l16.336-4.411  v7.116l-16.336,4.411V50.463z"></path><polygon points="83.875,74.893 61.643,81.477 61.643,88.547 83.875,81.963 "></polygon></svg> <!-- -->Server</span></span><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Class/Base/Props/PropBaseClass.luau#L1071"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>PropBaseClass<!-- -->:</code><code class="green_DgR4">SetSavedProps</code><code>(</code><div class="inset_uKQm"><div><code>newProps<!-- -->: </code><code class="purple_ieR2">{</code><span><code>[</code><code class="blue_P4bS">string</code><code>]</code></span><code>: </code><code class="blue_P4bS">any</code><code class="purple_ieR2">}</code><span class="inlineDescription_G7Er">-- <span>
+<p>Keys to merge in</p>
+</span></span></div></div><code>) → </code><code>(</code><code>)</code></div><div>
+<p>
+  Merges several keys into the persisted <code>props</code> table in a single replica
+  write. Keys absent from <code>newProps</code> are left alone.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="MoveTo"><code style="text-decoration:none">MoveTo</code><a href="#MoveTo" class="hash-link" aria-label="Direct link to MoveTo" title="Direct link to MoveTo" translate="no">​</a></h3><span class="badge_Ba2I" style="color:#00CC67"><span class="badgeTooltip_cWXP">This item only works when running on the server.</span><span class="badgeToolTipTail_H9D_"><svg fill="#00CC67" xmlns="http://www.w3.org/2000/svg" version="1.1" x="0px" y="0px" viewBox="0 0 90 90" role="img" aria-label="This item only works when running on the server."><polygon points="6.125,72.421 58.544,88.523 58.544,24.372 6.125,8.269 "></polygon><polygon points="79.818,15.77 79.868,15.755 29.615,1.453 10.328,6.318 60.102,21.609 "></polygon><path d="M61.643,78.738l22.232-6.582V17.801l-22.232,6.584V78.738z M73.811,69.257c-1.174,0-2.125-1.19-2.125-2.659  c0-1.468,0.951-2.658,2.125-2.658c1.172,0,2.123,1.19,2.123,2.658C75.934,68.066,74.982,69.257,73.811,69.257z M64.898,32.121  l16.336-4.41v7.117l-16.336,4.409V32.121z M64.898,41.292l16.336-4.41v7.116l-16.336,4.409V41.292z M64.898,50.463l16.336-4.411  v7.116l-16.336,4.411V50.463z"></path><polygon points="83.875,74.893 61.643,81.477 61.643,88.547 83.875,81.963 "></polygon></svg> <!-- -->Server</span></span><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Class/Base/Props/PropBaseClass.luau#L1102"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>PropBaseClass<!-- -->:</code><code class="green_DgR4">MoveTo</code><code>(</code><div class="inset_uKQm"><div><code>newCFrame<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/CFrame" target="_blank" rel="noopener noreferrer">CFrame<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code>,</code><span class="inlineDescription_G7Er">-- <span>
+<p>New world origin (bottom-centre of the prop)</p>
+</span></span></div><div><code>newPositionData<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/docs/murder-escape/api/BaseUtil#PositionData">PositionData</a></code><span class="inlineDescription_G7Er">-- <span>
+<p>New plot-relative grid position</p>
+</span></span></div></div><code>) → </code><code>(</code><code>)</code></div><div>
+<p>
+  Relocates the prop. Called by the Base class once it has validated a move
+  request (grid snapping, plot bounds, hitbox intersection) — this method does
+  no validation of its own.
+</p>
+<p>
+  No-ops when <code>newPositionData</code> is grid-equal to the prop's current position, so
+  a rotation-only move still goes through but a redundant one does not.
+</p>
+<p>
+  Moves the server bounding box directly and publishes <code>origin</code> and
+  <code>positionData</code> on the replica; each client then animates its own model via
+  <a href="/docs/murder-escape/api/PropBaseClass#_localMove">PropBaseClass:_localMove</a>.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="AllowClientFunction"><code style="text-decoration:none">AllowClientFunction</code><a href="#AllowClientFunction" class="hash-link" aria-label="Direct link to AllowClientFunction" title="Direct link to AllowClientFunction" translate="no">​</a></h3><span class="badge_Ba2I" style="color:#00CC67"><span class="badgeTooltip_cWXP">This item only works when running on the server.</span><span class="badgeToolTipTail_H9D_"><svg fill="#00CC67" xmlns="http://www.w3.org/2000/svg" version="1.1" x="0px" y="0px" viewBox="0 0 90 90" role="img" aria-label="This item only works when running on the server."><polygon points="6.125,72.421 58.544,88.523 58.544,24.372 6.125,8.269 "></polygon><polygon points="79.818,15.77 79.868,15.755 29.615,1.453 10.328,6.318 60.102,21.609 "></polygon><path d="M61.643,78.738l22.232-6.582V17.801l-22.232,6.584V78.738z M73.811,69.257c-1.174,0-2.125-1.19-2.125-2.659  c0-1.468,0.951-2.658,2.125-2.658c1.172,0,2.123,1.19,2.123,2.658C75.934,68.066,74.982,69.257,73.811,69.257z M64.898,32.121  l16.336-4.41v7.117l-16.336,4.409V32.121z M64.898,41.292l16.336-4.41v7.116l-16.336,4.409V41.292z M64.898,50.463l16.336-4.411  v7.116l-16.336,4.411V50.463z"></path><polygon points="83.875,74.893 61.643,81.477 61.643,88.547 83.875,81.963 "></polygon></svg> <!-- -->Server</span></span><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Class/Base/Props/PropBaseClass.luau#L1145"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>PropBaseClass<!-- -->:</code><code class="green_DgR4">AllowClientFunction</code><code>(</code><div class="inset_uKQm"><div><code>functionName<!-- -->: </code><code class="blue_P4bS">string</code><span class="inlineDescription_G7Er">-- <span>
+<p>Name of a method on this prop</p>
+</span></span></div></div><code>) → </code><code>(</code><code>)</code></div><div>
+<p>
+  Adds a method name to this prop instance's client-callable allowlist at
+  runtime. Warns and no-ops if it is already present.
+</p>
+<p>
+  Most subclasses do not need this — they pass <code>_allowedClientFunctions</code> in the
+  <code>props</code> table of <a href="/docs/murder-escape/api/PropBaseClass#new">PropBaseClass.new</a> instead, which merges into the base
+  allowlist. Use this only when the set of callable methods depends on runtime
+  state.
+</p>
+<p>
+  The allowlist controls <em>what</em> may be called, never <em>by whom</em>: the target
+  method still has to check <a href="/docs/murder-escape/api/PropBaseClass#IsOwner">PropBaseClass:IsOwner</a> itself.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="CompleteBuilding"><code style="text-decoration:none">CompleteBuilding</code><a href="#CompleteBuilding" class="hash-link" aria-label="Direct link to CompleteBuilding" title="Direct link to CompleteBuilding" translate="no">​</a></h3><span class="badge_Ba2I" style="color:#00CC67"><span class="badgeTooltip_cWXP">This item only works when running on the server.</span><span class="badgeToolTipTail_H9D_"><svg fill="#00CC67" xmlns="http://www.w3.org/2000/svg" version="1.1" x="0px" y="0px" viewBox="0 0 90 90" role="img" aria-label="This item only works when running on the server."><polygon points="6.125,72.421 58.544,88.523 58.544,24.372 6.125,8.269 "></polygon><polygon points="79.818,15.77 79.868,15.755 29.615,1.453 10.328,6.318 60.102,21.609 "></polygon><path d="M61.643,78.738l22.232-6.582V17.801l-22.232,6.584V78.738z M73.811,69.257c-1.174,0-2.125-1.19-2.125-2.659  c0-1.468,0.951-2.658,2.125-2.658c1.172,0,2.123,1.19,2.123,2.658C75.934,68.066,74.982,69.257,73.811,69.257z M64.898,32.121  l16.336-4.41v7.117l-16.336,4.409V32.121z M64.898,41.292l16.336-4.41v7.116l-16.336,4.409V41.292z M64.898,50.463l16.336-4.411  v7.116l-16.336,4.411V50.463z"></path><polygon points="83.875,74.893 61.643,81.477 61.643,88.547 83.875,81.963 "></polygon></svg> <!-- -->Server</span></span><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Class/Base/Props/PropBaseClass.luau#L1421"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>PropBaseClass<!-- -->:</code><code class="green_DgR4">CompleteBuilding</code><code>(</code><div class="inset_uKQm"><div><code>player<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/Player" target="_blank" rel="noopener noreferrer">Player?<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
+<p>The player completing the building, if client-driven</p>
+</span></span></div></div><code>) → </code><code>(</code><code>)</code></div><div>
+<p>
+  Finishes construction: clears <code>buildStartTime</code> from the persisted props and
+  sets <code>isBuilding</code> to <code>false</code>, which the client picks up to drop the tint,
+  fence and progress bar.
+</p>
+<p>
+  This is on the base allowlist, so the owner's client calls it over
+  <a href="/docs/murder-escape/api/PropBaseClass#DispatchRemoteEvent">PropBaseClass:DispatchRemoteEvent</a> when its local build timer elapses. It is
+  also called directly by <a href="/docs/murder-escape/api/PropBaseClass#InitServer">PropBaseClass:InitServer</a> (with no player) for builds
+  that finished while the owner was offline.
+</p>
+<p>Asserts ownership when a player is supplied.</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="ShowOutline"><code style="text-decoration:none">ShowOutline</code><a href="#ShowOutline" class="hash-link" aria-label="Direct link to ShowOutline" title="Direct link to ShowOutline" translate="no">​</a></h3><span class="badge_Ba2I" style="color:#349AD5"><span class="badgeTooltip_cWXP">This item only works when running on the client.</span><span class="badgeToolTipTail_H9D_"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 337 304" fill="#349AD5" role="img" aria-label="This item only works when running on the client."><path d="M0 201h337v36H0v-36zm0 0zM0 0v188h337V0H0zM218 287h30c12 0 12 17 0 17H88c-11 0-11-17 0-17h31l10-39h79l10 39z"></path></svg> <!-- -->Client</span></span><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Class/Base/Props/PropBaseClass.luau#L1453"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>PropBaseClass<!-- -->:</code><code class="green_DgR4">ShowOutline</code><code>(</code><div class="inset_uKQm"><div><code>show<!-- -->: </code><code class="blue_P4bS">boolean</code><span class="inlineDescription_G7Er">-- <span>
+<p><code>true</code> to show, <code>false</code> to tear down</p>
+</span></span></div></div><code>) → </code><code>(</code><code>)</code></div><div>
+<p>
+  Shows or hides the selection treatment on the prop — used while the prop is
+  picked up in edit mode, and cleared when demolition starts.
+</p>
+<p>
+  Two parts, both owned by an internal Maid so hiding is a single <code>Destroy()</code>:
+  the model's own <code>Outline</code> child (if it has one) has its parts faded in, and a
+  bobbing, slowly rotating arrow is cloned into the Workspace above the prop.
+  The arrow's height is recomputed every RenderStep so it tracks a prop that is
+  being dragged.
+</p>
+<p>
+  Calling it again with <code>true</code> replaces the previous outline rather than
+  stacking a second one.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="GetCurrentLevelInfo"><code style="text-decoration:none">GetCurrentLevelInfo</code><a href="#GetCurrentLevelInfo" class="hash-link" aria-label="Direct link to GetCurrentLevelInfo" title="Direct link to GetCurrentLevelInfo" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Class/Base/Props/PropBaseClass.luau#L1550"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>PropBaseClass<!-- -->:</code><code class="green_DgR4">GetCurrentLevelInfo</code><code>(</code><code>) → </code><code>(</code><div class="inset_uKQm"><div><code class="blue_P4bS">ItemTypes.PropUpgradeInfo?</code><code>,</code></div><div><code class="blue_P4bS">number?</code></div></div><code>)</code></div><div>
+<p>
+  Returns the upgrade record describing the prop's <em>current</em> level, plus that
+  level number. Callable from either realm.
+</p>
+<p>
+  The <code>upgrades</code> list is 1-indexed from level 2 — index <code>n</code> describes the
+  upgrade <em>into</em> level <code>n + 1</code> — so the current level's record is
+  <code>upgrades[level - 1]</code>. A level-1 prop therefore returns <code>nil</code> for the record:
+  level 1 is the item's own base stats, not an upgrade.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="GetNextLevelInfo"><code style="text-decoration:none">GetNextLevelInfo</code><a href="#GetNextLevelInfo" class="hash-link" aria-label="Direct link to GetNextLevelInfo" title="Direct link to GetNextLevelInfo" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Class/Base/Props/PropBaseClass.luau#L1578"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>PropBaseClass<!-- -->:</code><code class="green_DgR4">GetNextLevelInfo</code><code>(</code><code>) → </code><code>(</code><div class="inset_uKQm"><div><code class="blue_P4bS">ItemTypes.PropUpgradeInfo?</code><code>,</code></div><div><code class="blue_P4bS">number?</code></div></div><code>)</code></div><div>
+<p>
+  Returns the upgrade record for the <em>next</em> level (<code>upgrades[level]</code>) and that
+  level's number, or <code>nil</code> when the prop is already maxed or the item defines no
+  upgrades. Callable from either realm.
+</p>
+<p>
+  Used both as a "can this be upgraded at all?" test and as the source of the
+  price shown on the upgrade prompt.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="ShowInfo"><code style="text-decoration:none">ShowInfo</code><a href="#ShowInfo" class="hash-link" aria-label="Direct link to ShowInfo" title="Direct link to ShowInfo" translate="no">​</a></h3><span class="badge_Ba2I" style="color:#349AD5"><span class="badgeTooltip_cWXP">This item only works when running on the client.</span><span class="badgeToolTipTail_H9D_"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 337 304" fill="#349AD5" role="img" aria-label="This item only works when running on the client."><path d="M0 201h337v36H0v-36zm0 0zM0 0v188h337V0H0zM218 287h30c12 0 12 17 0 17H88c-11 0-11-17 0-17h31l10-39h79l10 39z"></path></svg> <!-- -->Client</span></span><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Class/Base/Props/PropBaseClass.luau#L1607"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>PropBaseClass<!-- -->:</code><code class="green_DgR4">ShowInfo</code><code>(</code><code>) → </code><code>(</code><code>)</code></div><div>
+<p>
+  Attaches the persistent <code>PropInfo</code> billboard (item name and current level) to
+  the model and keeps the level label in sync with the replica.
+</p>
+<p>
+  Opt-in per subclass rather than automatic — <a href="/docs/murder-escape/api/Town#Town">Town</a> turns it on in its
+  constructor, most props do not. There is no matching hide; the billboard lives
+  until <a href="/docs/murder-escape/api/PropBaseClass#Destroy">PropBaseClass:Destroy</a>.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="Destroy"><code style="text-decoration:none">Destroy</code><a href="#Destroy" class="hash-link" aria-label="Direct link to Destroy" title="Direct link to Destroy" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Class/Base/Props/PropBaseClass.luau#L1692"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>PropBaseClass<!-- -->:</code><code class="green_DgR4">Destroy</code><code>(</code><code>) → </code><code>(</code><code>)</code></div><div>
+<p>
+  Tears the prop down on whichever realm it is called from, then fires
+  <code>Destroyed</code>. Subclasses hook that signal to clean up their own state rather
+  than overriding this method.
+</p>
+<p>
+  On the client: destroys the model, both progress bars, the outline Maid, the
+  info billboard and the upgrade prompt, and unbinds the two RenderStep hooks
+  registered in <a href="/docs/murder-escape/api/PropBaseClass#InitClient">PropBaseClass:InitClient</a>.
+</p>
+<p>
+  On the server: cancels the build timer/heartbeat, destroys the bounding box
+  and the Replica, and removes the base's hitbox sub-container once it is empty.
+</p>
+<p>
+  This does not touch persisted data — removing the prop from the player's saved
+  base is the caller's job.
+</p>
+</div></div></article></div><details><summary>Show raw api</summary><pre style="max-width:100%;white-space:pre-wrap">{
+    &quot;functions&quot;: [
+        {
+            &quot;name&quot;: &quot;new&quot;,
+            &quot;desc&quot;: &quot;Constructs a new Prop instance and immediately initializes the realm-specific\nhalf of it — [PropBaseClass:InitServer] on the server,\n[PropBaseClass:InitClient] on the client.\n\nSubclasses call this and re-`setmetatable` the result onto themselves:\n\n```lua\nlocal self = setmetatable(\n\tPropBaseClass.new(propData, {\n\t\t_allowedClientFunctions = { \&quot;HarvestCrop\&quot; },\n\t\tHarvested = Signal.new(),\n\t}) :: any,\n\tSoil\n) :: Soil\n```\n\n`props` is copied onto the instance verbatim with one exception:\n`_allowedClientFunctions` is *merged* into the base allowlist rather than\nreplacing it, so subclasses keep `CompleteBuilding` for free.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;propData&quot;,
+                    &quot;desc&quot;: &quot;Identity, placement and realm-specific handles&quot;,
+                    &quot;lua_type&quot;: &quot;PropData&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;props&quot;,
+                    &quot;desc&quot;: &quot;Extra fields for the subclass instance&quot;,
+                    &quot;lua_type&quot;: &quot;{ [string]: any }?&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;Prop&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 332,
+                &quot;path&quot;: &quot;src/Shared/Class/Base/Props/PropBaseClass.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;InitClient&quot;,
+            &quot;desc&quot;: &quot;Builds the client half of the prop. Called by [PropBaseClass.new]; not meant\nto be called directly.\n\nClones the item&#x27;s model, pivots it to the replica&#x27;s `origin`, tags it with\n`BaseUtil.PROP_MODEL_TAG` and parents it under `BaseUtil.PROP_CONTAINER`. The\nmodel is marked `ModelStreamingMode.Persistent` on purpose: the *bounding box*\nis allowed to stream in and out, and PropController re-creates the whole prop\ninstance when it comes back, but the model itself must never vanish underneath\na live instance.\n\nIt then wires the replica-driven visuals:\n\n- `origin` changes → [PropBaseClass:_localMove]\n- `isBuilding` changes → building tint plus the building progress bar\n- `props.destroyStartTime` appearing/disappearing → demolition progress bar\n- two `BindToRenderStep` hooks that keep both bars ticking in real time\n\nIf the prop is mid-build and this client owns it, a `task.delay` is armed for\nthe remaining build time that dispatches `CompleteBuilding` back to the\nserver — the server does not run its own build timer for the common case.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;_propData&quot;,
+                    &quot;desc&quot;: &quot;Unused; state is read off the replica instead&quot;,
+                    &quot;lua_type&quot;: &quot;PropData&quot;
+                }
+            ],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;realm&quot;: [
+                &quot;Client&quot;
+            ],
+            &quot;private&quot;: true,
+            &quot;source&quot;: {
+                &quot;line&quot;: 423,
+                &quot;path&quot;: &quot;src/Shared/Class/Base/Props/PropBaseClass.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;_handleUpgrades&quot;,
+            &quot;desc&quot;: &quot;Wires up the prop&#x27;s upgrade affordances. Returns early when the item has no\nfurther levels defined in its `upgrades` list.\n\nTwo independent pieces:\n\n1. If the item sets `useUpgradePrompt` and the local player owns the prop, a\n   ProximityPrompt is attached to the model showing the next level and its\n   price. Triggering it checks the client&#x27;s coin balance first (purely for a\n   friendlier message — the server re-checks) and then dispatches\n   `BASE_UPGRADE_PROP`. The prompt text refreshes on every `level` change and\n   disables itself once the top level is reached.\n2. Regardless of the prompt, a `level` listener plays the upgrade SFX and\n   particle burst, and toasts the owner.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;realm&quot;: [
+                &quot;Client&quot;
+            ],
+            &quot;private&quot;: true,
+            &quot;source&quot;: {
+                &quot;line&quot;: 585,
+                &quot;path&quot;: &quot;src/Shared/Class/Base/Props/PropBaseClass.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;GetData&quot;,
+            &quot;desc&quot;: &quot;Returns the prop&#x27;s current replica data, reading from whichever replica this\nrealm owns. Both realms see the same shape and (modulo replication latency)\nthe same values.\n\nErrors if the prop somehow has no replica — that is a construction bug, not a\nrecoverable state.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;PropReplicaData&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 704,
+                &quot;path&quot;: &quot;src/Shared/Class/Base/Props/PropBaseClass.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;_localMove&quot;,
+            &quot;desc&quot;: &quot;Moves the client&#x27;s visual model to a new origin in response to the server\nchanging the replica&#x27;s `origin` key. Never called directly — the server is\nalways the one that decides a prop has moved (see [PropBaseClass:MoveTo]).\n\nSub-0.1-stud/radian deltas are ignored as floating-point noise, so this\nreturns `false` without touching the model.\n\nThe model is anchored before the pivot and un-anchored afterwards so the move\ncannot fling unanchored descendants, a squash-and-stretch [ScaleTween] plays\nover `SCALE_TWEEN_TIME`, and placement particles/SFX fire for the owner.\n**This method yields** for the length of that tween before firing `Moved`.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;newOrigin&quot;,
+                    &quot;desc&quot;: &quot;Origin from the replica&quot;,
+                    &quot;lua_type&quot;: &quot;CFrame&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;Whether the model was actually moved&quot;,
+                    &quot;lua_type&quot;: &quot;boolean&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;realm&quot;: [
+                &quot;Client&quot;
+            ],
+            &quot;private&quot;: true,
+            &quot;source&quot;: {
+                &quot;line&quot;: 739,
+                &quot;path&quot;: &quot;src/Shared/Class/Base/Props/PropBaseClass.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;InitServer&quot;,
+            &quot;desc&quot;: &quot;Builds the server half of the prop. Called by [PropBaseClass.new]; not meant\nto be called directly.\n\nClones the model&#x27;s `PrimaryPart` into a standalone bounding box, stamps it\nwith `BaseId`/`PlotId`/`PropId` attributes and `BaseUtil.PROP_TAG`, and parks\nit under a per-base sub-model of `BaseUtil.HITBOX_CONTAINER`. That box is what\nplacement collision (`BaseUtil.isHitboxIntersecting`) and client raycasts hit;\nit is raised by half its own height so it rests on the plot floor.\n\nIt then resolves the build state *before* creating the replica so the client\nnever observes a one-frame flash of the wrong state: if the item has a\n`buildTime` and a saved `buildStartTime`, `isBuilding` reflects whether that\nwindow has already elapsed, and a build that finished while the owner was\noffline is completed immediately. Finally any `initialReplicaData` supplied by\na subclass is merged in and the authoritative Replica is created.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;propData&quot;,
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;PropData&quot;
+                }
+            ],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;realm&quot;: [
+                &quot;Server&quot;
+            ],
+            &quot;private&quot;: true,
+            &quot;source&quot;: {
+                &quot;line&quot;: 805,
+                &quot;path&quot;: &quot;src/Shared/Class/Base/Props/PropBaseClass.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;GetSavedProps&quot;,
+            &quot;desc&quot;: &quot;Returns the prop&#x27;s persisted, prop-specific state — the `props` table on the\nreplica. Callable from either realm; reads whichever replica exists here.\n\nThis is the table that gets written back to the player&#x27;s datastore, so\nsubclasses keep their durable state (crops, animals, drops) inside it rather\nthan as plain instance fields.\n\nErrors if the prop has no replica.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;{ [string]: any }&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 930,
+                &quot;path&quot;: &quot;src/Shared/Class/Base/Props/PropBaseClass.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;GetSavedProp&quot;,
+            &quot;desc&quot;: &quot;Reads a single key out of [PropBaseClass:GetSavedProps]. Callable from either\nrealm.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;key&quot;,
+                    &quot;desc&quot;: &quot;Key within the persisted `props` table&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;any&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 950,
+                &quot;path&quot;: &quot;src/Shared/Class/Base/Props/PropBaseClass.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;IsOwner&quot;,
+            &quot;desc&quot;: &quot;Returns whether `player` owns the base this prop sits on.\n\nThe `player` argument is optional **on the client only**, where it defaults to\n`Players.LocalPlayer`. On the server, omitting it returns `false` — there is\nno sensible default, and silently answering `true` would defeat the ownership\nchecks that allow-listed client-callable methods rely on.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;player&quot;,
+                    &quot;desc&quot;: &quot;Defaults to the local player on the client&quot;,
+                    &quot;lua_type&quot;: &quot;Player?&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;boolean&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 968,
+                &quot;path&quot;: &quot;src/Shared/Class/Base/Props/PropBaseClass.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;GetLevel&quot;,
+            &quot;desc&quot;: &quot;Returns the prop&#x27;s current upgrade level, read from the replica. Levels start\nat 1. Callable from either realm.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;number&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 989,
+                &quot;path&quot;: &quot;src/Shared/Class/Base/Props/PropBaseClass.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;DispatchRemoteEvent&quot;,
+            &quot;desc&quot;: &quot;Asks the server to run one of this prop&#x27;s methods.\n\nDispatches a `PROP_REMOTE_INPUT` action carrying `propId`, the method name and\nthe varargs. The server looks the prop up and hands the action to\n[PropBaseClass:_processRemoteInput], which rejects any name that is not in\n`_allowedClientFunctions`.\n\n```lua\nself:DispatchRemoteEvent(\&quot;HarvestCrop\&quot;, cropId)\n```\n\nFire-and-forget: there is no reply channel. Observe the result by watching the\nreplica.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;eventName&quot;,
+                    &quot;desc&quot;: &quot;Name of the server method to invoke&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;...&quot;,
+                    &quot;desc&quot;: &quot;Arguments forwarded after the `player` argument&quot;,
+                    &quot;lua_type&quot;: &quot;any&quot;
+                }
+            ],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;realm&quot;: [
+                &quot;Client&quot;
+            ],
+            &quot;source&quot;: {
+                &quot;line&quot;: 1025,
+                &quot;path&quot;: &quot;src/Shared/Class/Base/Props/PropBaseClass.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;SetSavedProp&quot;,
+            &quot;desc&quot;: &quot;Writes one key into the persisted `props` table and republishes the whole\ntable through the replica, which is what notifies the client.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;key&quot;,
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;value&quot;,
+                    &quot;desc&quot;: &quot;Pass `nil` to clear the key&quot;,
+                    &quot;lua_type&quot;: &quot;any&quot;
+                }
+            ],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;realm&quot;: [
+                &quot;Server&quot;
+            ],
+            &quot;source&quot;: {
+                &quot;line&quot;: 1051,
+                &quot;path&quot;: &quot;src/Shared/Class/Base/Props/PropBaseClass.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;SetSavedProps&quot;,
+            &quot;desc&quot;: &quot;Merges several keys into the persisted `props` table in a single replica\nwrite. Keys absent from `newProps` are left alone.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;newProps&quot;,
+                    &quot;desc&quot;: &quot;Keys to merge in&quot;,
+                    &quot;lua_type&quot;: &quot;{ [string]: any }&quot;
+                }
+            ],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;realm&quot;: [
+                &quot;Server&quot;
+            ],
+            &quot;source&quot;: {
+                &quot;line&quot;: 1071,
+                &quot;path&quot;: &quot;src/Shared/Class/Base/Props/PropBaseClass.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;MoveTo&quot;,
+            &quot;desc&quot;: &quot;Relocates the prop. Called by the Base class once it has validated a move\nrequest (grid snapping, plot bounds, hitbox intersection) — this method does\nno validation of its own.\n\nNo-ops when `newPositionData` is grid-equal to the prop&#x27;s current position, so\na rotation-only move still goes through but a redundant one does not.\n\nMoves the server bounding box directly and publishes `origin` and\n`positionData` on the replica; each client then animates its own model via\n[PropBaseClass:_localMove].&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;newCFrame&quot;,
+                    &quot;desc&quot;: &quot;New world origin (bottom-centre of the prop)&quot;,
+                    &quot;lua_type&quot;: &quot;CFrame&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;newPositionData&quot;,
+                    &quot;desc&quot;: &quot;New plot-relative grid position&quot;,
+                    &quot;lua_type&quot;: &quot;PositionData&quot;
+                }
+            ],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;realm&quot;: [
+                &quot;Server&quot;
+            ],
+            &quot;source&quot;: {
+                &quot;line&quot;: 1102,
+                &quot;path&quot;: &quot;src/Shared/Class/Base/Props/PropBaseClass.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;AllowClientFunction&quot;,
+            &quot;desc&quot;: &quot;Adds a method name to this prop instance&#x27;s client-callable allowlist at\nruntime. Warns and no-ops if it is already present.\n\nMost subclasses do not need this — they pass `_allowedClientFunctions` in the\n`props` table of [PropBaseClass.new] instead, which merges into the base\nallowlist. Use this only when the set of callable methods depends on runtime\nstate.\n\nThe allowlist controls *what* may be called, never *by whom*: the target\nmethod still has to check [PropBaseClass:IsOwner] itself.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;functionName&quot;,
+                    &quot;desc&quot;: &quot;Name of a method on this prop&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;
+                }
+            ],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;realm&quot;: [
+                &quot;Server&quot;
+            ],
+            &quot;source&quot;: {
+                &quot;line&quot;: 1145,
+                &quot;path&quot;: &quot;src/Shared/Class/Base/Props/PropBaseClass.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;_processRemoteInput&quot;,
+            &quot;desc&quot;: &quot;Server-side landing point for [PropBaseClass:DispatchRemoteEvent]. Rejects\n(with a warning) any `functionName` that is not in `_allowedClientFunctions`,\nthen calls `self[functionName](self, player, ...action.args)`.\n\n:::warning\nThe allowlist is an authorization check on the *method*, not on the *caller*.\nEvery allow-listed method receives the calling player as its first argument\nand must verify `self:IsOwner(player)` before mutating anything — otherwise\nany client can act on any other player&#x27;s prop.\n:::&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;player&quot;,
+                    &quot;desc&quot;: &quot;The player that sent the input&quot;,
+                    &quot;lua_type&quot;: &quot;Player&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;action&quot;,
+                    &quot;desc&quot;: &quot;The action containing input args&quot;,
+                    &quot;lua_type&quot;: &quot;Actions.PropRemoteInputPayload&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;Whatever the target method returns&quot;,
+                    &quot;lua_type&quot;: &quot;any&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;realm&quot;: [
+                &quot;Server&quot;
+            ],
+            &quot;private&quot;: true,
+            &quot;source&quot;: {
+                &quot;line&quot;: 1179,
+                &quot;path&quot;: &quot;src/Shared/Class/Base/Props/PropBaseClass.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;_setBuildingVisuals&quot;,
+            &quot;desc&quot;: &quot;Toggles the \&quot;under construction\&quot; look on the model.\n\nWhile building, every `BasePart` descendant is washed out (saturation clamped\ndown, value clamped up) and `MeshPart` textures are blanked, with the original\n`Color`/`TextureID` stashed in `OriginalColor`/`OriginalTextureId` attributes\nso the effect is exactly reversible. Turning it off restores both and clears\nthe attributes.\n\nA scaffolding fence is also assembled around the bounding box&#x27;s footprint —\nroughly two scaled-down fence models per 8 studs of wall, on all four walls —\nand slid up from below the ground over `0.05s`. The fence is destroyed when\nbuilding ends.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;isBuilding&quot;,
+                    &quot;desc&quot;: &quot;Whether the prop is currently building&quot;,
+                    &quot;lua_type&quot;: &quot;boolean&quot;
+                }
+            ],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;realm&quot;: [
+                &quot;Client&quot;
+            ],
+            &quot;private&quot;: true,
+            &quot;source&quot;: {
+                &quot;line&quot;: 1218,
+                &quot;path&quot;: &quot;src/Shared/Class/Base/Props/PropBaseClass.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;CompleteBuilding&quot;,
+            &quot;desc&quot;: &quot;Finishes construction: clears `buildStartTime` from the persisted props and\nsets `isBuilding` to `false`, which the client picks up to drop the tint,\nfence and progress bar.\n\nThis is on the base allowlist, so the owner&#x27;s client calls it over\n[PropBaseClass:DispatchRemoteEvent] when its local build timer elapses. It is\nalso called directly by [PropBaseClass:InitServer] (with no player) for builds\nthat finished while the owner was offline.\n\nAsserts ownership when a player is supplied.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;player&quot;,
+                    &quot;desc&quot;: &quot;The player completing the building, if client-driven&quot;,
+                    &quot;lua_type&quot;: &quot;Player?&quot;
+                }
+            ],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;realm&quot;: [
+                &quot;Server&quot;
+            ],
+            &quot;source&quot;: {
+                &quot;line&quot;: 1421,
+                &quot;path&quot;: &quot;src/Shared/Class/Base/Props/PropBaseClass.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;ShowOutline&quot;,
+            &quot;desc&quot;: &quot;Shows or hides the selection treatment on the prop — used while the prop is\npicked up in edit mode, and cleared when demolition starts.\n\nTwo parts, both owned by an internal Maid so hiding is a single `Destroy()`:\nthe model&#x27;s own `Outline` child (if it has one) has its parts faded in, and a\nbobbing, slowly rotating arrow is cloned into the Workspace above the prop.\nThe arrow&#x27;s height is recomputed every RenderStep so it tracks a prop that is\nbeing dragged.\n\nCalling it again with `true` replaces the previous outline rather than\nstacking a second one.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;show&quot;,
+                    &quot;desc&quot;: &quot;`true` to show, `false` to tear down&quot;,
+                    &quot;lua_type&quot;: &quot;boolean&quot;
+                }
+            ],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;realm&quot;: [
+                &quot;Client&quot;
+            ],
+            &quot;source&quot;: {
+                &quot;line&quot;: 1453,
+                &quot;path&quot;: &quot;src/Shared/Class/Base/Props/PropBaseClass.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;GetCurrentLevelInfo&quot;,
+            &quot;desc&quot;: &quot;Returns the upgrade record describing the prop&#x27;s *current* level, plus that\nlevel number. Callable from either realm.\n\nThe `upgrades` list is 1-indexed from level 2 — index `n` describes the\nupgrade *into* level `n + 1` — so the current level&#x27;s record is\n`upgrades[level - 1]`. A level-1 prop therefore returns `nil` for the record:\nlevel 1 is the item&#x27;s own base stats, not an upgrade.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;ItemTypes.PropUpgradeInfo?&quot;
+                },
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 1550,
+                &quot;path&quot;: &quot;src/Shared/Class/Base/Props/PropBaseClass.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;GetNextLevelInfo&quot;,
+            &quot;desc&quot;: &quot;Returns the upgrade record for the *next* level (`upgrades[level]`) and that\nlevel&#x27;s number, or `nil` when the prop is already maxed or the item defines no\nupgrades. Callable from either realm.\n\nUsed both as a \&quot;can this be upgraded at all?\&quot; test and as the source of the\nprice shown on the upgrade prompt.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;ItemTypes.PropUpgradeInfo?&quot;
+                },
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 1578,
+                &quot;path&quot;: &quot;src/Shared/Class/Base/Props/PropBaseClass.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;ShowInfo&quot;,
+            &quot;desc&quot;: &quot;Attaches the persistent `PropInfo` billboard (item name and current level) to\nthe model and keeps the level label in sync with the replica.\n\nOpt-in per subclass rather than automatic — [Town] turns it on in its\nconstructor, most props do not. There is no matching hide; the billboard lives\nuntil [PropBaseClass:Destroy].&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;realm&quot;: [
+                &quot;Client&quot;
+            ],
+            &quot;source&quot;: {
+                &quot;line&quot;: 1607,
+                &quot;path&quot;: &quot;src/Shared/Class/Base/Props/PropBaseClass.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;_startDestruction&quot;,
+            &quot;desc&quot;: &quot;Marks the prop for timed demolition by stamping `destroyStartTime` (a Unix\ntimestamp) into the persisted props. Clients react by showing the\n\&quot;Demolishing\&quot; progress bar and clearing any outline.\n\nThis only *starts* the countdown — the Base service is what actually removes\nthe prop once `destroyTime` has elapsed. No-ops if a demolition is already in\nprogress, and warns if the item has no `destroyTime` configured (meaning it is\nremoved instantly instead and should never reach here).&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;realm&quot;: [
+                &quot;Server&quot;
+            ],
+            &quot;private&quot;: true,
+            &quot;source&quot;: {
+                &quot;line&quot;: 1650,
+                &quot;path&quot;: &quot;src/Shared/Class/Base/Props/PropBaseClass.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;Destroy&quot;,
+            &quot;desc&quot;: &quot;Tears the prop down on whichever realm it is called from, then fires\n`Destroyed`. Subclasses hook that signal to clean up their own state rather\nthan overriding this method.\n\nOn the client: destroys the model, both progress bars, the outline Maid, the\ninfo billboard and the upgrade prompt, and unbinds the two RenderStep hooks\nregistered in [PropBaseClass:InitClient].\n\nOn the server: cancels the build timer/heartbeat, destroys the bounding box\nand the Replica, and removes the base&#x27;s hitbox sub-container once it is empty.\n\nThis does not touch persisted data — removing the prop from the player&#x27;s saved\nbase is the caller&#x27;s job.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 1692,
+                &quot;path&quot;: &quot;src/Shared/Class/Base/Props/PropBaseClass.luau&quot;
+            }
+        }
+    ],
+    &quot;properties&quot;: [],
+    &quot;types&quot;: [
+        {
+            &quot;name&quot;: &quot;Prop&quot;,
+            &quot;desc&quot;: &quot;Instance shape shared by every prop. Fields are grouped by realm: a server\nprop has `serverReplica`/`savedPropData` and no `model`, a client prop has\n`clientReplica`/`model` and no `savedPropData`.&quot;,
+            &quot;fields&quot;: [
+                {
+                    &quot;name&quot;: &quot;propId&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;,
+                    &quot;desc&quot;: &quot;Unique id for this placed prop instance&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;propItemId&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;,
+                    &quot;desc&quot;: &quot;Item id the prop was placed from (key into `Data.Items.Props`)&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;plotId&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;,
+                    &quot;desc&quot;: &quot;Plot the prop sits on&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;baseId&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;,
+                    &quot;desc&quot;: &quot;Base the plot belongs to&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;ownerId&quot;,
+                    &quot;lua_type&quot;: &quot;number&quot;,
+                    &quot;desc&quot;: &quot;UserId of the base owner&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;_allowedClientFunctions&quot;,
+                    &quot;lua_type&quot;: &quot;{ string }&quot;,
+                    &quot;desc&quot;: &quot;Method names the client may invoke&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;boundingBox&quot;,
+                    &quot;lua_type&quot;: &quot;BasePart&quot;,
+                    &quot;desc&quot;: &quot;Collision/query volume; authored on the server, streamed to the client&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;Moved&quot;,
+                    &quot;lua_type&quot;: &quot;Signal&quot;,
+                    &quot;desc&quot;: &quot;Fires after the model finishes moving to a new origin (client)&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;Destroyed&quot;,
+                    &quot;lua_type&quot;: &quot;Signal&quot;,
+                    &quot;desc&quot;: &quot;Fires once when the prop is torn down on either realm&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;serverReplica&quot;,
+                    &quot;lua_type&quot;: &quot;ReplicaServer?&quot;,
+                    &quot;desc&quot;: &quot;Authoritative state (server only)&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;savedPropData&quot;,
+                    &quot;lua_type&quot;: &quot;SavedPropData?&quot;,
+                    &quot;desc&quot;: &quot;Persisted record this prop was loaded from (server only)&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;itemRecord&quot;,
+                    &quot;lua_type&quot;: &quot;ItemRecord?&quot;,
+                    &quot;desc&quot;: &quot;Inventory record consumed to place it; nil when loaded from save&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;positionData&quot;,
+                    &quot;lua_type&quot;: &quot;PositionData?&quot;,
+                    &quot;desc&quot;: &quot;Grid position within the plot (server only)&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;clientReplica&quot;,
+                    &quot;lua_type&quot;: &quot;ReplicaClient?&quot;,
+                    &quot;desc&quot;: &quot;Read-only mirror of the server state (client only)&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;model&quot;,
+                    &quot;lua_type&quot;: &quot;Model?&quot;,
+                    &quot;desc&quot;: &quot;Visual model (client only)&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;placementParticles&quot;,
+                    &quot;lua_type&quot;: &quot;ParticleEmitter?&quot;,
+                    &quot;desc&quot;: &quot;Emitted on move, owner&#x27;s client only&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;propDisplayPaths&quot;,
+                    &quot;lua_type&quot;: &quot;boolean&quot;,
+                    &quot;desc&quot;: &quot;Whether the prop renders path decals under it&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;buildingProgressBar&quot;,
+                    &quot;lua_type&quot;: &quot;ProgressBar?&quot;,
+                    &quot;desc&quot;: &quot;\&quot;Building\&quot; bar while `isBuilding` is set&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;destructionProgressBar&quot;,
+                    &quot;lua_type&quot;: &quot;ProgressBar?&quot;,
+                    &quot;desc&quot;: &quot;\&quot;Demolishing\&quot; bar while `destroyStartTime` is set&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;connections&quot;,
+                    &quot;lua_type&quot;: &quot;{ RBXScriptConnection }&quot;,
+                    &quot;desc&quot;: &quot;Connections torn down with the prop&quot;
+                }
+            ],
+            &quot;source&quot;: {
+                &quot;line&quot;: 217,
+                &quot;path&quot;: &quot;src/Shared/Class/Base/Props/PropBaseClass.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;PropData&quot;,
+            &quot;desc&quot;: &quot;Construction payload for [PropBaseClass.new]. Subclasses use\n`initialReplicaData` to seed their own replica keys in the same dispatch that\ncreates the replica, instead of writing them immediately afterwards.&quot;,
+            &quot;fields&quot;: [
+                {
+                    &quot;name&quot;: &quot;propId&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;,
+                    &quot;desc&quot;: &quot;&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;propItemId&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;,
+                    &quot;desc&quot;: &quot;&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;plotId&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;,
+                    &quot;desc&quot;: &quot;&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;baseId&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;,
+                    &quot;desc&quot;: &quot;&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;ownerId&quot;,
+                    &quot;lua_type&quot;: &quot;number&quot;,
+                    &quot;desc&quot;: &quot;&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;origin&quot;,
+                    &quot;lua_type&quot;: &quot;CFrame&quot;,
+                    &quot;desc&quot;: &quot;World CFrame the prop should sit at&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;serverReplica&quot;,
+                    &quot;lua_type&quot;: &quot;ReplicaServer?&quot;,
+                    &quot;desc&quot;: &quot;Unused by `new()`; the server builds its own&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;savedPropData&quot;,
+                    &quot;lua_type&quot;: &quot;SavedPropData?&quot;,
+                    &quot;desc&quot;: &quot;Persisted record to restore from (server)&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;itemRecord&quot;,
+                    &quot;lua_type&quot;: &quot;ItemRecord?&quot;,
+                    &quot;desc&quot;: &quot;Inventory record being consumed (server, new placements only)&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;initialReplicaData&quot;,
+                    &quot;lua_type&quot;: &quot;{ [string]: any }?&quot;,
+                    &quot;desc&quot;: &quot;Extra keys merged into the initial replica data&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;positionData&quot;,
+                    &quot;lua_type&quot;: &quot;PositionData?&quot;,
+                    &quot;desc&quot;: &quot;Grid position within the plot (server)&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;clientReplica&quot;,
+                    &quot;lua_type&quot;: &quot;ReplicaClient?&quot;,
+                    &quot;desc&quot;: &quot;Required on the client&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;_boundingBox&quot;,
+                    &quot;lua_type&quot;: &quot;BasePart?&quot;,
+                    &quot;desc&quot;: &quot;Required on the client; supplied by PropController&quot;
+                }
+            ],
+            &quot;source&quot;: {
+                &quot;line&quot;: 286,
+                &quot;path&quot;: &quot;src/Shared/Class/Base/Props/PropBaseClass.luau&quot;
+            }
+        }
+    ],
+    &quot;name&quot;: &quot;PropBaseClass&quot;,
+    &quot;desc&quot;: &quot;Base class for every prop that can be placed on a player&#x27;s base — soil plots,\nanimal pens, nuisances (rocks/trees/fields), town buildings, and so on.\nSubclasses call [PropBaseClass.new] with their own extra fields and inherit\neverything below.\n\n**Realms.** The same class is constructed on both the server and the client,\nand `new()` branches into `InitServer` or `InitClient` accordingly. The two\nhalves own different things:\n\n- Server owns the **bounding box** (a clone of the model&#x27;s `PrimaryPart`,\n  tagged and parented under `BaseUtil.HITBOX_CONTAINER`) and the authoritative\n  [Replica]. It never builds a visual model.\n- Client owns the **visual model** (a clone of the prop&#x27;s asset, parented to\n  `BaseUtil.PROP_CONTAINER`) plus every progress bar, particle, outline and\n  ProximityPrompt. Its bounding box is handed in by PropController.\n\n**Data flow.** All shared state travels through a single Replica of class\n`BaseUtil.PROP_REPLICA_CLASS`. The server writes with `Set`, the client reacts\nwith `GetKeyChangedSignal`. Persisted, prop-specific state lives under the\n`props` key and is reached with [PropBaseClass:GetSavedProps] /\n[PropBaseClass:SetSavedProp] rather than by touching the replica directly.\nNothing the client does mutates state on its own — see below.\n\n**Client → server calls.** The client cannot call methods on the server prop.\nIt calls [PropBaseClass:DispatchRemoteEvent], which dispatches a\n`PROP_REMOTE_INPUT` action naming a method; the server routes it through\n[PropBaseClass:_processRemoteInput], which refuses any method not present in\nthe prop&#x27;s `_allowedClientFunctions` allowlist. Subclasses extend that\nallowlist by passing `_allowedClientFunctions` in the `props` table of\n`new()` (or by calling [PropBaseClass:AllowClientFunction]). Allow-listed\nmethods receive `player` as their first argument and **must** verify\nownership themselves with [PropBaseClass:IsOwner] — the allowlist only gates\n*which* method may be called, not *by whom*.\n\nGated by [FeatureFlags].BaseEnabled — disabled by default; per-project forks\nenable it deliberately.\n\nCopyright (c) 2026 firebit. All rights reserved.\nfirebit/murder-escape - proprietary and confidential.&quot;,
+    &quot;tags&quot;: [
+        &quot;dormant&quot;
+    ],
+    &quot;source&quot;: {
+        &quot;line&quot;: 45,
+        &quot;path&quot;: &quot;src/Shared/Class/Base/Props/PropBaseClass.luau&quot;
+    }
+}</pre></details></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#types" class="table-of-contents__link toc-highlight">Types</a><ul><li><a href="#Prop" class="table-of-contents__link toc-highlight">Prop</a></li><li><a href="#PropData" class="table-of-contents__link toc-highlight">PropData</a></li></ul></li><li><a href="#functions" class="table-of-contents__link toc-highlight">Functions</a><ul><li><a href="#AllowClientFunction" class="table-of-contents__link toc-highlight">:AllowClientFunction</a></li><li><a href="#CompleteBuilding" class="table-of-contents__link toc-highlight">:CompleteBuilding</a></li><li><a href="#Destroy" class="table-of-contents__link toc-highlight">:Destroy</a></li><li><a href="#DispatchRemoteEvent" class="table-of-contents__link toc-highlight">:DispatchRemoteEvent</a></li><li><a href="#GetCurrentLevelInfo" class="table-of-contents__link toc-highlight">:GetCurrentLevelInfo</a></li><li><a href="#GetData" class="table-of-contents__link toc-highlight">:GetData</a></li><li><a href="#GetLevel" class="table-of-contents__link toc-highlight">:GetLevel</a></li><li><a href="#GetNextLevelInfo" class="table-of-contents__link toc-highlight">:GetNextLevelInfo</a></li><li><a href="#GetSavedProp" class="table-of-contents__link toc-highlight">:GetSavedProp</a></li><li><a href="#GetSavedProps" class="table-of-contents__link toc-highlight">:GetSavedProps</a></li><li><a href="#IsOwner" class="table-of-contents__link toc-highlight">:IsOwner</a></li><li><a href="#MoveTo" class="table-of-contents__link toc-highlight">:MoveTo</a></li><li><a href="#SetSavedProp" class="table-of-contents__link toc-highlight">:SetSavedProp</a></li><li><a href="#SetSavedProps" class="table-of-contents__link toc-highlight">:SetSavedProps</a></li><li><a href="#ShowInfo" class="table-of-contents__link toc-highlight">:ShowInfo</a></li><li><a href="#ShowOutline" class="table-of-contents__link toc-highlight">:ShowOutline</a></li><li><a href="#new" class="table-of-contents__link toc-highlight">.new</a></li></ul></li></ul></div></div></div></div></main></div></div><footer class="theme-layout-footer footer footer--dark"><div class="container container-fluid"><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2026 firebit-dev. Built with Moonwave and Docusaurus.</div></div></div></footer></div>
+</body>
+</html>

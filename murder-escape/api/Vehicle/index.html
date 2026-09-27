@@ -1,0 +1,891 @@
+<!doctype html>
+<html lang="en" dir="ltr" class="plugin-moonwave plugin-id-moonwave" data-has-hydrated="false">
+<head>
+<meta charset="UTF-8">
+<meta name="generator" content="Docusaurus v3.10.1">
+<title data-rh="true">Vehicle | Murder Escape</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://firebit-dev.github.io/docs/murder-escape/api/Vehicle"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docusaurus_tag" content="default"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docsearch:docusaurus_tag" content="default"><meta data-rh="true" property="og:title" content="Vehicle | Murder Escape"><meta data-rh="true" name="description" content="Manages a single vehicle instance: spawning, seat occupancy,
+collision setup, despawn timer, and cleanup.
+
+One instance wraps one car model. Instances are registered in a module-level
+`Model → Vehicle` cache so any code holding just the model can recover the
+wrapper with [Vehicle.getCar] — that is how [VehicleService] gets from its
+`player → Model` map to the behaviour on this class.
+
+### Network ownership is the whole design
+
+Physics is simulated by the driver&#x27;s client. Taking the driver&#x27;s seat hands
+that client network ownership of the assembly; leaving it reclaims ownership
+for the server. The reclaim sequence in [Vehicle:OnOccupantChanged] is
+deliberately fussy — sever the character&#x27;s weld first, zero the wheel
+velocities the client was driving, then un-anchor → `SetNetworkOwner(nil)` →
+re-anchor, and only 0.1s later zero the assembly velocity and release. Each
+step exists to stop a specific artefact: dragging the character with the car,
+wheels spinning forever at their last commanded velocity, and the vehicle
+clipping through the floor as the server resolves a position it did not
+simulate.
+
+### Collision groups
+
+Set up once at require time: `CarDetail` ignores both the body and the wheels,
+and `CarWheel` ignores `CarBody` — the constraints already position the wheels,
+so letting them collide with the body only produces jitter.
+
+### Suspension
+
+Spring stiffness and damping are computed from the assembly&#x27;s real mass, one
+frame after parenting (`task.defer`, because `AssemblyMass` is not meaningful
+until then). Stiffness is sized so the car sags exactly
+`SUSPENSION_TARGET_SAG` studs at rest, and damping from the standard
+`2ζ√(km)` relation at `SUSPENSION_DAMPING_RATIO`. Tuning against measured mass
+rather than fixed numbers means adding attachments or passengers does not
+bottom the car out.
+
+### Ejection
+
+Every exit path routes through the same helper, which projects the exit
+direction onto the XZ plane (so a flipped car does not eject downward),
+raycasts for ground, falls back to the vehicle&#x27;s roof if there is none, and
+clamps to `MIN_EJECT_Y` as a last resort against dropping players through the
+world.
+
+Gated by [FeatureFlags].Vehicle — disabled by default; per-project forks enable
+it deliberately.
+
+Copyright (c) 2026 firebit. All rights reserved.
+firebit/murder-escape - proprietary and confidential."><meta data-rh="true" property="og:description" content="Manages a single vehicle instance: spawning, seat occupancy,
+collision setup, despawn timer, and cleanup.
+
+One instance wraps one car model. Instances are registered in a module-level
+`Model → Vehicle` cache so any code holding just the model can recover the
+wrapper with [Vehicle.getCar] — that is how [VehicleService] gets from its
+`player → Model` map to the behaviour on this class.
+
+### Network ownership is the whole design
+
+Physics is simulated by the driver&#x27;s client. Taking the driver&#x27;s seat hands
+that client network ownership of the assembly; leaving it reclaims ownership
+for the server. The reclaim sequence in [Vehicle:OnOccupantChanged] is
+deliberately fussy — sever the character&#x27;s weld first, zero the wheel
+velocities the client was driving, then un-anchor → `SetNetworkOwner(nil)` →
+re-anchor, and only 0.1s later zero the assembly velocity and release. Each
+step exists to stop a specific artefact: dragging the character with the car,
+wheels spinning forever at their last commanded velocity, and the vehicle
+clipping through the floor as the server resolves a position it did not
+simulate.
+
+### Collision groups
+
+Set up once at require time: `CarDetail` ignores both the body and the wheels,
+and `CarWheel` ignores `CarBody` — the constraints already position the wheels,
+so letting them collide with the body only produces jitter.
+
+### Suspension
+
+Spring stiffness and damping are computed from the assembly&#x27;s real mass, one
+frame after parenting (`task.defer`, because `AssemblyMass` is not meaningful
+until then). Stiffness is sized so the car sags exactly
+`SUSPENSION_TARGET_SAG` studs at rest, and damping from the standard
+`2ζ√(km)` relation at `SUSPENSION_DAMPING_RATIO`. Tuning against measured mass
+rather than fixed numbers means adding attachments or passengers does not
+bottom the car out.
+
+### Ejection
+
+Every exit path routes through the same helper, which projects the exit
+direction onto the XZ plane (so a flipped car does not eject downward),
+raycasts for ground, falls back to the vehicle&#x27;s roof if there is none, and
+clamps to `MIN_EJECT_Y` as a last resort against dropping players through the
+world.
+
+Gated by [FeatureFlags].Vehicle — disabled by default; per-project forks enable
+it deliberately.
+
+Copyright (c) 2026 firebit. All rights reserved.
+firebit/murder-escape - proprietary and confidential."><link data-rh="true" rel="canonical" href="https://firebit-dev.github.io/docs/murder-escape/api/Vehicle"><link data-rh="true" rel="alternate" href="https://firebit-dev.github.io/docs/murder-escape/api/Vehicle" hreflang="en"><link data-rh="true" rel="alternate" href="https://firebit-dev.github.io/docs/murder-escape/api/Vehicle" hreflang="x-default"><link rel="stylesheet" href="/docs/murder-escape/assets/css/styles.3f63b0bb.css">
+<script src="/docs/murder-escape/assets/js/runtime~main.eb72bda3.js" defer="defer"></script>
+<script src="/docs/murder-escape/assets/js/main.dab95a80.js" defer="defer"></script>
+</head>
+<body>
+<svg style="display: none;"><defs>
+<symbol id="theme-svg-external-link" viewBox="0 0 24 24"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"/></symbol>
+</defs></svg>
+<script>!function(){var t=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme")}catch(t){}}();document.documentElement.setAttribute("data-theme",t||(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light")),document.documentElement.setAttribute("data-theme-choice",t||"system")}(),function(){try{const c=new URLSearchParams(window.location.search).entries();for(var[t,e]of c)if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id="__docusaurus"><div role="region" aria-label="Skip to main content"><a class="skipToContent_fXgn" href="#__docusaurus_skipToContent_fallback">Skip to main content</a></div><nav aria-label="Main" class="theme-layout-navbar navbar navbar--fixed-top"><div class="navbar__inner"><div class="theme-layout-navbar-left navbar__items"><button aria-label="Toggle navigation bar" aria-expanded="false" class="navbar__toggle clean-btn" type="button"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/docs/murder-escape/"><b class="navbar__title text--truncate">Murder Escape</b></a><a class="navbar__item navbar__link" href="/docs/murder-escape/docs/intro">Docs</a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/docs/murder-escape/api/">API</a></div><div class="theme-layout-navbar-right navbar__items navbar__items--right"><a href="https://github.com/firebit-dev/murder-escape" target="_blank" rel="noopener noreferrer" class="navbar__item navbar__link">GitHub<svg width="13.5" height="13.5" aria-label="(opens in new tab)" class="iconExternalLink_nPIU"><use href="#theme-svg-external-link"></use></svg></a><div class="toggle_vylO colorModeToggle_DEke"><button class="clean-btn toggleButton_gllP toggleButtonDisabled_aARS" type="button" disabled="" title="system mode" aria-label="Switch between dark and light mode (currently system mode)"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP lightToggleIcon_pyhR"><path fill="currentColor" d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP darkToggleIcon_wfgR"><path fill="currentColor" d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP systemToggleIcon_QzmC"><path fill="currentColor" d="m12 21c4.971 0 9-4.029 9-9s-4.029-9-9-9-9 4.029-9 9 4.029 9 9 9zm4.95-13.95c1.313 1.313 2.05 3.093 2.05 4.95s-0.738 3.637-2.05 4.95c-1.313 1.313-3.093 2.05-4.95 2.05v-14c1.857 0 3.637 0.737 4.95 2.05z"></path></svg></button></div><div class="navbarSearchContainer_Bca1"><div class="navbar__search"><span aria-label="expand searchbar" role="button" class="search-icon" tabindex="0"></span><input id="search_input_react" type="search" placeholder="Loading..." aria-label="Search" class="navbar__search-input search-bar" disabled=""></div></div></div></div><div role="presentation" class="navbar-sidebar__backdrop"></div></nav><div id="__docusaurus_skipToContent_fallback" class="theme-layout-main main-wrapper mainWrapper_z2l0 docPageContainer_wNNk"><div class="docPage_Dpn1"><div class="docSidebarContainer_o_re"><div class="sidebar_njMd"><nav aria-label="Docs sidebar" class="menu thin-scrollbar menu_SIkG"><ul class="theme-doc-sidebar-menu menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Actions"><span title="​Actions" class="linkLabel_WmDU">​Actions</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/AdminService"><span title="​Admin​Service" class="linkLabel_WmDU">​Admin​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Analytics"><span title="​Analytics" class="linkLabel_WmDU">​Analytics</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/AnalyticsService"><span title="​Analytics​Service" class="linkLabel_WmDU">​Analytics​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/AnchorDescendants"><span title="​Anchor​Descendants" class="linkLabel_WmDU">​Anchor​Descendants</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/AnimalPen"><span title="​Animal​Pen" class="linkLabel_WmDU">​Animal​Pen</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/AnimalPenBaseClass"><span title="​Animal​Pen​Base​Class" class="linkLabel_WmDU">​Animal​Pen​Base​Class</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Attrify"><span title="​Attrify" class="linkLabel_WmDU">​Attrify</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/AutoCanvasSize"><span title="​Auto​Canvas​Size" class="linkLabel_WmDU">​Auto​Canvas​Size</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/BaseGameMode"><span title="​Base​Game​Mode" class="linkLabel_WmDU">​Base​Game​Mode</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/BaseUtil"><span title="​Base​Util" class="linkLabel_WmDU">​Base​Util</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Bezier"><span title="​Bezier" class="linkLabel_WmDU">​Bezier</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Blur"><span title="​Blur" class="linkLabel_WmDU">​Blur</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Bootstrap"><span title="​Bootstrap" class="linkLabel_WmDU">​Bootstrap</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/BoxService"><span title="​Box​Service" class="linkLabel_WmDU">​Box​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/BuySkillNodeHandler"><span title="​Buy​Skill​Node​Handler" class="linkLabel_WmDU">​Buy​Skill​Node​Handler</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Character"><span title="​Character" class="linkLabel_WmDU">​Character</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/CharacterGrip"><span title="​Character​Grip" class="linkLabel_WmDU">​Character​Grip</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ChatCommand"><span title="​Chat​Command" class="linkLabel_WmDU">​Chat​Command</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ClientState"><span title="​Client​State" class="linkLabel_WmDU">​Client​State</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/CollectionObject"><span title="​Collection​Object" class="linkLabel_WmDU">​Collection​Object</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/CollectionWatcher"><span title="​Collection​Watcher" class="linkLabel_WmDU">​Collection​Watcher</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/CollectionWatcherController"><span title="​Collection​Watcher​Controller" class="linkLabel_WmDU">​Collection​Watcher​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/CollisionService"><span title="​Collision​Service" class="linkLabel_WmDU">​Collision​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Colors"><span title="​Colors" class="linkLabel_WmDU">​Colors</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ConeCast"><span title="​Cone​Cast" class="linkLabel_WmDU">​Cone​Cast</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Confetti"><span title="​Confetti" class="linkLabel_WmDU">​Confetti</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ControlsData"><span title="​Controls​Data" class="linkLabel_WmDU">​Controls​Data</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Cooldown"><span title="​Cooldown" class="linkLabel_WmDU">​Cooldown</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/CoreService"><span title="​Core​Service" class="linkLabel_WmDU">​Core​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/CoreState"><span title="​Core​State" class="linkLabel_WmDU">​Core​State</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/CosmeticService"><span title="​Cosmetic​Service" class="linkLabel_WmDU">​Cosmetic​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/CreateCharacterWeld"><span title="​Create​Character​Weld" class="linkLabel_WmDU">​Create​Character​Weld</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/CreateFullViewport"><span title="​Create​Full​Viewport" class="linkLabel_WmDU">​Create​Full​Viewport</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/CreateNumberTween"><span title="​Create​Number​Tween" class="linkLabel_WmDU">​Create​Number​Tween</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/CreateTween"><span title="​Create​Tween" class="linkLabel_WmDU">​Create​Tween</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/CreateWeld"><span title="​Create​Weld" class="linkLabel_WmDU">​Create​Weld</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/CropTypes"><span title="​Crop​Types" class="linkLabel_WmDU">​Crop​Types</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/CrownGrab"><span title="​Crown​Grab" class="linkLabel_WmDU">​Crown​Grab</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/CurrencyService"><span title="​Currency​Service" class="linkLabel_WmDU">​Currency​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/DailyRewards"><span title="​Daily​Rewards" class="linkLabel_WmDU">​Daily​Rewards</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/DailyRotationService"><span title="​Daily​Rotation​Service" class="linkLabel_WmDU">​Daily​Rotation​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/DataController"><span title="​Data​Controller" class="linkLabel_WmDU">​Data​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/DefaultProps"><span title="​Default​Props" class="linkLabel_WmDU">​Default​Props</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Device"><span title="​Device" class="linkLabel_WmDU">​Device</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/DocumentDB"><span title="​Document​D​B" class="linkLabel_WmDU">​Document​D​B</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/DodgeTheTeapots"><span title="​Dodge​The​Teapots" class="linkLabel_WmDU">​Dodge​The​Teapots</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Door"><span title="​Door" class="linkLabel_WmDU">​Door</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/DropsController"><span title="​Drops​Controller" class="linkLabel_WmDU">​Drops​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Effects"><span title="​Effects" class="linkLabel_WmDU">​Effects</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/FeatureFlags"><span title="​Feature​Flags" class="linkLabel_WmDU">​Feature​Flags</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/GameService"><span title="​Game​Service" class="linkLabel_WmDU">​Game​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/GearController"><span title="​Gear​Controller" class="linkLabel_WmDU">​Gear​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/GearDebugService"><span title="​Gear​Debug​Service" class="linkLabel_WmDU">​Gear​Debug​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/GearService"><span title="​Gear​Service" class="linkLabel_WmDU">​Gear​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/GearkitSetup"><span title="​Gearkit​Setup" class="linkLabel_WmDU">​Gearkit​Setup</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/HealthBar"><span title="​Health​Bar" class="linkLabel_WmDU">​Health​Bar</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/HighlightedPrompt"><span title="​Highlighted​Prompt" class="linkLabel_WmDU">​Highlighted​Prompt</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/InstanceSync"><span title="​Instance​Sync" class="linkLabel_WmDU">​Instance​Sync</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/InventoryHandler"><span title="​Inventory​Handler" class="linkLabel_WmDU">​Inventory​Handler</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/InventoryService"><span title="​Inventory​Service" class="linkLabel_WmDU">​Inventory​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/InventoryTypes"><span title="​Inventory​Types" class="linkLabel_WmDU">​Inventory​Types</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/InventoryUtil"><span title="​Inventory​Util" class="linkLabel_WmDU">​Inventory​Util</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/InviteFriends"><span title="​Invite​Friends" class="linkLabel_WmDU">​Invite​Friends</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ItemProcessor"><span title="​Item​Processor" class="linkLabel_WmDU">​Item​Processor</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ItemSlotIcon"><span title="​Item​Slot​Icon" class="linkLabel_WmDU">​Item​Slot​Icon</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ItemTypes"><span title="​Item​Types" class="linkLabel_WmDU">​Item​Types</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/LeaderboardService"><span title="​Leaderboard​Service" class="linkLabel_WmDU">​Leaderboard​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Leaderstats"><span title="​Leaderstats" class="linkLabel_WmDU">​Leaderstats</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Level"><span title="​Level" class="linkLabel_WmDU">​Level</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/LevelService"><span title="​Level​Service" class="linkLabel_WmDU">​Level​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/LevelTeleport"><span title="​Level​Teleport" class="linkLabel_WmDU">​Level​Teleport</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ListenForKey"><span title="​Listen​For​Key" class="linkLabel_WmDU">​Listen​For​Key</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/MarketplaceData"><span title="​Marketplace​Data" class="linkLabel_WmDU">​Marketplace​Data</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/MarketplaceService"><span title="​Marketplace​Service" class="linkLabel_WmDU">​Marketplace​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/MemoryStoreService"><span title="​Memory​Store​Service" class="linkLabel_WmDU">​Memory​Store​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/MessageController"><span title="​Message​Controller" class="linkLabel_WmDU">​Message​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/MineablesController"><span title="​Mineables​Controller" class="linkLabel_WmDU">​Mineables​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/MinigameData"><span title="​Minigame​Data" class="linkLabel_WmDU">​Minigame​Data</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/MinigameService"><span title="​Minigame​Service" class="linkLabel_WmDU">​Minigame​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/MinigameUtil"><span title="​Minigame​Util" class="linkLabel_WmDU">​Minigame​Util</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Minigames"><span title="​Minigames" class="linkLabel_WmDU">​Minigames</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ModelWrap"><span title="​Model​Wrap" class="linkLabel_WmDU">​Model​Wrap</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Monetization"><span title="​Monetization" class="linkLabel_WmDU">​Monetization</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/MonetizationController"><span title="​Monetization​Controller" class="linkLabel_WmDU">​Monetization​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/MonetizationService"><span title="​Monetization​Service" class="linkLabel_WmDU">​Monetization​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/MurderEscape"><span title="​Murder​Escape" class="linkLabel_WmDU">​Murder​Escape</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/NPC"><span title="​N​P​C" class="linkLabel_WmDU">​N​P​C</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/NavigationController"><span title="​Navigation​Controller" class="linkLabel_WmDU">​Navigation​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Nuisance"><span title="​Nuisance" class="linkLabel_WmDU">​Nuisance</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/OrderedDB"><span title="​Ordered​D​B" class="linkLabel_WmDU">​Ordered​D​B</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/PlaceUtility"><span title="​Place​Utility" class="linkLabel_WmDU">​Place​Utility</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/PlaySFX"><span title="​Play​S​F​X" class="linkLabel_WmDU">​Play​S​F​X</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/PlayerOverhead"><span title="​Player​Overhead" class="linkLabel_WmDU">​Player​Overhead</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/PlayerService"><span title="​Player​Service" class="linkLabel_WmDU">​Player​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/PlayerState"><span title="​Player​State" class="linkLabel_WmDU">​Player​State</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/PoissonDisk"><span title="​Poisson​Disk" class="linkLabel_WmDU">​Poisson​Disk</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ProfileService"><span title="​Profile​Service" class="linkLabel_WmDU">​Profile​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ProfileTypes"><span title="​Profile​Types" class="linkLabel_WmDU">​Profile​Types</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ProgressBar"><span title="​Progress​Bar" class="linkLabel_WmDU">​Progress​Bar</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/PropBaseClass"><span title="​Prop​Base​Class" class="linkLabel_WmDU">​Prop​Base​Class</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/PropTypes"><span title="​Prop​Types" class="linkLabel_WmDU">​Prop​Types</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/QueueService"><span title="​Queue​Service" class="linkLabel_WmDU">​Queue​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/RandomizeYOrientation"><span title="​Randomize​Y​Orientation" class="linkLabel_WmDU">​Randomize​Y​Orientation</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Range"><span title="​Range" class="linkLabel_WmDU">​Range</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/RarityData"><span title="​Rarity​Data" class="linkLabel_WmDU">​Rarity​Data</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Rng"><span title="​Rng" class="linkLabel_WmDU">​Rng</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Round"><span title="​Round" class="linkLabel_WmDU">​Round</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Router"><span title="​Router" class="linkLabel_WmDU">​Router</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/RunMode"><span title="​Run​Mode" class="linkLabel_WmDU">​Run​Mode</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/SafeSet"><span title="​Safe​Set" class="linkLabel_WmDU">​Safe​Set</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Sanitation"><span title="​Sanitation" class="linkLabel_WmDU">​Sanitation</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ScaleTween"><span title="​Scale​Tween" class="linkLabel_WmDU">​Scale​Tween</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ScalingButton"><span title="​Scaling​Button" class="linkLabel_WmDU">​Scaling​Button</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/SeasonData"><span title="​Season​Data" class="linkLabel_WmDU">​Season​Data</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/SeasonService"><span title="​Season​Service" class="linkLabel_WmDU">​Season​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/SecurityController"><span title="​Security​Controller" class="linkLabel_WmDU">​Security​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/SecurityService"><span title="​Security​Service" class="linkLabel_WmDU">​Security​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ShopController"><span title="​Shop​Controller" class="linkLabel_WmDU">​Shop​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ShopHandler"><span title="​Shop​Handler" class="linkLabel_WmDU">​Shop​Handler</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ShopItems"><span title="​Shop​Items" class="linkLabel_WmDU">​Shop​Items</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ShopService"><span title="​Shop​Service" class="linkLabel_WmDU">​Shop​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/ShopTypes"><span title="​Shop​Types" class="linkLabel_WmDU">​Shop​Types</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Shuffle"><span title="​Shuffle" class="linkLabel_WmDU">​Shuffle</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/SkillTreeData"><span title="​Skill​Tree​Data" class="linkLabel_WmDU">​Skill​Tree​Data</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/SkillTreeService"><span title="​Skill​Tree​Service" class="linkLabel_WmDU">​Skill​Tree​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Smoothstep"><span title="​Smoothstep" class="linkLabel_WmDU">​Smoothstep</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/SocialController"><span title="​Social​Controller" class="linkLabel_WmDU">​Social​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Soil"><span title="​Soil" class="linkLabel_WmDU">​Soil</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/SoundController"><span title="​Sound​Controller" class="linkLabel_WmDU">​Sound​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Sounds"><span title="​Sounds" class="linkLabel_WmDU">​Sounds</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Spring"><span title="​Spring" class="linkLabel_WmDU">​Spring</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/StatsController"><span title="​Stats​Controller" class="linkLabel_WmDU">​Stats​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/TeleportPad"><span title="​Teleport​Pad" class="linkLabel_WmDU">​Teleport​Pad</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Town"><span title="​Town" class="linkLabel_WmDU">​Town</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/TrackedPlayerValues"><span title="​Tracked​Player​Values" class="linkLabel_WmDU">​Tracked​Player​Values</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/UITypes"><span title="​U​I​Types" class="linkLabel_WmDU">​U​I​Types</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link menu__link--active" aria-current="page" href="/docs/murder-escape/api/Vehicle"><span title="​Vehicle" class="linkLabel_WmDU">​Vehicle</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/VehicleAttachmentData"><span title="​Vehicle​Attachment​Data" class="linkLabel_WmDU">​Vehicle​Attachment​Data</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/VehicleController"><span title="​Vehicle​Controller" class="linkLabel_WmDU">​Vehicle​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/VehicleService"><span title="​Vehicle​Service" class="linkLabel_WmDU">​Vehicle​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/VehicleTypes"><span title="​Vehicle​Types" class="linkLabel_WmDU">​Vehicle​Types</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/VoteService"><span title="​Vote​Service" class="linkLabel_WmDU">​Vote​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/WaitForPrimaryPart"><span title="​Wait​For​Primary​Part" class="linkLabel_WmDU">​Wait​For​Primary​Part</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Zombie"><span title="​Zombie" class="linkLabel_WmDU">​Zombie</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/Zone"><span title="​Zone" class="linkLabel_WmDU">​Zone</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/adjustValueByUserPriceLevel"><span title="adjust​Value​By​User​Price​Level" class="linkLabel_WmDU">adjust​Value​By​User​Price​Level</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/breakJoints"><span title="break​Joints" class="linkLabel_WmDU">break​Joints</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/getFirstTaggedDescendant"><span title="get​First​Tagged​Descendant" class="linkLabel_WmDU">get​First​Tagged​Descendant</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/getFriendsInServer"><span title="get​Friends​In​Server" class="linkLabel_WmDU">get​Friends​In​Server</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/getPriceLevel"><span title="get​Price​Level" class="linkLabel_WmDU">get​Price​Level</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/getProductInfo"><span title="get​Product​Info" class="linkLabel_WmDU">get​Product​Info</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/quantityToUrgencyText"><span title="quantity​To​Urgency​Text" class="linkLabel_WmDU">quantity​To​Urgency​Text</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/murder-escape/api/spawnParticle"><span title="spawn​Particle" class="linkLabel_WmDU">spawn​Particle</span></a></li></ul></nav></div></div><main class="docMainContainer_HJE1"><div class="container padding-vert--lg"><div class="row"><div class="col docItemCol_MU3C"><div class="docItemContainer_Wv98"><article><div class="member_J0w1 markdown"><div class="tocCollapsible_ETCw theme-doc-toc-mobile tocMobile_oUs_"><button type="button" class="clean-btn tocCollapsibleButton_TO0P">On this page</button></div><header><h1 class="docTitle_mZRt" style="text-decoration:none"><span style="display:inline-block">Vehicle</span></h1><div class="luaClassTags_EipM"><span class="badge_Ba2I" style="color:#00CC67"><span class="badgeTooltip_cWXP">This item only works when running on the server.</span><span class="badgeToolTipTail_H9D_"><svg fill="#00CC67" xmlns="http://www.w3.org/2000/svg" version="1.1" x="0px" y="0px" viewBox="0 0 90 90" role="img" aria-label="This item only works when running on the server."><polygon points="6.125,72.421 58.544,88.523 58.544,24.372 6.125,8.269 "></polygon><polygon points="79.818,15.77 79.868,15.755 29.615,1.453 10.328,6.318 60.102,21.609 "></polygon><path d="M61.643,78.738l22.232-6.582V17.801l-22.232,6.584V78.738z M73.811,69.257c-1.174,0-2.125-1.19-2.125-2.659  c0-1.468,0.951-2.658,2.125-2.658c1.172,0,2.123,1.19,2.123,2.658C75.934,68.066,74.982,69.257,73.811,69.257z M64.898,32.121  l16.336-4.41v7.117l-16.336,4.409V32.121z M64.898,41.292l16.336-4.41v7.116l-16.336,4.409V41.292z M64.898,50.463l16.336-4.411  v7.116l-16.336,4.411V50.463z"></path><polygon points="83.875,74.893 61.643,81.477 61.643,88.547 83.875,81.963 "></polygon></svg> <!-- -->Server</span></span><span class="docTag__6UZ" style="border-color:#ff5252;color:#ff5252">dormant</span></div><div>
+<p>
+  Manages a single vehicle instance: spawning, seat occupancy,
+  collision setup, despawn timer, and cleanup.
+</p>
+<p>
+  One instance wraps one car model. Instances are registered in a module-level
+  <code>Model → Vehicle</code> cache so any code holding just the model can recover the
+  wrapper with <a href="/docs/murder-escape/api/VehicleTypes#Vehicle#getCar">Vehicle.getCar</a> — that is how <a href="/docs/murder-escape/api/VehicleService">VehicleService</a> gets from its
+  <code>player → Model</code> map to the behaviour on this class.
+</p>
+<h3>Network ownership is the whole design</h3>
+<p>
+  Physics is simulated by the driver's client. Taking the driver's seat hands
+  that client network ownership of the assembly; leaving it reclaims ownership
+  for the server. The reclaim sequence in <a href="/docs/murder-escape/api/VehicleTypes#Vehicle#OnOccupantChanged">Vehicle:OnOccupantChanged</a> is
+  deliberately fussy — sever the character's weld first, zero the wheel
+  velocities the client was driving, then un-anchor → <code>SetNetworkOwner(nil)</code> →
+  re-anchor, and only 0.1s later zero the assembly velocity and release. Each
+  step exists to stop a specific artefact: dragging the character with the car,
+  wheels spinning forever at their last commanded velocity, and the vehicle
+  clipping through the floor as the server resolves a position it did not
+  simulate.
+</p>
+<h3>Collision groups</h3>
+<p>
+  Set up once at require time: <code>CarDetail</code> ignores both the body and the wheels,
+  and <code>CarWheel</code> ignores <code>CarBody</code> — the constraints already position the wheels,
+  so letting them collide with the body only produces jitter.
+</p>
+<h3>Suspension</h3>
+<p>
+  Spring stiffness and damping are computed from the assembly's real mass, one
+  frame after parenting (<code>task.defer</code>, because <code>AssemblyMass</code> is not meaningful
+  until then). Stiffness is sized so the car sags exactly
+  <code>SUSPENSION_TARGET_SAG</code> studs at rest, and damping from the standard
+  <code>2ζ√(km)</code> relation at <code>SUSPENSION_DAMPING_RATIO</code>. Tuning against measured mass
+  rather than fixed numbers means adding attachments or passengers does not
+  bottom the car out.
+</p>
+<h3>Ejection</h3>
+<p>
+  Every exit path routes through the same helper, which projects the exit
+  direction onto the XZ plane (so a flipped car does not eject downward),
+  raycasts for ground, falls back to the vehicle's roof if there is none, and
+  clamps to <code>MIN_EJECT_Y</code> as a last resort against dropping players through the
+  world.
+</p>
+<p>
+  Gated by <a href="/docs/murder-escape/api/FeatureFlags">FeatureFlags</a>.Vehicle — disabled by default; per-project forks enable
+  it deliberately.
+</p>
+<p>
+  Copyright (c) 2026 firebit. All rights reserved.
+  firebit/murder-escape - proprietary and confidential.
+</p>
+</div></header><h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="types">Types<a href="#types" class="hash-link" aria-label="Direct link to Types" title="Direct link to Types" translate="no">​</a></h2><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="Vehicle"><code style="text-decoration:none">Vehicle</code><a href="#Vehicle" class="hash-link" aria-label="Direct link to Vehicle" title="Direct link to Vehicle" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Server/Features/Vehicle/Class/Vehicle.luau#L147"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>Vehicle<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>car<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/Model" target="_blank" rel="noopener noreferrer">Model<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
+<p>The spawned car model</p>
+</span></span></div><div><code>driverSeat<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/VehicleSeat" target="_blank" rel="noopener noreferrer">VehicleSeat<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
+<p>Required; construction fails without it</p>
+</span></span></div><div><code>passengerSeat<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/VehicleSeat" target="_blank" rel="noopener noreferrer">VehicleSeat<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
+<p>Optional in practice; may be nil on a one-seat model</p>
+</span></span></div><div><code>body<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/BasePart" target="_blank" rel="noopener noreferrer">BasePart<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
+<p>The car's <code>Body</code> part</p>
+</span></span></div><div><code>locked<!-- -->: </code><code class="blue_P4bS">boolean</code><span class="inlineDescription_G7Er">-- <span>
+<p>While true, nobody may sit down</p>
+</span></span></div><div><code>maid<!-- -->: </code><code class="blue_P4bS">Maid</code><span class="inlineDescription_G7Er">-- <span>
+<p>Owns the model and every connection</p>
+</span></span></div><div><code>owner<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/Player" target="_blank" rel="noopener noreferrer">Player?<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
+<p>Whose vehicle this is; nil for a public vehicle</p>
+</span></span></div><div><code>occupiedDriver<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/Player" target="_blank" rel="noopener noreferrer">Player?<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
+<p>Current driver</p>
+</span></span></div><div><code>occupiedPassenger<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/Player" target="_blank" rel="noopener noreferrer">Player?<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
+<p>Current passenger</p>
+</span></span></div><div><code>occupiedSignal<!-- -->: </code><code class="blue_P4bS">Signal</code><span class="inlineDescription_G7Er">-- <span>
+<p>(player, "StartControl" | "StopControl")</p>
+</span></span></div><div><code>attachments<!-- -->: </code><code class="purple_ieR2">{</code><span><code>[</code><code class="blue_P4bS">string</code><code>]</code></span><code>: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/Model" target="_blank" rel="noopener noreferrer">Model<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code class="purple_ieR2">}</code><span class="inlineDescription_G7Er">-- <span>
+<p>Slot type to attached model</p>
+</span></span></div><div><code>ownerOnly<!-- -->: </code><code class="blue_P4bS">boolean</code><span class="inlineDescription_G7Er">-- <span>
+<p>Restrict the driver's seat to <code>owner</code></p>
+</span></span></div><div><code>lastSatInCar<!-- -->: </code><code class="blue_P4bS">number</code><span class="inlineDescription_G7Er">-- <span>
+<p>Server time of the last seat entry; debounces the prompt</p>
+</span></span></div><div><code>timerThread<!-- -->: </code><code class="blue_P4bS">thread?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Pending idle-despawn timer</p>
+</span></span></div></div><code>}</code></div><div>
+<p>Instance shape of a server-side vehicle.</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="VehicleConfig"><code style="text-decoration:none">VehicleConfig</code><a href="#VehicleConfig" class="hash-link" aria-label="Direct link to VehicleConfig" title="Direct link to VehicleConfig" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Server/Features/Vehicle/Class/Vehicle.luau#L459"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>VehicleConfig<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>owner<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/Player" target="_blank" rel="noopener noreferrer">Player?<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
+<p>Whose vehicle this is; also the reference point for auto-placement</p>
+</span></span></div><div><code>ownerOnly<!-- -->: </code><code class="blue_P4bS">boolean?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Restrict the driver's seat to the owner (default false)</p>
+</span></span></div><div><code>spawnCFrame<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/CFrame" target="_blank" rel="noopener noreferrer">CFrame?<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
+<p>Explicit placement, skipping the ground/clearance search</p>
+</span></span></div></div><code>}</code></div><div>
+<p>
+  Construction options for <a href="/docs/murder-escape/api/VehicleTypes#Vehicle#new">Vehicle.new</a>. Supplying <code>spawnCFrame</code> bypasses
+  placement resolution entirely, which is how a vehicle can be spawned somewhere
+  no player is standing.
+</p>
+</div><h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="functions">Functions<a href="#functions" class="hash-link" aria-label="Direct link to Functions" title="Direct link to Functions" translate="no">​</a></h2><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="getCar"><code style="text-decoration:none">getCar</code><a href="#getCar" class="hash-link" aria-label="Direct link to getCar" title="Direct link to getCar" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Server/Features/Vehicle/Class/Vehicle.luau#L402"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>Vehicle<!-- -->.</code><code class="green_DgR4">getCar</code><code>(</code><code>model<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/Model" target="_blank" rel="noopener noreferrer">Model<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/docs/murder-escape/api/VehicleTypes#Vehicle">Vehicle?</a></code></div><div>
+<p>
+  Recovers the Vehicle wrapper for a car model from the module cache, or <code>nil</code>
+  if the model is not a live vehicle. The bridge every caller holding only a
+  model uses to reach this class's methods.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="getCarModel"><code style="text-decoration:none">getCarModel</code><a href="#getCarModel" class="hash-link" aria-label="Direct link to getCarModel" title="Direct link to getCarModel" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Server/Features/Vehicle/Class/Vehicle.luau#L416"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>Vehicle<!-- -->.</code><code class="green_DgR4">getCarModel</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/Model" target="_blank" rel="noopener noreferrer">Model<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code></div><div>
+<p>
+  Returns the shared car template from <code>Assets.Vehicles.Car</code>. This is the
+  original, not a clone — read it for bounding-box measurements, do not modify
+  it.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="getRaycastParams"><code style="text-decoration:none">getRaycastParams</code><a href="#getRaycastParams" class="hash-link" aria-label="Direct link to getRaycastParams" title="Direct link to getRaycastParams" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Server/Features/Vehicle/Class/Vehicle.luau#L430"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>Vehicle<!-- -->.</code><code class="green_DgR4">getRaycastParams</code><code>(</code><code>) → </code><code class="blue_P4bS">RaycastParams</code></div><div>
+<p>
+  Returns the shared raycast params used for spawn ground-finding, filtered
+  against <code>Spawner</code>- and <code>Water</code>-tagged instances so neither counts as ground.
+  Kept in sync as those tags come and go.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="getOverlapParams"><code style="text-decoration:none">getOverlapParams</code><a href="#getOverlapParams" class="hash-link" aria-label="Direct link to getOverlapParams" title="Direct link to getOverlapParams" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Server/Features/Vehicle/Class/Vehicle.luau#L444"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>Vehicle<!-- -->.</code><code class="green_DgR4">getOverlapParams</code><code>(</code><code>) → </code><code class="blue_P4bS">OverlapParams</code></div><div>
+<p>
+  Returns the shared overlap params used for the spawn clearance check, filtered
+  the same way as <a href="/docs/murder-escape/api/VehicleTypes#Vehicle#getRaycastParams">Vehicle.getRaycastParams</a> and capped at one result since any
+  single hit is enough to reject a spot.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="new"><code style="text-decoration:none">new</code><a href="#new" class="hash-link" aria-label="Direct link to new" title="Direct link to new" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Server/Features/Vehicle/Class/Vehicle.luau#L493"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>Vehicle<!-- -->.</code><code class="green_DgR4">new</code><code>(</code><div class="inset_uKQm"><div><code>config<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/docs/murder-escape/api/Vehicle#VehicleConfig">VehicleConfig?</a></code><span class="inlineDescription_G7Er">-- <span>
+<p>Defaults to an unowned vehicle with no placement</p>
+</span></span></div></div><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/docs/murder-escape/api/VehicleTypes#Vehicle">Vehicle?</a></code></div><div>
+<p>Spawns a vehicle, or returns <code>nil</code> if it cannot be placed.</p>
+<p>
+  Placement is either the supplied <code>spawnCFrame</code> or, for an owned vehicle,
+  resolved from the owner's character: a point <code>SPAWN_DISTANCE</code> studs ahead is
+  raycast down for ground, and a temporary box the size of the car's bounding
+  box is overlap-tested for clearance. Either failing returns <code>nil</code>. This
+  repeats the check <a href="/docs/murder-escape/api/VehicleController#spawn">VehicleController.spawn</a> already ran on the client, because
+  the client's answer is advisory.
+</p>
+<p>Setup, in order:</p>
+<ul>
+  <li>Clone and tag the model, stamp <code>OwnerId</code> and a <code>SpeedMultiplier</code> of 1.</li>
+  <li>
+    Nudge the driver's <code>SeatWeld</code> via the seat attachment so the character sits
+    at the wheel rather than at the seat part's raw origin.
+  </li>
+  <li>
+    Wire seat <code>Occupant</code> listeners and the enter prompt (itself debounced to one
+    entry per second).
+  </li>
+  <li>
+    Assign collision groups: <code>Details</code> → <code>CarDetail</code>, <code>DBO</code> parts → <code>CarBody</code>,
+    and every part carrying a <code>CylindricalConstraint</code> attachment → <code>CarWheel</code>
+    with high-friction physical properties so the wheels actually grip.
+  </li>
+  <li>
+    Parent to the Workspace, then <code>task.defer</code> the mass-derived suspension
+    tuning described on <a href="/docs/murder-escape/api/VehicleTypes#Vehicle">Vehicle</a>.
+  </li>
+</ul>
+<p>Returns <code>nil</code> without side effects if the model has no <code>DriverSeat</code>.</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="StartTimer"><code style="text-decoration:none">StartTimer</code><a href="#StartTimer" class="hash-link" aria-label="Direct link to StartTimer" title="Direct link to StartTimer" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Server/Features/Vehicle/Class/Vehicle.luau#L791"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>Vehicle<!-- -->:</code><code class="green_DgR4">StartTimer</code><code>(</code><code>) → </code><code>(</code><code>)</code></div><div>
+<p>
+  Arms the idle-despawn timer, which runs <code>DESPAWN_TIME</code> after the vehicle is
+  spawned or vacated. <a href="/docs/murder-escape/api/VehicleTypes#Vehicle#StopTimer">Vehicle:StopTimer</a> cancels it when someone gets in.
+</p>
+
+  
+    
+    
+      <div class="admonition admonition-note alert alert--secondary">
+        <div class="admonition-heading">
+          <h5><span class="admonition-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="16" viewBox="0 0 14 16">
+                <path d="M6.3 5.69a.942.942 0 0 1-.28-.7c0-.28.09-.52.28-.7.19-.18.42-.28.7-.28.28 0 .52.09.7.28.18.19.28.42.28.7 0 .28-.09.52-.28.7a1 1 0 0 1-.7.3c-.28 0-.52-.11-.7-.3zM8 7.99c-.02-.25-.11-.48-.31-.69-.2-.19-.42-.3-.69-.31H6c-.27.02-.48.13-.69.31-.2.2-.3.44-.31.69h1v3c.02.27.11.5.31.69.2.2.42.31.69.31h1c.27 0 .48-.11.69-.31.2-.19.3-.42.31-.69H8V7.98v.01zM7 2.3c-3.14 0-5.7 2.54-5.7 5.68 0 3.14 2.56 5.7 5.7 5.7s5.7-2.55 5.7-5.7c0-3.15-2.56-5.69-5.7-5.69v.01zM7 .98c3.86 0 7 3.14 7 7s-3.14 7-7 7-7-3.12-7-7 3.14-7 7-7z"></path>
+              </svg></span><span class="admonition-title">NOTE</span></h5>
+        </div>
+        <div class="admonition-content">
+          <p>
+            The timer body is commented out, so the vehicle is never actually despawned —
+            the scheduling is live but the effect is disabled. Re-enabling it requires
+            calling back into <a href="/docs/murder-escape/api/VehicleService">VehicleService</a>, which is why it was stubbed: this class
+            does not import that service.
+          </p>
+        </div>
+      </div>
+    
+  
+
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="StopTimer"><code style="text-decoration:none">StopTimer</code><a href="#StopTimer" class="hash-link" aria-label="Direct link to StopTimer" title="Direct link to StopTimer" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Server/Features/Vehicle/Class/Vehicle.luau#L803"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>Vehicle<!-- -->:</code><code class="green_DgR4">StopTimer</code><code>(</code><code>) → </code><code>(</code><code>)</code></div><div>
+<p>Cancels a pending idle-despawn timer, if any.</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="OnOccupantChanged"><code style="text-decoration:none">OnOccupantChanged</code><a href="#OnOccupantChanged" class="hash-link" aria-label="Direct link to OnOccupantChanged" title="Direct link to OnOccupantChanged" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Server/Features/Vehicle/Class/Vehicle.luau#L833"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>Vehicle<!-- -->:</code><code class="green_DgR4">OnOccupantChanged</code><code>(</code><div class="inset_uKQm"><div><code>seat<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/VehicleSeat" target="_blank" rel="noopener noreferrer">VehicleSeat<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
+<p>The seat whose occupancy changed</p>
+</span></span></div></div><code>) → </code><code>(</code><code>)</code></div><div>
+<p>
+  Handles a seat's <code>Occupant</code> changing — the voluntary-exit path, as opposed to
+  the forced <code>Eject*</code> methods.
+</p>
+<p>
+  The enter prompt is toggled to match occupancy, and the idle-despawn timer is
+  stopped while someone is driving and restarted once the vehicle empties.
+</p>
+<p>
+  A departing <strong>driver</strong> triggers the full handover described on [Vehicle]: fire
+  <code>StopControl</code>, brake, sever the character's weld, zero the wheel velocities the
+  client was commanding, reclaim network ownership through the
+  un-anchor/set/re-anchor dance, place the character on the ground to the car's
+  left, zero their velocity so they do not inherit the car's momentum, and stop
+  the idle engine sound.
+</p>
+<p>A departing <strong>passenger</strong> is simply placed on the right-hand side.</p>
+<p>Either way the character's collision is restored on the way out.</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="EnterDriverSeat"><code style="text-decoration:none">EnterDriverSeat</code><a href="#EnterDriverSeat" class="hash-link" aria-label="Direct link to EnterDriverSeat" title="Direct link to EnterDriverSeat" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Server/Features/Vehicle/Class/Vehicle.luau#L945"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>Vehicle<!-- -->:</code><code class="green_DgR4">EnterDriverSeat</code><code>(</code><code>player<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/Player" target="_blank" rel="noopener noreferrer">Player<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code>) → </code><code>(</code><code>)</code></div><div>
+<p>
+  Seats a player as the driver. Refuses if the seat is taken, or if <code>ownerOnly</code>
+  is set and they are not the owner.
+</p>
+<p>
+  Grants the player network ownership of the assembly before seating them —
+  this is what makes their client the physics authority, and the vehicle must be
+  un-anchored first for the grant to take.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="EnterPassengerSeat"><code style="text-decoration:none">EnterPassengerSeat</code><a href="#EnterPassengerSeat" class="hash-link" aria-label="Direct link to EnterPassengerSeat" title="Direct link to EnterPassengerSeat" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Server/Features/Vehicle/Class/Vehicle.luau#L971"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>Vehicle<!-- -->:</code><code class="green_DgR4">EnterPassengerSeat</code><code>(</code><code>player<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/Player" target="_blank" rel="noopener noreferrer">Player<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code>) → </code><code>(</code><code>)</code></div><div>
+<p>
+  Seats a player as the passenger. Refuses if there is no passenger seat or it
+  is occupied. Passengers get no network ownership and no control.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="getSeatedPlayers"><code style="text-decoration:none">getSeatedPlayers</code><a href="#getSeatedPlayers" class="hash-link" aria-label="Direct link to getSeatedPlayers" title="Direct link to getSeatedPlayers" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Server/Features/Vehicle/Class/Vehicle.luau#L989"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>Vehicle<!-- -->:</code><code class="green_DgR4">getSeatedPlayers</code><code>(</code><code>) → </code><code class="purple_ieR2">{</code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/Player" target="_blank" rel="noopener noreferrer">Player<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code class="purple_ieR2">}</code></div><div>
+<p>
+  Every player currently seated in this vehicle: the driver (if any)
+  followed by the passenger. Only players who boarded through the enter
+  handlers are known — engine touch-seated characters are untracked.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="AttachAttachment"><code style="text-decoration:none">AttachAttachment</code><a href="#AttachAttachment" class="hash-link" aria-label="Direct link to AttachAttachment" title="Direct link to AttachAttachment" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Server/Features/Vehicle/Class/Vehicle.luau#L1022"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>Vehicle<!-- -->:</code><code class="green_DgR4">AttachAttachment</code><code>(</code><div class="inset_uKQm"><div><code>attachmentType<!-- -->: </code><code class="blue_P4bS">string</code><code>,</code><span class="inlineDescription_G7Er">-- <span>
+<p>Slot name; also the attachment point prefix</p>
+</span></span></div><div><code>attachmentModel<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/Model" target="_blank" rel="noopener noreferrer">Model<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
+<p>Template to clone; needs a PrimaryPart</p>
+</span></span></div></div><code>) → </code><code class="blue_P4bS">boolean</code><span class="inlineDescription_G7Er">-- <span>
+<p>Whether it was attached</p>
+</span></span></div><div>
+<p>
+  Clones <code>attachmentModel</code> onto the vehicle at the platform attachment named
+  <code>&#x3C;attachmentType>Attachment</code>, welds it to the platform and records it in the
+  slot.
+</p>
+<p>
+  Refuses if the slot is already filled — <a href="/docs/murder-escape/api/VehicleService#equipAttachment">VehicleService:equipAttachment</a>
+  removes the incumbent first — and warns and refuses if the model has no
+  PrimaryPart or the named attachment point does not exist.
+</p>
+<p>
+  Every part of the clone is put on the <code>CarBody</code> collision group so an
+  attachment cannot collide with the car it is bolted to.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="RemoveAttachment"><code style="text-decoration:none">RemoveAttachment</code><a href="#RemoveAttachment" class="hash-link" aria-label="Direct link to RemoveAttachment" title="Direct link to RemoveAttachment" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Server/Features/Vehicle/Class/Vehicle.luau#L1086"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>Vehicle<!-- -->:</code><code class="green_DgR4">RemoveAttachment</code><code>(</code><code>attachmentType<!-- -->: </code><code class="blue_P4bS">string</code><code>) → </code><code class="blue_P4bS">boolean</code><span class="inlineDescription_G7Er">-- <span>
+<p><code>false</code> if the slot was already empty</p>
+</span></span></div><div>
+<p>Destroys the attachment in a slot and clears it.</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="GetAttachment"><code style="text-decoration:none">GetAttachment</code><a href="#GetAttachment" class="hash-link" aria-label="Direct link to GetAttachment" title="Direct link to GetAttachment" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Server/Features/Vehicle/Class/Vehicle.luau#L1108"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>Vehicle<!-- -->:</code><code class="green_DgR4">GetAttachment</code><code>(</code><code>attachmentType<!-- -->: </code><code class="blue_P4bS">string</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/Model" target="_blank" rel="noopener noreferrer">Model?<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code></div><div>
+<p>Returns the model in a slot, or <code>nil</code>.</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="GetAllAttachments"><code style="text-decoration:none">GetAllAttachments</code><a href="#GetAllAttachments" class="hash-link" aria-label="Direct link to GetAllAttachments" title="Direct link to GetAllAttachments" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Server/Features/Vehicle/Class/Vehicle.luau#L1120"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>Vehicle<!-- -->:</code><code class="green_DgR4">GetAllAttachments</code><code>(</code><code>) → </code><code class="purple_ieR2">{</code><span><code>[</code><code class="blue_P4bS">string</code><code>]</code></span><code>: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/Model" target="_blank" rel="noopener noreferrer">Model<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code class="purple_ieR2">}</code></div><div>
+<p>Returns the live slot-to-model map. Not a copy — do not mutate it.</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="SetSpeedMultiplier"><code style="text-decoration:none">SetSpeedMultiplier</code><a href="#SetSpeedMultiplier" class="hash-link" aria-label="Direct link to SetSpeedMultiplier" title="Direct link to SetSpeedMultiplier" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Server/Features/Vehicle/Class/Vehicle.luau#L1137"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>Vehicle<!-- -->:</code><code class="green_DgR4">SetSpeedMultiplier</code><code>(</code><div class="inset_uKQm"><div><code>multiplier<!-- -->: </code><code class="blue_P4bS">number</code><span class="inlineDescription_G7Er">-- <span>
+<p>0..1</p>
+</span></span></div></div><code>) → </code><code>(</code><code>)</code></div><div>
+<p>
+  Sets the vehicle's <code>SpeedMultiplier</code> attribute, which the driving client reads
+  every frame to scale its top speed. Using an attribute rather than a remote
+  means the change replicates on its own and applies immediately.
+</p>
+<p>
+  Clamped to 0..1, so this can only slow a vehicle down; 0 is a full stop.
+  No-ops if the vehicle has been unparented.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="Brake"><code style="text-decoration:none">Brake</code><a href="#Brake" class="hash-link" aria-label="Direct link to Brake" title="Direct link to Brake" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Server/Features/Vehicle/Class/Vehicle.luau#L1153"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>Vehicle<!-- -->:</code><code class="green_DgR4">Brake</code><code>(</code><code>) → </code><code>(</code><code>)</code></div><div>
+<p>
+  Stops the vehicle by setting its speed multiplier to 0. The vehicle stays
+  braked until something restores the multiplier — entering the driver's seat
+  resets it to 1.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="EjectDriver"><code style="text-decoration:none">EjectDriver</code><a href="#EjectDriver" class="hash-link" aria-label="Direct link to EjectDriver" title="Direct link to EjectDriver" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Server/Features/Vehicle/Class/Vehicle.luau#L1164"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>Vehicle<!-- -->:</code><code class="green_DgR4">EjectDriver</code><code>(</code><code>) → </code><code>(</code><code>)</code></div><div>
+<p>
+  Forcibly removes the driver, placing them off the car's left side. No-ops if
+  there is no driver.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="EjectPassenger"><code style="text-decoration:none">EjectPassenger</code><a href="#EjectPassenger" class="hash-link" aria-label="Direct link to EjectPassenger" title="Direct link to EjectPassenger" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Server/Features/Vehicle/Class/Vehicle.luau#L1181"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>Vehicle<!-- -->:</code><code class="green_DgR4">EjectPassenger</code><code>(</code><code>) → </code><code>(</code><code>)</code></div><div>
+<p>
+  Forcibly removes the passenger, placing them off the car's right side. No-ops
+  if there is no passenger.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="EjectAll"><code style="text-decoration:none">EjectAll</code><a href="#EjectAll" class="hash-link" aria-label="Direct link to EjectAll" title="Direct link to EjectAll" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Server/Features/Vehicle/Class/Vehicle.luau#L1197"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>Vehicle<!-- -->:</code><code class="green_DgR4">EjectAll</code><code>(</code><code>) → </code><code>(</code><code>)</code></div><div>
+<p>Empties the vehicle — driver and passenger both.</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="EjectPlayer"><code style="text-decoration:none">EjectPlayer</code><a href="#EjectPlayer" class="hash-link" aria-label="Direct link to EjectPlayer" title="Direct link to EjectPlayer" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Server/Features/Vehicle/Class/Vehicle.luau#L1211"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>Vehicle<!-- -->:</code><code class="green_DgR4">EjectPlayer</code><code>(</code><code>player<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/Player" target="_blank" rel="noopener noreferrer">Player<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code>) → </code><code>(</code><code>)</code></div><div>
+<p>
+  Ejects one specific occupant, whichever seat they are in. No-ops if they are
+  not aboard.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="Destroy"><code style="text-decoration:none">Destroy</code><a href="#Destroy" class="hash-link" aria-label="Direct link to Destroy" title="Direct link to Destroy" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Server/Features/Vehicle/Class/Vehicle.luau#L1227"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>Vehicle<!-- -->:</code><code class="green_DgR4">Destroy</code><code>(</code><code>) → </code><code>(</code><code>)</code></div><div>
+<p>
+  Tears the vehicle down: cancels the despawn timer, destroys the model, and
+  destroys the Maid — which also restores collision on any seated characters,
+  drops the entry from the module cache and destroys <code>occupiedSignal</code>.
+</p>
+</div></div></article></div><details><summary>Show raw api</summary><pre style="max-width:100%;white-space:pre-wrap">{
+    &quot;functions&quot;: [
+        {
+            &quot;name&quot;: &quot;getCar&quot;,
+            &quot;desc&quot;: &quot;Recovers the Vehicle wrapper for a car model from the module cache, or `nil`\nif the model is not a live vehicle. The bridge every caller holding only a\nmodel uses to reach this class&#x27;s methods.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;model&quot;,
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;Model&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;Vehicle?&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 402,
+                &quot;path&quot;: &quot;src/Server/Features/Vehicle/Class/Vehicle.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;getCarModel&quot;,
+            &quot;desc&quot;: &quot;Returns the shared car template from `Assets.Vehicles.Car`. This is the\noriginal, not a clone — read it for bounding-box measurements, do not modify\nit.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;Model&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 416,
+                &quot;path&quot;: &quot;src/Server/Features/Vehicle/Class/Vehicle.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;getRaycastParams&quot;,
+            &quot;desc&quot;: &quot;Returns the shared raycast params used for spawn ground-finding, filtered\nagainst `Spawner`- and `Water`-tagged instances so neither counts as ground.\nKept in sync as those tags come and go.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;RaycastParams&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 430,
+                &quot;path&quot;: &quot;src/Server/Features/Vehicle/Class/Vehicle.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;getOverlapParams&quot;,
+            &quot;desc&quot;: &quot;Returns the shared overlap params used for the spawn clearance check, filtered\nthe same way as [Vehicle.getRaycastParams] and capped at one result since any\nsingle hit is enough to reject a spot.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;OverlapParams&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 444,
+                &quot;path&quot;: &quot;src/Server/Features/Vehicle/Class/Vehicle.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;new&quot;,
+            &quot;desc&quot;: &quot;Spawns a vehicle, or returns `nil` if it cannot be placed.\n\nPlacement is either the supplied `spawnCFrame` or, for an owned vehicle,\nresolved from the owner&#x27;s character: a point `SPAWN_DISTANCE` studs ahead is\nraycast down for ground, and a temporary box the size of the car&#x27;s bounding\nbox is overlap-tested for clearance. Either failing returns `nil`. This\nrepeats the check [VehicleController.spawn] already ran on the client, because\nthe client&#x27;s answer is advisory.\n\nSetup, in order:\n\n- Clone and tag the model, stamp `OwnerId` and a `SpeedMultiplier` of 1.\n- Nudge the driver&#x27;s `SeatWeld` via the seat attachment so the character sits\n  at the wheel rather than at the seat part&#x27;s raw origin.\n- Wire seat `Occupant` listeners and the enter prompt (itself debounced to one\n  entry per second).\n- Assign collision groups: `Details` → `CarDetail`, `DBO` parts → `CarBody`,\n  and every part carrying a `CylindricalConstraint` attachment → `CarWheel`\n  with high-friction physical properties so the wheels actually grip.\n- Parent to the Workspace, then `task.defer` the mass-derived suspension\n  tuning described on [Vehicle].\n\nReturns `nil` without side effects if the model has no `DriverSeat`.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;config&quot;,
+                    &quot;desc&quot;: &quot;Defaults to an unowned vehicle with no placement&quot;,
+                    &quot;lua_type&quot;: &quot;VehicleConfig?&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;Vehicle?&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 493,
+                &quot;path&quot;: &quot;src/Server/Features/Vehicle/Class/Vehicle.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;StartTimer&quot;,
+            &quot;desc&quot;: &quot;Arms the idle-despawn timer, which runs `DESPAWN_TIME` after the vehicle is\nspawned or vacated. [Vehicle:StopTimer] cancels it when someone gets in.\n\n:::note\nThe timer body is commented out, so the vehicle is never actually despawned —\nthe scheduling is live but the effect is disabled. Re-enabling it requires\ncalling back into [VehicleService], which is why it was stubbed: this class\ndoes not import that service.\n:::&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 791,
+                &quot;path&quot;: &quot;src/Server/Features/Vehicle/Class/Vehicle.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;StopTimer&quot;,
+            &quot;desc&quot;: &quot;Cancels a pending idle-despawn timer, if any.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 803,
+                &quot;path&quot;: &quot;src/Server/Features/Vehicle/Class/Vehicle.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;OnOccupantChanged&quot;,
+            &quot;desc&quot;: &quot;Handles a seat&#x27;s `Occupant` changing — the voluntary-exit path, as opposed to\nthe forced `Eject*` methods.\n\nThe enter prompt is toggled to match occupancy, and the idle-despawn timer is\nstopped while someone is driving and restarted once the vehicle empties.\n\nA departing **driver** triggers the full handover described on [Vehicle]: fire\n`StopControl`, brake, sever the character&#x27;s weld, zero the wheel velocities the\nclient was commanding, reclaim network ownership through the\nun-anchor/set/re-anchor dance, place the character on the ground to the car&#x27;s\nleft, zero their velocity so they do not inherit the car&#x27;s momentum, and stop\nthe idle engine sound.\n\nA departing **passenger** is simply placed on the right-hand side.\n\nEither way the character&#x27;s collision is restored on the way out.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;seat&quot;,
+                    &quot;desc&quot;: &quot;The seat whose occupancy changed&quot;,
+                    &quot;lua_type&quot;: &quot;VehicleSeat&quot;
+                }
+            ],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 833,
+                &quot;path&quot;: &quot;src/Server/Features/Vehicle/Class/Vehicle.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;EnterDriverSeat&quot;,
+            &quot;desc&quot;: &quot;Seats a player as the driver. Refuses if the seat is taken, or if `ownerOnly`\nis set and they are not the owner.\n\nGrants the player network ownership of the assembly before seating them —\nthis is what makes their client the physics authority, and the vehicle must be\nun-anchored first for the grant to take.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;player&quot;,
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;Player&quot;
+                }
+            ],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 945,
+                &quot;path&quot;: &quot;src/Server/Features/Vehicle/Class/Vehicle.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;EnterPassengerSeat&quot;,
+            &quot;desc&quot;: &quot;Seats a player as the passenger. Refuses if there is no passenger seat or it\nis occupied. Passengers get no network ownership and no control.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;player&quot;,
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;Player&quot;
+                }
+            ],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 971,
+                &quot;path&quot;: &quot;src/Server/Features/Vehicle/Class/Vehicle.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;getSeatedPlayers&quot;,
+            &quot;desc&quot;: &quot;Every player currently seated in this vehicle: the driver (if any)\nfollowed by the passenger. Only players who boarded through the enter\nhandlers are known — engine touch-seated characters are untracked.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;{ Player }&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 989,
+                &quot;path&quot;: &quot;src/Server/Features/Vehicle/Class/Vehicle.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;AttachAttachment&quot;,
+            &quot;desc&quot;: &quot;Clones `attachmentModel` onto the vehicle at the platform attachment named\n`&lt;attachmentType&gt;Attachment`, welds it to the platform and records it in the\nslot.\n\nRefuses if the slot is already filled — [VehicleService:equipAttachment]\nremoves the incumbent first — and warns and refuses if the model has no\nPrimaryPart or the named attachment point does not exist.\n\nEvery part of the clone is put on the `CarBody` collision group so an\nattachment cannot collide with the car it is bolted to.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;attachmentType&quot;,
+                    &quot;desc&quot;: &quot;Slot name; also the attachment point prefix&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;attachmentModel&quot;,
+                    &quot;desc&quot;: &quot;Template to clone; needs a PrimaryPart&quot;,
+                    &quot;lua_type&quot;: &quot;Model&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;Whether it was attached&quot;,
+                    &quot;lua_type&quot;: &quot;boolean&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 1022,
+                &quot;path&quot;: &quot;src/Server/Features/Vehicle/Class/Vehicle.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;RemoveAttachment&quot;,
+            &quot;desc&quot;: &quot;Destroys the attachment in a slot and clears it.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;attachmentType&quot;,
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;`false` if the slot was already empty&quot;,
+                    &quot;lua_type&quot;: &quot;boolean&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 1086,
+                &quot;path&quot;: &quot;src/Server/Features/Vehicle/Class/Vehicle.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;GetAttachment&quot;,
+            &quot;desc&quot;: &quot;Returns the model in a slot, or `nil`.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;attachmentType&quot;,
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;Model?&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 1108,
+                &quot;path&quot;: &quot;src/Server/Features/Vehicle/Class/Vehicle.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;GetAllAttachments&quot;,
+            &quot;desc&quot;: &quot;Returns the live slot-to-model map. Not a copy — do not mutate it.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;{ [string]: Model }&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 1120,
+                &quot;path&quot;: &quot;src/Server/Features/Vehicle/Class/Vehicle.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;SetSpeedMultiplier&quot;,
+            &quot;desc&quot;: &quot;Sets the vehicle&#x27;s `SpeedMultiplier` attribute, which the driving client reads\nevery frame to scale its top speed. Using an attribute rather than a remote\nmeans the change replicates on its own and applies immediately.\n\nClamped to 0..1, so this can only slow a vehicle down; 0 is a full stop.\nNo-ops if the vehicle has been unparented.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;multiplier&quot;,
+                    &quot;desc&quot;: &quot;0..1&quot;,
+                    &quot;lua_type&quot;: &quot;number&quot;
+                }
+            ],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 1137,
+                &quot;path&quot;: &quot;src/Server/Features/Vehicle/Class/Vehicle.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;Brake&quot;,
+            &quot;desc&quot;: &quot;Stops the vehicle by setting its speed multiplier to 0. The vehicle stays\nbraked until something restores the multiplier — entering the driver&#x27;s seat\nresets it to 1.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 1153,
+                &quot;path&quot;: &quot;src/Server/Features/Vehicle/Class/Vehicle.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;EjectDriver&quot;,
+            &quot;desc&quot;: &quot;Forcibly removes the driver, placing them off the car&#x27;s left side. No-ops if\nthere is no driver.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 1164,
+                &quot;path&quot;: &quot;src/Server/Features/Vehicle/Class/Vehicle.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;EjectPassenger&quot;,
+            &quot;desc&quot;: &quot;Forcibly removes the passenger, placing them off the car&#x27;s right side. No-ops\nif there is no passenger.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 1181,
+                &quot;path&quot;: &quot;src/Server/Features/Vehicle/Class/Vehicle.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;EjectAll&quot;,
+            &quot;desc&quot;: &quot;Empties the vehicle — driver and passenger both.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 1197,
+                &quot;path&quot;: &quot;src/Server/Features/Vehicle/Class/Vehicle.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;EjectPlayer&quot;,
+            &quot;desc&quot;: &quot;Ejects one specific occupant, whichever seat they are in. No-ops if they are\nnot aboard.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;player&quot;,
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;Player&quot;
+                }
+            ],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 1211,
+                &quot;path&quot;: &quot;src/Server/Features/Vehicle/Class/Vehicle.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;Destroy&quot;,
+            &quot;desc&quot;: &quot;Tears the vehicle down: cancels the despawn timer, destroys the model, and\ndestroys the Maid — which also restores collision on any seated characters,\ndrops the entry from the module cache and destroys `occupiedSignal`.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 1227,
+                &quot;path&quot;: &quot;src/Server/Features/Vehicle/Class/Vehicle.luau&quot;
+            }
+        }
+    ],
+    &quot;properties&quot;: [],
+    &quot;types&quot;: [
+        {
+            &quot;name&quot;: &quot;Vehicle&quot;,
+            &quot;desc&quot;: &quot;Instance shape of a server-side vehicle.&quot;,
+            &quot;fields&quot;: [
+                {
+                    &quot;name&quot;: &quot;car&quot;,
+                    &quot;lua_type&quot;: &quot;Model&quot;,
+                    &quot;desc&quot;: &quot;The spawned car model&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;driverSeat&quot;,
+                    &quot;lua_type&quot;: &quot;VehicleSeat&quot;,
+                    &quot;desc&quot;: &quot;Required; construction fails without it&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;passengerSeat&quot;,
+                    &quot;lua_type&quot;: &quot;VehicleSeat&quot;,
+                    &quot;desc&quot;: &quot;Optional in practice; may be nil on a one-seat model&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;body&quot;,
+                    &quot;lua_type&quot;: &quot;BasePart&quot;,
+                    &quot;desc&quot;: &quot;The car&#x27;s `Body` part&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;locked&quot;,
+                    &quot;lua_type&quot;: &quot;boolean&quot;,
+                    &quot;desc&quot;: &quot;While true, nobody may sit down&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;maid&quot;,
+                    &quot;lua_type&quot;: &quot;Maid&quot;,
+                    &quot;desc&quot;: &quot;Owns the model and every connection&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;owner&quot;,
+                    &quot;lua_type&quot;: &quot;Player?&quot;,
+                    &quot;desc&quot;: &quot;Whose vehicle this is; nil for a public vehicle&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;occupiedDriver&quot;,
+                    &quot;lua_type&quot;: &quot;Player?&quot;,
+                    &quot;desc&quot;: &quot;Current driver&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;occupiedPassenger&quot;,
+                    &quot;lua_type&quot;: &quot;Player?&quot;,
+                    &quot;desc&quot;: &quot;Current passenger&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;occupiedSignal&quot;,
+                    &quot;lua_type&quot;: &quot;Signal&quot;,
+                    &quot;desc&quot;: &quot;(player, \&quot;StartControl\&quot; | \&quot;StopControl\&quot;)&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;attachments&quot;,
+                    &quot;lua_type&quot;: &quot;{ [string]: Model }&quot;,
+                    &quot;desc&quot;: &quot;Slot type to attached model&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;ownerOnly&quot;,
+                    &quot;lua_type&quot;: &quot;boolean&quot;,
+                    &quot;desc&quot;: &quot;Restrict the driver&#x27;s seat to `owner`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;lastSatInCar&quot;,
+                    &quot;lua_type&quot;: &quot;number&quot;,
+                    &quot;desc&quot;: &quot;Server time of the last seat entry; debounces the prompt&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;timerThread&quot;,
+                    &quot;lua_type&quot;: &quot;thread?&quot;,
+                    &quot;desc&quot;: &quot;Pending idle-despawn timer&quot;
+                }
+            ],
+            &quot;source&quot;: {
+                &quot;line&quot;: 147,
+                &quot;path&quot;: &quot;src/Server/Features/Vehicle/Class/Vehicle.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;VehicleConfig&quot;,
+            &quot;desc&quot;: &quot;Construction options for [Vehicle.new]. Supplying `spawnCFrame` bypasses\nplacement resolution entirely, which is how a vehicle can be spawned somewhere\nno player is standing.&quot;,
+            &quot;fields&quot;: [
+                {
+                    &quot;name&quot;: &quot;owner&quot;,
+                    &quot;lua_type&quot;: &quot;Player?&quot;,
+                    &quot;desc&quot;: &quot;Whose vehicle this is; also the reference point for auto-placement&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;ownerOnly&quot;,
+                    &quot;lua_type&quot;: &quot;boolean?&quot;,
+                    &quot;desc&quot;: &quot;Restrict the driver&#x27;s seat to the owner (default false)&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;spawnCFrame&quot;,
+                    &quot;lua_type&quot;: &quot;CFrame?&quot;,
+                    &quot;desc&quot;: &quot;Explicit placement, skipping the ground/clearance search&quot;
+                }
+            ],
+            &quot;source&quot;: {
+                &quot;line&quot;: 459,
+                &quot;path&quot;: &quot;src/Server/Features/Vehicle/Class/Vehicle.luau&quot;
+            }
+        }
+    ],
+    &quot;name&quot;: &quot;Vehicle&quot;,
+    &quot;desc&quot;: &quot;Manages a single vehicle instance: spawning, seat occupancy,\ncollision setup, despawn timer, and cleanup.\n\nOne instance wraps one car model. Instances are registered in a module-level\n`Model → Vehicle` cache so any code holding just the model can recover the\nwrapper with [Vehicle.getCar] — that is how [VehicleService] gets from its\n`player → Model` map to the behaviour on this class.\n\n### Network ownership is the whole design\n\nPhysics is simulated by the driver&#x27;s client. Taking the driver&#x27;s seat hands\nthat client network ownership of the assembly; leaving it reclaims ownership\nfor the server. The reclaim sequence in [Vehicle:OnOccupantChanged] is\ndeliberately fussy — sever the character&#x27;s weld first, zero the wheel\nvelocities the client was driving, then un-anchor → `SetNetworkOwner(nil)` →\nre-anchor, and only 0.1s later zero the assembly velocity and release. Each\nstep exists to stop a specific artefact: dragging the character with the car,\nwheels spinning forever at their last commanded velocity, and the vehicle\nclipping through the floor as the server resolves a position it did not\nsimulate.\n\n### Collision groups\n\nSet up once at require time: `CarDetail` ignores both the body and the wheels,\nand `CarWheel` ignores `CarBody` — the constraints already position the wheels,\nso letting them collide with the body only produces jitter.\n\n### Suspension\n\nSpring stiffness and damping are computed from the assembly&#x27;s real mass, one\nframe after parenting (`task.defer`, because `AssemblyMass` is not meaningful\nuntil then). Stiffness is sized so the car sags exactly\n`SUSPENSION_TARGET_SAG` studs at rest, and damping from the standard\n`2ζ√(km)` relation at `SUSPENSION_DAMPING_RATIO`. Tuning against measured mass\nrather than fixed numbers means adding attachments or passengers does not\nbottom the car out.\n\n### Ejection\n\nEvery exit path routes through the same helper, which projects the exit\ndirection onto the XZ plane (so a flipped car does not eject downward),\nraycasts for ground, falls back to the vehicle&#x27;s roof if there is none, and\nclamps to `MIN_EJECT_Y` as a last resort against dropping players through the\nworld.\n\nGated by [FeatureFlags].Vehicle — disabled by default; per-project forks enable\nit deliberately.\n\nCopyright (c) 2026 firebit. All rights reserved.\nfirebit/murder-escape - proprietary and confidential.&quot;,
+    &quot;tags&quot;: [
+        &quot;dormant&quot;
+    ],
+    &quot;realm&quot;: [
+        &quot;Server&quot;
+    ],
+    &quot;source&quot;: {
+        &quot;line&quot;: 57,
+        &quot;path&quot;: &quot;src/Server/Features/Vehicle/Class/Vehicle.luau&quot;
+    }
+}</pre></details></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#types" class="table-of-contents__link toc-highlight">Types</a><ul><li><a href="#Vehicle" class="table-of-contents__link toc-highlight">Vehicle</a></li><li><a href="#VehicleConfig" class="table-of-contents__link toc-highlight">VehicleConfig</a></li></ul></li><li><a href="#functions" class="table-of-contents__link toc-highlight">Functions</a><ul><li><a href="#AttachAttachment" class="table-of-contents__link toc-highlight">:AttachAttachment</a></li><li><a href="#Brake" class="table-of-contents__link toc-highlight">:Brake</a></li><li><a href="#Destroy" class="table-of-contents__link toc-highlight">:Destroy</a></li><li><a href="#EjectAll" class="table-of-contents__link toc-highlight">:EjectAll</a></li><li><a href="#EjectDriver" class="table-of-contents__link toc-highlight">:EjectDriver</a></li><li><a href="#EjectPassenger" class="table-of-contents__link toc-highlight">:EjectPassenger</a></li><li><a href="#EjectPlayer" class="table-of-contents__link toc-highlight">:EjectPlayer</a></li><li><a href="#EnterDriverSeat" class="table-of-contents__link toc-highlight">:EnterDriverSeat</a></li><li><a href="#EnterPassengerSeat" class="table-of-contents__link toc-highlight">:EnterPassengerSeat</a></li><li><a href="#GetAllAttachments" class="table-of-contents__link toc-highlight">:GetAllAttachments</a></li><li><a href="#GetAttachment" class="table-of-contents__link toc-highlight">:GetAttachment</a></li><li><a href="#getSeatedPlayers" class="table-of-contents__link toc-highlight">:getSeatedPlayers</a></li><li><a href="#OnOccupantChanged" class="table-of-contents__link toc-highlight">:OnOccupantChanged</a></li><li><a href="#RemoveAttachment" class="table-of-contents__link toc-highlight">:RemoveAttachment</a></li><li><a href="#SetSpeedMultiplier" class="table-of-contents__link toc-highlight">:SetSpeedMultiplier</a></li><li><a href="#StartTimer" class="table-of-contents__link toc-highlight">:StartTimer</a></li><li><a href="#StopTimer" class="table-of-contents__link toc-highlight">:StopTimer</a></li><li><a href="#getCar" class="table-of-contents__link toc-highlight">.getCar</a></li><li><a href="#getCarModel" class="table-of-contents__link toc-highlight">.getCarModel</a></li><li><a href="#getOverlapParams" class="table-of-contents__link toc-highlight">.getOverlapParams</a></li><li><a href="#getRaycastParams" class="table-of-contents__link toc-highlight">.getRaycastParams</a></li><li><a href="#new" class="table-of-contents__link toc-highlight">.new</a></li></ul></li></ul></div></div></div></div></main></div></div><footer class="theme-layout-footer footer footer--dark"><div class="container container-fluid"><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2026 firebit-dev. Built with Moonwave and Docusaurus.</div></div></div></footer></div>
+</body>
+</html>
