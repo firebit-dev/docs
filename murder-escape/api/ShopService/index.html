@@ -43,7 +43,7 @@ clock reset on every server start. The only DataStore this module touches is
 never starts the restock loop, and [ShopService.purchaseStock] skips its
 stock-decrement step entirely — so stock is effectively infinite and
 purchases are limited only by currency and ownership limits. Handlers,
-redeem codes, crates and the marketplace item callback all remain active.
+redeem codes and the marketplace item callback all remain active.
 
 Copyright (c) 2026 firebit. All rights reserved.
 firebit/murder-escape - proprietary and confidential."><meta data-rh="true" property="og:description" content="Handles shop management, including stock for multiple shop types.
@@ -86,12 +86,12 @@ clock reset on every server start. The only DataStore this module touches is
 never starts the restock loop, and [ShopService.purchaseStock] skips its
 stock-decrement step entirely — so stock is effectively infinite and
 purchases are limited only by currency and ownership limits. Handlers,
-redeem codes, crates and the marketplace item callback all remain active.
+redeem codes and the marketplace item callback all remain active.
 
 Copyright (c) 2026 firebit. All rights reserved.
 firebit/murder-escape - proprietary and confidential."><link data-rh="true" rel="canonical" href="https://firebit-dev.github.io/docs/murder-escape/api/ShopService"><link data-rh="true" rel="alternate" href="https://firebit-dev.github.io/docs/murder-escape/api/ShopService" hreflang="en"><link data-rh="true" rel="alternate" href="https://firebit-dev.github.io/docs/murder-escape/api/ShopService" hreflang="x-default"><link rel="stylesheet" href="/docs/murder-escape/assets/css/styles.3f63b0bb.css">
-<script src="/docs/murder-escape/assets/js/runtime~main.14f3b6cf.js" defer="defer"></script>
-<script src="/docs/murder-escape/assets/js/main.34679e4b.js" defer="defer"></script>
+<script src="/docs/murder-escape/assets/js/runtime~main.da96205f.js" defer="defer"></script>
+<script src="/docs/murder-escape/assets/js/main.51f397b7.js" defer="defer"></script>
 </head>
 <body>
 <svg style="display: none;"><defs>
@@ -159,7 +159,7 @@ firebit/murder-escape - proprietary and confidential."><link data-rh="true" rel=
   never starts the restock loop, and <a href="/docs/murder-escape/api/ShopService#purchaseStock">ShopService.purchaseStock</a> skips its
   stock-decrement step entirely — so stock is effectively infinite and
   purchases are limited only by currency and ownership limits. Handlers,
-  redeem codes, crates and the marketplace item callback all remain active.
+  redeem codes and the marketplace item callback all remain active.
 </p>
 <p>
   Copyright (c) 2026 firebit. All rights reserved.
@@ -424,7 +424,7 @@ firebit/murder-escape - proprietary and confidential."><link data-rh="true" rel=
   Advances <code>_lastRestockCycle</code> on success so the scheduled loop does not
   immediately repeat the work, and broadcasts the restock toast.
 </p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="redeemCode"><code style="text-decoration:none">redeemCode</code><a href="#redeemCode" class="hash-link" aria-label="Direct link to redeemCode" title="Direct link to redeemCode" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Server/Features/Shop/ShopService.luau#L1335"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>ShopService<!-- -->.</code><code class="green_DgR4">redeemCode</code><code>(</code><div class="inset_uKQm"><div><code>player<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/Player" target="_blank" rel="noopener noreferrer">Player<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code>,</code><span class="inlineDescription_G7Er">-- <span>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="redeemCode"><code style="text-decoration:none">redeemCode</code><a href="#redeemCode" class="hash-link" aria-label="Direct link to redeemCode" title="Direct link to redeemCode" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Server/Features/Shop/ShopService.luau#L1305"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>ShopService<!-- -->.</code><code class="green_DgR4">redeemCode</code><code>(</code><div class="inset_uKQm"><div><code>player<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/Player" target="_blank" rel="noopener noreferrer">Player<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code>,</code><span class="inlineDescription_G7Er">-- <span>
 <p>redeemer</p>
 </span></span></div><div><code>payload<!-- -->: </code><code class="blue_P4bS">ShopTypes.ShopRedeemCodePayload</code><span class="inlineDescription_G7Er">-- <span>
 <p>carries the entered code</p>
@@ -439,7 +439,7 @@ firebit/murder-escape - proprietary and confidential."><link data-rh="true" rel=
   datastore failure cannot produce a free duplicate.
 </p>
 <p>Replies with a <code>UI_TOAST</code> on success or <code>ITEM_SHOP_ERROR</code> on any rejection.</p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="purchaseItem"><code style="text-decoration:none">purchaseItem</code><a href="#purchaseItem" class="hash-link" aria-label="Direct link to purchaseItem" title="Direct link to purchaseItem" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Server/Features/Shop/ShopService.luau#L1406"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>ShopService<!-- -->.</code><code class="green_DgR4">purchaseItem</code><code>(</code><div class="inset_uKQm"><div><code>player<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/Player" target="_blank" rel="noopener noreferrer">Player<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code>,</code><span class="inlineDescription_G7Er">-- <span>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="purchaseItem"><code style="text-decoration:none">purchaseItem</code><a href="#purchaseItem" class="hash-link" aria-label="Direct link to purchaseItem" title="Direct link to purchaseItem" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Server/Features/Shop/ShopService.luau#L1373"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>ShopService<!-- -->.</code><code class="green_DgR4">purchaseItem</code><code>(</code><div class="inset_uKQm"><div><code>player<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/Player" target="_blank" rel="noopener noreferrer">Player<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code>,</code><span class="inlineDescription_G7Er">-- <span>
 <p>buyer</p>
 </span></span></div><div><code>payload<!-- -->: </code><code class="blue_P4bS">ShopTypes.ShopPurchasePayload</code><span class="inlineDescription_G7Er">-- <span>
 <p>carries the item id</p>
@@ -452,45 +452,7 @@ firebit/murder-escape - proprietary and confidential."><link data-rh="true" rel=
   not log a resource analytics event and does not share the currency service's
   guard rails. Items with no <code>purchasePrice</code> are granted free.
 </p>
-<p>
-  Crates are granted without popping the inventory open, since the client
-  plays its own opening flow.
-</p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="openCrate"><code style="text-decoration:none">openCrate</code><a href="#openCrate" class="hash-link" aria-label="Direct link to openCrate" title="Direct link to openCrate" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Server/Features/Shop/ShopService.luau#L1493"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>ShopService<!-- -->.</code><code class="green_DgR4">openCrate</code><code>(</code><div class="inset_uKQm"><div><code>player<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/Player" target="_blank" rel="noopener noreferrer">Player<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code>,</code><span class="inlineDescription_G7Er">-- <span>
-<p>opener</p>
-</span></span></div><div><code>payload<!-- -->: </code><code class="blue_P4bS">ShopTypes.ShopOpenCratePayload</code><span class="inlineDescription_G7Er">-- <span>
-<p>crate item id and inventory recordId</p>
-</span></span></div></div><code>) → </code><code>(</code><code>)</code></div><div>
-<p>Opens an owned crate and grants a rolled item.</p>
-<p>
-  Verifies via <a href="/docs/murder-escape/api/ShopService#playerOwnsItem">ShopService.playerOwnsItem</a> that the record really belongs to
-  the player, rolls a reward with <code>ShopItems.chooseCrateItem</code>, grants it and
-  replies with <code>ITEM_SHOP_CRATE_OPEN</code>. Non-common results additionally
-  broadcast a server-wide <code>CHAT_ALERT</code>, delayed 6 seconds to land after the
-  client's reel animation finishes.
-</p>
-
-  
-    
-    
-      <div class="admonition admonition-warning alert alert--warning">
-        <div class="admonition-heading">
-          <h5><span class="admonition-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-                <path d="M8.893 1.5c-.183-.31-.52-.5-.887-.5s-.703.19-.886.5L.138 13.499a.98.98 0 0 0 0 1.001c.193.31.53.501.886.501h13.964c.367 0 .704-.19.877-.5a1.03 1.03 0 0 0 .01-1.002L8.893 1.5zm.133 11.497H6.987v-2.003h2.039v2.003zm0-3.004H6.987V5.987h2.039v4.006z"></path>
-              </svg></span><span class="admonition-title">Crate is not consumed</span></h5>
-        </div>
-        <div class="admonition-content">
-          <p>
-            The removal of the crate record is commented out and replaced by an empty
-            stub table, so opening a crate does not currently destroy it — the same
-            crate can be opened repeatedly.
-          </p>
-        </div>
-      </div>
-    
-  
-
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="init"><code style="text-decoration:none">init</code><a href="#init" class="hash-link" aria-label="Direct link to init" title="Direct link to init" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Server/Features/Shop/ShopService.luau#L1586"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>ShopService<!-- -->.</code><code class="green_DgR4">init</code><code>(</code><code>) → </code><code>(</code><code>)</code></div><div>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="init"><code style="text-decoration:none">init</code><a href="#init" class="hash-link" aria-label="Direct link to init" title="Direct link to init" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Server/Features/Shop/ShopService.luau#L1452"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>ShopService<!-- -->.</code><code class="green_DgR4">init</code><code>(</code><code>) → </code><code>(</code><code>)</code></div><div>
 <p>
   Boots the service: binds the <code>Handlers</code> folder, and registers the <code>item</code>
   developer-product callback so a purchased item is granted through
@@ -1035,36 +997,8 @@ firebit/murder-escape - proprietary and confidential."><link data-rh="true" rel=
             }
         },
         {
-            &quot;name&quot;: &quot;playerOwnsItem&quot;,
-            &quot;desc&quot;: &quot;Resolves an inventory recordId to its itemId, or nil when the player does\nnot hold that record. Used to verify crate ownership before opening.&quot;,
-            &quot;params&quot;: [
-                {
-                    &quot;name&quot;: &quot;player&quot;,
-                    &quot;desc&quot;: &quot;claimed owner&quot;,
-                    &quot;lua_type&quot;: &quot;Player&quot;
-                },
-                {
-                    &quot;name&quot;: &quot;recordId&quot;,
-                    &quot;desc&quot;: &quot;record to resolve&quot;,
-                    &quot;lua_type&quot;: &quot;string&quot;
-                }
-            ],
-            &quot;returns&quot;: [
-                {
-                    &quot;desc&quot;: &quot;the itemId, when owned&quot;,
-                    &quot;lua_type&quot;: &quot;string?&quot;
-                }
-            ],
-            &quot;function_type&quot;: &quot;static&quot;,
-            &quot;private&quot;: true,
-            &quot;source&quot;: {
-                &quot;line&quot;: 1197,
-                &quot;path&quot;: &quot;src/Server/Features/Shop/ShopService.luau&quot;
-            }
-        },
-        {
             &quot;name&quot;: &quot;giveItem&quot;,
-            &quot;desc&quot;: &quot;Legacy grant path: builds an [ItemRecord] by hand and appends it to the\nprofile via the `inventory.++` path operator, then notifies the client with\n`ITEM_SHOP_ITEM_ADD`.\n\nUnlike [ShopService.giveItemToPlayer] this bypasses [InventoryService]\nentirely, so it performs no stacking against existing records and always\nplaces the item in the bag. Used by the redeem-code, crate and\n[ShopService.purchaseItem] flows.&quot;,
+            &quot;desc&quot;: &quot;Legacy grant path: builds an [ItemRecord] by hand and appends it to the\nprofile via the `inventory.++` path operator, then notifies the client with\n`ITEM_SHOP_ITEM_ADD`.\n\nUnlike [ShopService.giveItemToPlayer] this bypasses [InventoryService]\nentirely, so it performs no stacking against existing records and always\nplaces the item in the bag. Used by the redeem-code and\n[ShopService.purchaseItem] flows.&quot;,
             &quot;params&quot;: [
                 {
                     &quot;name&quot;: &quot;player&quot;,
@@ -1096,7 +1030,7 @@ firebit/murder-escape - proprietary and confidential."><link data-rh="true" rel=
             &quot;function_type&quot;: &quot;static&quot;,
             &quot;private&quot;: true,
             &quot;source&quot;: {
-                &quot;line&quot;: 1235,
+                &quot;line&quot;: 1205,
                 &quot;path&quot;: &quot;src/Server/Features/Shop/ShopService.luau&quot;
             }
         },
@@ -1124,7 +1058,7 @@ firebit/murder-escape - proprietary and confidential."><link data-rh="true" rel=
             &quot;function_type&quot;: &quot;static&quot;,
             &quot;private&quot;: true,
             &quot;source&quot;: {
-                &quot;line&quot;: 1284,
+                &quot;line&quot;: 1254,
                 &quot;path&quot;: &quot;src/Server/Features/Shop/ShopService.luau&quot;
             }
         },
@@ -1146,13 +1080,13 @@ firebit/murder-escape - proprietary and confidential."><link data-rh="true" rel=
             &quot;returns&quot;: [],
             &quot;function_type&quot;: &quot;static&quot;,
             &quot;source&quot;: {
-                &quot;line&quot;: 1335,
+                &quot;line&quot;: 1305,
                 &quot;path&quot;: &quot;src/Server/Features/Shop/ShopService.luau&quot;
             }
         },
         {
             &quot;name&quot;: &quot;purchaseItem&quot;,
-            &quot;desc&quot;: &quot;Legacy catalogue purchase path, driven from the shop UI.\n\nChecks the ownership limit (reporting `owned/limit` back to the player when\nexceeded), then debits coins by adding a negative delta through\n[ProfileService.add] rather than [CurrencyService.take] — so this path does\nnot log a resource analytics event and does not share the currency service&#x27;s\nguard rails. Items with no `purchasePrice` are granted free.\n\nCrates are granted without popping the inventory open, since the client\nplays its own opening flow.&quot;,
+            &quot;desc&quot;: &quot;Legacy catalogue purchase path, driven from the shop UI.\n\nChecks the ownership limit (reporting `owned/limit` back to the player when\nexceeded), then debits coins by adding a negative delta through\n[ProfileService.add] rather than [CurrencyService.take] — so this path does\nnot log a resource analytics event and does not share the currency service&#x27;s\nguard rails. Items with no `purchasePrice` are granted free.&quot;,
             &quot;params&quot;: [
                 {
                     &quot;name&quot;: &quot;player&quot;,
@@ -1168,29 +1102,7 @@ firebit/murder-escape - proprietary and confidential."><link data-rh="true" rel=
             &quot;returns&quot;: [],
             &quot;function_type&quot;: &quot;static&quot;,
             &quot;source&quot;: {
-                &quot;line&quot;: 1406,
-                &quot;path&quot;: &quot;src/Server/Features/Shop/ShopService.luau&quot;
-            }
-        },
-        {
-            &quot;name&quot;: &quot;openCrate&quot;,
-            &quot;desc&quot;: &quot;Opens an owned crate and grants a rolled item.\n\nVerifies via [ShopService.playerOwnsItem] that the record really belongs to\nthe player, rolls a reward with `ShopItems.chooseCrateItem`, grants it and\nreplies with `ITEM_SHOP_CRATE_OPEN`. Non-common results additionally\nbroadcast a server-wide `CHAT_ALERT`, delayed 6 seconds to land after the\nclient&#x27;s reel animation finishes.\n\n:::warning Crate is not consumed\nThe removal of the crate record is commented out and replaced by an empty\nstub table, so opening a crate does not currently destroy it — the same\ncrate can be opened repeatedly.\n:::&quot;,
-            &quot;params&quot;: [
-                {
-                    &quot;name&quot;: &quot;player&quot;,
-                    &quot;desc&quot;: &quot;opener&quot;,
-                    &quot;lua_type&quot;: &quot;Player&quot;
-                },
-                {
-                    &quot;name&quot;: &quot;payload&quot;,
-                    &quot;desc&quot;: &quot;crate item id and inventory recordId&quot;,
-                    &quot;lua_type&quot;: &quot;ShopTypes.ShopOpenCratePayload&quot;
-                }
-            ],
-            &quot;returns&quot;: [],
-            &quot;function_type&quot;: &quot;static&quot;,
-            &quot;source&quot;: {
-                &quot;line&quot;: 1493,
+                &quot;line&quot;: 1373,
                 &quot;path&quot;: &quot;src/Server/Features/Shop/ShopService.luau&quot;
             }
         },
@@ -1201,7 +1113,7 @@ firebit/murder-escape - proprietary and confidential."><link data-rh="true" rel=
             &quot;returns&quot;: [],
             &quot;function_type&quot;: &quot;static&quot;,
             &quot;source&quot;: {
-                &quot;line&quot;: 1586,
+                &quot;line&quot;: 1452,
                 &quot;path&quot;: &quot;src/Server/Features/Shop/ShopService.luau&quot;
             }
         }
@@ -1209,7 +1121,7 @@ firebit/murder-escape - proprietary and confidential."><link data-rh="true" rel=
     &quot;properties&quot;: [],
     &quot;types&quot;: [],
     &quot;name&quot;: &quot;ShopService&quot;,
-    &quot;desc&quot;: &quot;Handles shop management, including stock for multiple shop types.\n\nOne [Replica] is created per non-custom shop defined in `ShopData.SHOPS`,\neach holding a `{ [itemId]: StockItem }` map that is the single source of\ntruth clients read stock from. Shops marked `custom` (skins, player market)\nship their own component and are skipped entirely — they do not participate\nin the stock system.\n\n## Restock scheduling\n\nRestocking is derived from wall-clock time rather than tracked per item.\nTwo intervals interact:\n\n- `ShopData.STOCK_REFRESH_INTERVAL` — the global cycle. `_lastRestockCycle`\n  records the cycle ordinal already processed, which is what stops a cycle\n  from firing twice.\n- `item.stockData.restockInterval` — per item. An item&#x27;s most recent due\n  restock is `floor(now / interval) * interval`; it refills to\n  `maxStockQuantity` only when that timestamp falls inside the current\n  global window, otherwise it keeps its quantity.\n\n[ShopService.startRestockLoop] polls [ShopService.getTimeUntilRestock] at\nmost once a second and calls [ShopService.performRestock] when the window\nopens.\n\n:::caution Stock is not persisted\nDespite the `save*` naming, `LocalStorage` is a plain in-memory table on the\nserver — [ShopService.saveStockToLocalStorage] and\n[ShopService.saveRestockTime] write no DataStore, so stock and the restock\nclock reset on every server start. The only DataStore this module touches is\n`redeemed_codes`, used by the redeem-code flow.\n:::\n\n## Feature gate\n\n`FeatureFlags.ScarcityShop` is **off** by default. When off,\n[ShopService.init] never builds the shop replicas, never populates stock and\nnever starts the restock loop, and [ShopService.purchaseStock] skips its\nstock-decrement step entirely — so stock is effectively infinite and\npurchases are limited only by currency and ownership limits. Handlers,\nredeem codes, crates and the marketplace item callback all remain active.\n\nCopyright (c) 2026 firebit. All rights reserved.\nfirebit/murder-escape - proprietary and confidential.&quot;,
+    &quot;desc&quot;: &quot;Handles shop management, including stock for multiple shop types.\n\nOne [Replica] is created per non-custom shop defined in `ShopData.SHOPS`,\neach holding a `{ [itemId]: StockItem }` map that is the single source of\ntruth clients read stock from. Shops marked `custom` (skins, player market)\nship their own component and are skipped entirely — they do not participate\nin the stock system.\n\n## Restock scheduling\n\nRestocking is derived from wall-clock time rather than tracked per item.\nTwo intervals interact:\n\n- `ShopData.STOCK_REFRESH_INTERVAL` — the global cycle. `_lastRestockCycle`\n  records the cycle ordinal already processed, which is what stops a cycle\n  from firing twice.\n- `item.stockData.restockInterval` — per item. An item&#x27;s most recent due\n  restock is `floor(now / interval) * interval`; it refills to\n  `maxStockQuantity` only when that timestamp falls inside the current\n  global window, otherwise it keeps its quantity.\n\n[ShopService.startRestockLoop] polls [ShopService.getTimeUntilRestock] at\nmost once a second and calls [ShopService.performRestock] when the window\nopens.\n\n:::caution Stock is not persisted\nDespite the `save*` naming, `LocalStorage` is a plain in-memory table on the\nserver — [ShopService.saveStockToLocalStorage] and\n[ShopService.saveRestockTime] write no DataStore, so stock and the restock\nclock reset on every server start. The only DataStore this module touches is\n`redeemed_codes`, used by the redeem-code flow.\n:::\n\n## Feature gate\n\n`FeatureFlags.ScarcityShop` is **off** by default. When off,\n[ShopService.init] never builds the shop replicas, never populates stock and\nnever starts the restock loop, and [ShopService.purchaseStock] skips its\nstock-decrement step entirely — so stock is effectively infinite and\npurchases are limited only by currency and ownership limits. Handlers,\nredeem codes and the marketplace item callback all remain active.\n\nCopyright (c) 2026 firebit. All rights reserved.\nfirebit/murder-escape - proprietary and confidential.&quot;,
     &quot;realm&quot;: [
         &quot;Server&quot;
     ],
@@ -1217,6 +1129,6 @@ firebit/murder-escape - proprietary and confidential."><link data-rh="true" rel=
         &quot;line&quot;: 50,
         &quot;path&quot;: &quot;src/Server/Features/Shop/ShopService.luau&quot;
     }
-}</pre></details></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#functions" class="table-of-contents__link toc-highlight">Functions</a><ul><li><a href="#applyStock" class="table-of-contents__link toc-highlight">.applyStock</a></li><li><a href="#checkOwnershipLimit" class="table-of-contents__link toc-highlight">.checkOwnershipLimit</a></li><li><a href="#clearLocalStorage" class="table-of-contents__link toc-highlight">.clearLocalStorage</a></li><li><a href="#decrementStock" class="table-of-contents__link toc-highlight">.decrementStock</a></li><li><a href="#fetch" class="table-of-contents__link toc-highlight">.fetch</a></li><li><a href="#generateStock" class="table-of-contents__link toc-highlight">.generateStock</a></li><li><a href="#getCurrentStock" class="table-of-contents__link toc-highlight">.getCurrentStock</a></li><li><a href="#getRestockInfo" class="table-of-contents__link toc-highlight">.getRestockInfo</a></li><li><a href="#getShopStock" class="table-of-contents__link toc-highlight">.getShopStock</a></li><li><a href="#getTimeUntilRestock" class="table-of-contents__link toc-highlight">.getTimeUntilRestock</a></li><li><a href="#giveItemToPlayer" class="table-of-contents__link toc-highlight">.giveItemToPlayer</a></li><li><a href="#init" class="table-of-contents__link toc-highlight">.init</a></li><li><a href="#manualRestock" class="table-of-contents__link toc-highlight">.manualRestock</a></li><li><a href="#openCrate" class="table-of-contents__link toc-highlight">.openCrate</a></li><li><a href="#performRestock" class="table-of-contents__link toc-highlight">.performRestock</a></li><li><a href="#purchase" class="table-of-contents__link toc-highlight">.purchase</a></li><li><a href="#purchaseItem" class="table-of-contents__link toc-highlight">.purchaseItem</a></li><li><a href="#purchaseStock" class="table-of-contents__link toc-highlight">.purchaseStock</a></li><li><a href="#redeemCode" class="table-of-contents__link toc-highlight">.redeemCode</a></li><li><a href="#saveRestockTime" class="table-of-contents__link toc-highlight">.saveRestockTime</a></li><li><a href="#saveStockToLocalStorage" class="table-of-contents__link toc-highlight">.saveStockToLocalStorage</a></li><li><a href="#subtractQuantityFromItem" class="table-of-contents__link toc-highlight">.subtractQuantityFromItem</a></li></ul></li></ul></div></div></div></div></main></div></div><footer class="theme-layout-footer footer footer--dark"><div class="container container-fluid"><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2026 firebit-dev. Built with Moonwave and Docusaurus.</div></div></div></footer></div>
+}</pre></details></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#functions" class="table-of-contents__link toc-highlight">Functions</a><ul><li><a href="#applyStock" class="table-of-contents__link toc-highlight">.applyStock</a></li><li><a href="#checkOwnershipLimit" class="table-of-contents__link toc-highlight">.checkOwnershipLimit</a></li><li><a href="#clearLocalStorage" class="table-of-contents__link toc-highlight">.clearLocalStorage</a></li><li><a href="#decrementStock" class="table-of-contents__link toc-highlight">.decrementStock</a></li><li><a href="#fetch" class="table-of-contents__link toc-highlight">.fetch</a></li><li><a href="#generateStock" class="table-of-contents__link toc-highlight">.generateStock</a></li><li><a href="#getCurrentStock" class="table-of-contents__link toc-highlight">.getCurrentStock</a></li><li><a href="#getRestockInfo" class="table-of-contents__link toc-highlight">.getRestockInfo</a></li><li><a href="#getShopStock" class="table-of-contents__link toc-highlight">.getShopStock</a></li><li><a href="#getTimeUntilRestock" class="table-of-contents__link toc-highlight">.getTimeUntilRestock</a></li><li><a href="#giveItemToPlayer" class="table-of-contents__link toc-highlight">.giveItemToPlayer</a></li><li><a href="#init" class="table-of-contents__link toc-highlight">.init</a></li><li><a href="#manualRestock" class="table-of-contents__link toc-highlight">.manualRestock</a></li><li><a href="#performRestock" class="table-of-contents__link toc-highlight">.performRestock</a></li><li><a href="#purchase" class="table-of-contents__link toc-highlight">.purchase</a></li><li><a href="#purchaseItem" class="table-of-contents__link toc-highlight">.purchaseItem</a></li><li><a href="#purchaseStock" class="table-of-contents__link toc-highlight">.purchaseStock</a></li><li><a href="#redeemCode" class="table-of-contents__link toc-highlight">.redeemCode</a></li><li><a href="#saveRestockTime" class="table-of-contents__link toc-highlight">.saveRestockTime</a></li><li><a href="#saveStockToLocalStorage" class="table-of-contents__link toc-highlight">.saveStockToLocalStorage</a></li><li><a href="#subtractQuantityFromItem" class="table-of-contents__link toc-highlight">.subtractQuantityFromItem</a></li></ul></li></ul></div></div></div></div></main></div></div><footer class="theme-layout-footer footer footer--dark"><div class="container container-fluid"><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2026 firebit-dev. Built with Moonwave and Docusaurus.</div></div></div></footer></div>
 </body>
 </html>

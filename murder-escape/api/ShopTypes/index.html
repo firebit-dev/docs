@@ -12,8 +12,8 @@ agree on one shape.
 
 Items are addressed two different ways depending on the verb. Buying, equipping
 and granting take an `id` — the item id from `src/Shared/Data/Items/`, which
-names a *kind* of item. Selling, removing and opening a crate take a `recordId`,
-which names one specific stack the player owns (see `Types.ItemRecord`). Sending
+names a *kind* of item. Selling and removing take a `recordId`, which names
+one specific stack the player owns (see `Types.ItemRecord`). Sending
 one where the other is expected silently misses.
 
 Copyright (c) 2026 firebit. All rights reserved.
@@ -26,14 +26,14 @@ agree on one shape.
 
 Items are addressed two different ways depending on the verb. Buying, equipping
 and granting take an `id` — the item id from `src/Shared/Data/Items/`, which
-names a *kind* of item. Selling, removing and opening a crate take a `recordId`,
-which names one specific stack the player owns (see `Types.ItemRecord`). Sending
+names a *kind* of item. Selling and removing take a `recordId`, which names
+one specific stack the player owns (see `Types.ItemRecord`). Sending
 one where the other is expected silently misses.
 
 Copyright (c) 2026 firebit. All rights reserved.
 firebit/murder-escape - proprietary and confidential."><link data-rh="true" rel="canonical" href="https://firebit-dev.github.io/docs/murder-escape/api/ShopTypes"><link data-rh="true" rel="alternate" href="https://firebit-dev.github.io/docs/murder-escape/api/ShopTypes" hreflang="en"><link data-rh="true" rel="alternate" href="https://firebit-dev.github.io/docs/murder-escape/api/ShopTypes" hreflang="x-default"><link rel="stylesheet" href="/docs/murder-escape/assets/css/styles.3f63b0bb.css">
-<script src="/docs/murder-escape/assets/js/runtime~main.14f3b6cf.js" defer="defer"></script>
-<script src="/docs/murder-escape/assets/js/main.34679e4b.js" defer="defer"></script>
+<script src="/docs/murder-escape/assets/js/runtime~main.da96205f.js" defer="defer"></script>
+<script src="/docs/murder-escape/assets/js/main.51f397b7.js" defer="defer"></script>
 </head>
 <body>
 <svg style="display: none;"><defs>
@@ -50,8 +50,8 @@ firebit/murder-escape - proprietary and confidential."><link data-rh="true" rel=
 <p>
   Items are addressed two different ways depending on the verb. Buying, equipping
   and granting take an <code>id</code> — the item id from <code>src/Shared/Data/Items/</code>, which
-  names a <em>kind</em> of item. Selling, removing and opening a crate take a <code>recordId</code>,
-  which names one specific stack the player owns (see <code>Types.ItemRecord</code>). Sending
+  names a <em>kind</em> of item. Selling and removing take a <code>recordId</code>, which names
+  one specific stack the player owns (see <code>Types.ItemRecord</code>). Sending
   one where the other is expected silently misses.
 </p>
 <p>
@@ -66,27 +66,23 @@ firebit/murder-escape - proprietary and confidential."><link data-rh="true" rel=
 <p>Grants an item to a player outside of a purchase.</p>
 </div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="ShopRedeemCodePayload"><code style="text-decoration:none">ShopRedeemCodePayload</code><a href="#ShopRedeemCodePayload" class="hash-link" aria-label="Direct link to ShopRedeemCodePayload" title="Direct link to ShopRedeemCodePayload" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Types/ShopTypes.luau#L39"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>ShopRedeemCodePayload<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>code<!-- -->: </code><code class="blue_P4bS">string</code><span class="inlineDescription_G7Er">-- <span>
 <p>Promo code as typed by the player</p>
-</span></span></div></div><code>}</code></div><div></div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="ShopOpenCratePayload"><code style="text-decoration:none">ShopOpenCratePayload</code><a href="#ShopOpenCratePayload" class="hash-link" aria-label="Direct link to ShopOpenCratePayload" title="Direct link to ShopOpenCratePayload" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Types/ShopTypes.luau#L49"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>ShopOpenCratePayload<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>id<!-- -->: </code><code class="blue_P4bS">string</code><span class="inlineDescription_G7Er">-- <span>
-<p>Item id of the crate kind</p>
-</span></span></div><div><code>recordId<!-- -->: </code><code class="blue_P4bS">string</code><span class="inlineDescription_G7Er">-- <span>
-<p>The specific crate stack in the player's inventory to consume</p>
-</span></span></div></div><code>}</code></div><div></div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="ShopPurchasePayload"><code style="text-decoration:none">ShopPurchasePayload</code><a href="#ShopPurchasePayload" class="hash-link" aria-label="Direct link to ShopPurchasePayload" title="Direct link to ShopPurchasePayload" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Types/ShopTypes.luau#L62"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>ShopPurchasePayload<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>id<!-- -->: </code><code class="blue_P4bS">string</code><span class="inlineDescription_G7Er">-- <span>
+</span></span></div></div><code>}</code></div><div></div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="ShopPurchasePayload"><code style="text-decoration:none">ShopPurchasePayload</code><a href="#ShopPurchasePayload" class="hash-link" aria-label="Direct link to ShopPurchasePayload" title="Direct link to ShopPurchasePayload" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Types/ShopTypes.luau#L51"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>ShopPurchasePayload<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>id<!-- -->: </code><code class="blue_P4bS">string</code><span class="inlineDescription_G7Er">-- <span>
 <p>Item id being bought</p>
 </span></span></div></div><code>}</code></div><div>
 <p>
   Price, currency and eligibility are all resolved server-side from the item data,
   so the client never sends an amount.
 </p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="ShopRemoveItemPayload"><code style="text-decoration:none">ShopRemoveItemPayload</code><a href="#ShopRemoveItemPayload" class="hash-link" aria-label="Direct link to ShopRemoveItemPayload" title="Direct link to ShopRemoveItemPayload" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Types/ShopTypes.luau#L71"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>ShopRemoveItemPayload<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>recordId<!-- -->: </code><code class="blue_P4bS">string</code><span class="inlineDescription_G7Er">-- <span>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="ShopRemoveItemPayload"><code style="text-decoration:none">ShopRemoveItemPayload</code><a href="#ShopRemoveItemPayload" class="hash-link" aria-label="Direct link to ShopRemoveItemPayload" title="Direct link to ShopRemoveItemPayload" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Types/ShopTypes.luau#L60"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>ShopRemoveItemPayload<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>recordId<!-- -->: </code><code class="blue_P4bS">string</code><span class="inlineDescription_G7Er">-- <span>
 <p>The specific inventory stack to remove</p>
-</span></span></div></div><code>}</code></div><div></div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="ShopEquipPayload"><code style="text-decoration:none">ShopEquipPayload</code><a href="#ShopEquipPayload" class="hash-link" aria-label="Direct link to ShopEquipPayload" title="Direct link to ShopEquipPayload" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Types/ShopTypes.luau#L83"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>ShopEquipPayload<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>id<!-- -->: </code><code class="blue_P4bS">string</code><span class="inlineDescription_G7Er">-- <span>
+</span></span></div></div><code>}</code></div><div></div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="ShopEquipPayload"><code style="text-decoration:none">ShopEquipPayload</code><a href="#ShopEquipPayload" class="hash-link" aria-label="Direct link to ShopEquipPayload" title="Direct link to ShopEquipPayload" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Types/ShopTypes.luau#L72"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>ShopEquipPayload<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>id<!-- -->: </code><code class="blue_P4bS">string</code><span class="inlineDescription_G7Er">-- <span>
 <p>Item id to equip</p>
 </span></span></div></div><code>}</code></div><div>
 <p>
   Equipping is by item id, not record id — only one item per slot type can be
   equipped, so the stack does not matter.
 </p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="ShopUnequipPayload"><code style="text-decoration:none">ShopUnequipPayload</code><a href="#ShopUnequipPayload" class="hash-link" aria-label="Direct link to ShopUnequipPayload" title="Direct link to ShopUnequipPayload" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Types/ShopTypes.luau#L96"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>ShopUnequipPayload<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>id<!-- -->: </code><code class="blue_P4bS">string</code><span class="inlineDescription_G7Er">-- <span>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="ShopUnequipPayload"><code style="text-decoration:none">ShopUnequipPayload</code><a href="#ShopUnequipPayload" class="hash-link" aria-label="Direct link to ShopUnequipPayload" title="Direct link to ShopUnequipPayload" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Types/ShopTypes.luau#L85"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>ShopUnequipPayload<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>id<!-- -->: </code><code class="blue_P4bS">string</code><span class="inlineDescription_G7Er">-- <span>
 <p>Item id to unequip</p>
 </span></span></div></div><code>}</code></div><div>
 <p>
@@ -94,7 +90,7 @@ firebit/murder-escape - proprietary and confidential."><link data-rh="true" rel=
   holds it (a pet can sit in any pet slot). Only cosmetics that
   <code>InventoryUtil.canUnequip</code> allows are accepted.
 </p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="RotationSlot"><code style="text-decoration:none">RotationSlot</code><a href="#RotationSlot" class="hash-link" aria-label="Direct link to RotationSlot" title="Direct link to RotationSlot" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Types/ShopTypes.luau#L112"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>RotationSlot<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>itemId<!-- -->: </code><code class="blue_P4bS">string</code><span class="inlineDescription_G7Er">-- <span>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="RotationSlot"><code style="text-decoration:none">RotationSlot</code><a href="#RotationSlot" class="hash-link" aria-label="Direct link to RotationSlot" title="Direct link to RotationSlot" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Types/ShopTypes.luau#L101"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>RotationSlot<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>itemId<!-- -->: </code><code class="blue_P4bS">string</code><span class="inlineDescription_G7Er">-- <span>
 <p>Cosmetic item id filling this slot</p>
 </span></span></div><div><code>rarity<!-- -->: </code><code class="blue_P4bS">string</code><span class="inlineDescription_G7Er">-- <span>
 <p>Rarity key, see <code>ShopData.Rarity</code></p>
@@ -108,17 +104,17 @@ firebit/murder-escape - proprietary and confidential."><link data-rh="true" rel=
 <p>True for the rotation's single wildcard slot</p>
 </span></span></div></div><code>}</code></div><div>
 <p>One item slot in the daily rotating shop. See <a href="/docs/murder-escape/api/DailyRotationService#getRotation">DailyRotationService.getRotation</a>.</p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="Rotation"><code style="text-decoration:none">Rotation</code><a href="#Rotation" class="hash-link" aria-label="Direct link to Rotation" title="Direct link to Rotation" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Types/ShopTypes.luau#L129"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>Rotation<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>slots<!-- -->: </code><code class="purple_ieR2">{</code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/docs/murder-escape/api/ShopTypes#RotationSlot">RotationSlot</a></code><code class="purple_ieR2">}</code><span class="inlineDescription_G7Er">-- <span>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="Rotation"><code style="text-decoration:none">Rotation</code><a href="#Rotation" class="hash-link" aria-label="Direct link to Rotation" title="Direct link to Rotation" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Types/ShopTypes.luau#L118"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>Rotation<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>slots<!-- -->: </code><code class="purple_ieR2">{</code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/docs/murder-escape/api/ShopTypes#RotationSlot">RotationSlot</a></code><code class="purple_ieR2">}</code><span class="inlineDescription_G7Er">-- <span>
 <p>Today's rotation, in <code>ShopPricing.ROTATION.slotRarities</code> order</p>
 </span></span></div><div><code>expiresAt<!-- -->: </code><code class="blue_P4bS">number</code><span class="inlineDescription_G7Er">-- <span>
 <p>Unix time of the next UTC midnight, when the rotation changes</p>
 </span></span></div></div><code>}</code></div><div>
 <p>Return shape of <a href="/docs/murder-escape/api/DailyRotationService#getRotation">DailyRotationService.getRotation</a> and the <code>SHOP_ROTATION_GET</code> action.</p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="ShopRotationPurchasePayload"><code style="text-decoration:none">ShopRotationPurchasePayload</code><a href="#ShopRotationPurchasePayload" class="hash-link" aria-label="Direct link to ShopRotationPurchasePayload" title="Direct link to ShopRotationPurchasePayload" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Types/ShopTypes.luau#L141"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>ShopRotationPurchasePayload<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>itemId<!-- -->: </code><code class="blue_P4bS">string</code><span class="inlineDescription_G7Er">-- <span>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="ShopRotationPurchasePayload"><code style="text-decoration:none">ShopRotationPurchasePayload</code><a href="#ShopRotationPurchasePayload" class="hash-link" aria-label="Direct link to ShopRotationPurchasePayload" title="Direct link to ShopRotationPurchasePayload" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Types/ShopTypes.luau#L130"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>ShopRotationPurchasePayload<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>itemId<!-- -->: </code><code class="blue_P4bS">string</code><span class="inlineDescription_G7Er">-- <span>
 <p>Item id to buy; must be present in today's rotation</p>
 </span></span></div></div><code>}</code></div><div>
 <p>Payload for <code>SHOP_ROTATION_PURCHASE</code>.</p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="BoxPoolItem"><code style="text-decoration:none">BoxPoolItem</code><a href="#BoxPoolItem" class="hash-link" aria-label="Direct link to BoxPoolItem" title="Direct link to BoxPoolItem" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Types/ShopTypes.luau#L156"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>BoxPoolItem<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>itemId<!-- -->: </code><code class="blue_P4bS">string</code><span class="inlineDescription_G7Er">-- <span>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="BoxPoolItem"><code style="text-decoration:none">BoxPoolItem</code><a href="#BoxPoolItem" class="hash-link" aria-label="Direct link to BoxPoolItem" title="Direct link to BoxPoolItem" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Types/ShopTypes.luau#L145"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>BoxPoolItem<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>itemId<!-- -->: </code><code class="blue_P4bS">string</code><span class="inlineDescription_G7Er">-- <span>
 <p>Cosmetic item id</p>
 </span></span></div><div><code>name<!-- -->: </code><code class="blue_P4bS">string</code><span class="inlineDescription_G7Er">-- <span>
 <p>Display name</p>
@@ -130,7 +126,7 @@ firebit/murder-escape - proprietary and confidential."><link data-rh="true" rel=
   <a href="/docs/murder-escape/api/ShopTypes#BoxInfo#odds">BoxInfo.odds</a> and the count of pool items sharing a rarity — never sent
   per item.
 </p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="BoxInfo"><code style="text-decoration:none">BoxInfo</code><a href="#BoxInfo" class="hash-link" aria-label="Direct link to BoxInfo" title="Direct link to BoxInfo" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Types/ShopTypes.luau#L176"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>BoxInfo<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>boxId<!-- -->: </code><code class="blue_P4bS">string</code><span class="inlineDescription_G7Er">-- <span>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="BoxInfo"><code style="text-decoration:none">BoxInfo</code><a href="#BoxInfo" class="hash-link" aria-label="Direct link to BoxInfo" title="Direct link to BoxInfo" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Types/ShopTypes.luau#L165"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>BoxInfo<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>boxId<!-- -->: </code><code class="blue_P4bS">string</code><span class="inlineDescription_G7Er">-- <span>
 <p>Box id, see <code>ShopPricing.BOXES</code></p>
 </span></span></div><div><code>price<!-- -->: </code><code class="blue_P4bS">number</code><span class="inlineDescription_G7Er">-- <span>
 <p>Coin price to purchase-and-open</p>
@@ -147,23 +143,23 @@ firebit/murder-escape - proprietary and confidential."><link data-rh="true" rel=
 </span></span></div></div><code>}</code></div><div>
 <p>for this player; the client hides the purchase/open entry point when true</p>
 <p>Everything the box window needs to render. See <a href="/docs/murder-escape/api/BoxService#getBoxInfo">BoxService.getBoxInfo</a>.</p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="ShopBoxInfoPayload"><code style="text-decoration:none">ShopBoxInfoPayload</code><a href="#ShopBoxInfoPayload" class="hash-link" aria-label="Direct link to ShopBoxInfoPayload" title="Direct link to ShopBoxInfoPayload" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Types/ShopTypes.luau#L195"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>ShopBoxInfoPayload<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>boxId<!-- -->: </code><code class="blue_P4bS">string</code><span class="inlineDescription_G7Er">-- <span>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="ShopBoxInfoPayload"><code style="text-decoration:none">ShopBoxInfoPayload</code><a href="#ShopBoxInfoPayload" class="hash-link" aria-label="Direct link to ShopBoxInfoPayload" title="Direct link to ShopBoxInfoPayload" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Types/ShopTypes.luau#L184"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>ShopBoxInfoPayload<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>boxId<!-- -->: </code><code class="blue_P4bS">string</code><span class="inlineDescription_G7Er">-- <span>
 <p>Box id to fetch info for</p>
 </span></span></div></div><code>}</code></div><div>
 <p>Payload for <code>SHOP_BOX_INFO</code>.</p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="ShopBoxOpenPayload"><code style="text-decoration:none">ShopBoxOpenPayload</code><a href="#ShopBoxOpenPayload" class="hash-link" aria-label="Direct link to ShopBoxOpenPayload" title="Direct link to ShopBoxOpenPayload" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Types/ShopTypes.luau#L206"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>ShopBoxOpenPayload<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>boxId<!-- -->: </code><code class="blue_P4bS">string</code><span class="inlineDescription_G7Er">-- <span>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="ShopBoxOpenPayload"><code style="text-decoration:none">ShopBoxOpenPayload</code><a href="#ShopBoxOpenPayload" class="hash-link" aria-label="Direct link to ShopBoxOpenPayload" title="Direct link to ShopBoxOpenPayload" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Types/ShopTypes.luau#L195"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>ShopBoxOpenPayload<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>boxId<!-- -->: </code><code class="blue_P4bS">string</code><span class="inlineDescription_G7Er">-- <span>
 <p>Box id to purchase-and-open</p>
 </span></span></div></div><code>}</code></div><div>
 <p>Payload for <code>SHOP_BOX_OPEN</code>.</p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="ShopBoxOpenResult"><code style="text-decoration:none">ShopBoxOpenResult</code><a href="#ShopBoxOpenResult" class="hash-link" aria-label="Direct link to ShopBoxOpenResult" title="Direct link to ShopBoxOpenResult" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Types/ShopTypes.luau#L217"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>ShopBoxOpenResult<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>itemId<!-- -->: </code><code class="blue_P4bS">string</code><span class="inlineDescription_G7Er">-- <span>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="ShopBoxOpenResult"><code style="text-decoration:none">ShopBoxOpenResult</code><a href="#ShopBoxOpenResult" class="hash-link" aria-label="Direct link to ShopBoxOpenResult" title="Direct link to ShopBoxOpenResult" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Types/ShopTypes.luau#L206"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>ShopBoxOpenResult<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>itemId<!-- -->: </code><code class="blue_P4bS">string</code><span class="inlineDescription_G7Er">-- <span>
 <p>Item granted by the roll</p>
 </span></span></div></div><code>}</code></div><div>
 <p>Return shape of <a href="/docs/murder-escape/api/BoxService#open">BoxService.open</a> and the <code>SHOP_BOX_OPEN</code> action.</p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="ShopTradeUpPayload"><code style="text-decoration:none">ShopTradeUpPayload</code><a href="#ShopTradeUpPayload" class="hash-link" aria-label="Direct link to ShopTradeUpPayload" title="Direct link to ShopTradeUpPayload" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Types/ShopTypes.luau#L228"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>ShopTradeUpPayload<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>itemIds<!-- -->: </code><code class="purple_ieR2">{</code><code class="blue_P4bS">string</code><code class="purple_ieR2">}</code><span class="inlineDescription_G7Er">-- <span>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="ShopTradeUpPayload"><code style="text-decoration:none">ShopTradeUpPayload</code><a href="#ShopTradeUpPayload" class="hash-link" aria-label="Direct link to ShopTradeUpPayload" title="Direct link to ShopTradeUpPayload" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Types/ShopTypes.luau#L217"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>ShopTradeUpPayload<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>itemIds<!-- -->: </code><code class="purple_ieR2">{</code><code class="blue_P4bS">string</code><code class="purple_ieR2">}</code><span class="inlineDescription_G7Er">-- <span>
 <p>One entry per slotted copy; exactly TradeUpContract.SLOT_COUNT</p>
 </span></span></div></div><code>}</code></div><div>
 <p>Payload for <code>SHOP_TRADE_UP</code>. The result shape is <a href="/docs/murder-escape/api/ShopTypes#ShopTradeUpResult">ShopTradeUpResult</a>.</p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="ShopTradeUpResult"><code style="text-decoration:none">ShopTradeUpResult</code><a href="#ShopTradeUpResult" class="hash-link" aria-label="Direct link to ShopTradeUpResult" title="Direct link to ShopTradeUpResult" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Types/ShopTypes.luau#L241"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>ShopTradeUpResult<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>itemId<!-- -->: </code><code class="blue_P4bS">string?</code><span class="inlineDescription_G7Er">-- <span>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="ShopTradeUpResult"><code style="text-decoration:none">ShopTradeUpResult</code><a href="#ShopTradeUpResult" class="hash-link" aria-label="Direct link to ShopTradeUpResult" title="Direct link to ShopTradeUpResult" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Shared/Types/ShopTypes.luau#L230"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>ShopTradeUpResult<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>itemId<!-- -->: </code><code class="blue_P4bS">string?</code><span class="inlineDescription_G7Er">-- <span>
 <p>Item granted; set only on success</p>
 </span></span></div><div><code>error<!-- -->: </code><code class="blue_P4bS">string?</code><span class="inlineDescription_G7Er">-- <span>
 <p>Short player-facing refusal reason; set only on failure</p>
@@ -212,26 +208,6 @@ firebit/murder-escape - proprietary and confidential."><link data-rh="true" rel=
             }
         },
         {
-            &quot;name&quot;: &quot;ShopOpenCratePayload&quot;,
-            &quot;desc&quot;: &quot;&quot;,
-            &quot;fields&quot;: [
-                {
-                    &quot;name&quot;: &quot;id&quot;,
-                    &quot;lua_type&quot;: &quot;string&quot;,
-                    &quot;desc&quot;: &quot;Item id of the crate kind&quot;
-                },
-                {
-                    &quot;name&quot;: &quot;recordId&quot;,
-                    &quot;lua_type&quot;: &quot;string&quot;,
-                    &quot;desc&quot;: &quot;The specific crate stack in the player&#x27;s inventory to consume&quot;
-                }
-            ],
-            &quot;source&quot;: {
-                &quot;line&quot;: 49,
-                &quot;path&quot;: &quot;src/Shared/Types/ShopTypes.luau&quot;
-            }
-        },
-        {
             &quot;name&quot;: &quot;ShopPurchasePayload&quot;,
             &quot;desc&quot;: &quot;Price, currency and eligibility are all resolved server-side from the item data,\nso the client never sends an amount.&quot;,
             &quot;fields&quot;: [
@@ -242,7 +218,7 @@ firebit/murder-escape - proprietary and confidential."><link data-rh="true" rel=
                 }
             ],
             &quot;source&quot;: {
-                &quot;line&quot;: 62,
+                &quot;line&quot;: 51,
                 &quot;path&quot;: &quot;src/Shared/Types/ShopTypes.luau&quot;
             }
         },
@@ -257,7 +233,7 @@ firebit/murder-escape - proprietary and confidential."><link data-rh="true" rel=
                 }
             ],
             &quot;source&quot;: {
-                &quot;line&quot;: 71,
+                &quot;line&quot;: 60,
                 &quot;path&quot;: &quot;src/Shared/Types/ShopTypes.luau&quot;
             }
         },
@@ -272,7 +248,7 @@ firebit/murder-escape - proprietary and confidential."><link data-rh="true" rel=
                 }
             ],
             &quot;source&quot;: {
-                &quot;line&quot;: 83,
+                &quot;line&quot;: 72,
                 &quot;path&quot;: &quot;src/Shared/Types/ShopTypes.luau&quot;
             }
         },
@@ -287,7 +263,7 @@ firebit/murder-escape - proprietary and confidential."><link data-rh="true" rel=
                 }
             ],
             &quot;source&quot;: {
-                &quot;line&quot;: 96,
+                &quot;line&quot;: 85,
                 &quot;path&quot;: &quot;src/Shared/Types/ShopTypes.luau&quot;
             }
         },
@@ -327,7 +303,7 @@ firebit/murder-escape - proprietary and confidential."><link data-rh="true" rel=
                 }
             ],
             &quot;source&quot;: {
-                &quot;line&quot;: 112,
+                &quot;line&quot;: 101,
                 &quot;path&quot;: &quot;src/Shared/Types/ShopTypes.luau&quot;
             }
         },
@@ -347,7 +323,7 @@ firebit/murder-escape - proprietary and confidential."><link data-rh="true" rel=
                 }
             ],
             &quot;source&quot;: {
-                &quot;line&quot;: 129,
+                &quot;line&quot;: 118,
                 &quot;path&quot;: &quot;src/Shared/Types/ShopTypes.luau&quot;
             }
         },
@@ -362,7 +338,7 @@ firebit/murder-escape - proprietary and confidential."><link data-rh="true" rel=
                 }
             ],
             &quot;source&quot;: {
-                &quot;line&quot;: 141,
+                &quot;line&quot;: 130,
                 &quot;path&quot;: &quot;src/Shared/Types/ShopTypes.luau&quot;
             }
         },
@@ -387,7 +363,7 @@ firebit/murder-escape - proprietary and confidential."><link data-rh="true" rel=
                 }
             ],
             &quot;source&quot;: {
-                &quot;line&quot;: 156,
+                &quot;line&quot;: 145,
                 &quot;path&quot;: &quot;src/Shared/Types/ShopTypes.luau&quot;
             }
         },
@@ -432,7 +408,7 @@ firebit/murder-escape - proprietary and confidential."><link data-rh="true" rel=
                 }
             ],
             &quot;source&quot;: {
-                &quot;line&quot;: 176,
+                &quot;line&quot;: 165,
                 &quot;path&quot;: &quot;src/Shared/Types/ShopTypes.luau&quot;
             }
         },
@@ -447,7 +423,7 @@ firebit/murder-escape - proprietary and confidential."><link data-rh="true" rel=
                 }
             ],
             &quot;source&quot;: {
-                &quot;line&quot;: 195,
+                &quot;line&quot;: 184,
                 &quot;path&quot;: &quot;src/Shared/Types/ShopTypes.luau&quot;
             }
         },
@@ -462,7 +438,7 @@ firebit/murder-escape - proprietary and confidential."><link data-rh="true" rel=
                 }
             ],
             &quot;source&quot;: {
-                &quot;line&quot;: 206,
+                &quot;line&quot;: 195,
                 &quot;path&quot;: &quot;src/Shared/Types/ShopTypes.luau&quot;
             }
         },
@@ -477,7 +453,7 @@ firebit/murder-escape - proprietary and confidential."><link data-rh="true" rel=
                 }
             ],
             &quot;source&quot;: {
-                &quot;line&quot;: 217,
+                &quot;line&quot;: 206,
                 &quot;path&quot;: &quot;src/Shared/Types/ShopTypes.luau&quot;
             }
         },
@@ -492,7 +468,7 @@ firebit/murder-escape - proprietary and confidential."><link data-rh="true" rel=
                 }
             ],
             &quot;source&quot;: {
-                &quot;line&quot;: 228,
+                &quot;line&quot;: 217,
                 &quot;path&quot;: &quot;src/Shared/Types/ShopTypes.luau&quot;
             }
         },
@@ -512,17 +488,17 @@ firebit/murder-escape - proprietary and confidential."><link data-rh="true" rel=
                 }
             ],
             &quot;source&quot;: {
-                &quot;line&quot;: 241,
+                &quot;line&quot;: 230,
                 &quot;path&quot;: &quot;src/Shared/Types/ShopTypes.luau&quot;
             }
         }
     ],
     &quot;name&quot;: &quot;ShopTypes&quot;,
-    &quot;desc&quot;: &quot;Types for shop-related operations and handlers.\n\nEach type here is the payload for one client-to-server shop action. They are\nnamed after the action they belong to and are dispatched through the shared\naction layer, so the server handler for an action and the client that fires it\nagree on one shape.\n\nItems are addressed two different ways depending on the verb. Buying, equipping\nand granting take an `id` — the item id from `src/Shared/Data/Items/`, which\nnames a *kind* of item. Selling, removing and opening a crate take a `recordId`,\nwhich names one specific stack the player owns (see `Types.ItemRecord`). Sending\none where the other is expected silently misses.\n\nCopyright (c) 2026 firebit. All rights reserved.\nfirebit/murder-escape - proprietary and confidential.&quot;,
+    &quot;desc&quot;: &quot;Types for shop-related operations and handlers.\n\nEach type here is the payload for one client-to-server shop action. They are\nnamed after the action they belong to and are dispatched through the shared\naction layer, so the server handler for an action and the client that fires it\nagree on one shape.\n\nItems are addressed two different ways depending on the verb. Buying, equipping\nand granting take an `id` — the item id from `src/Shared/Data/Items/`, which\nnames a *kind* of item. Selling and removing take a `recordId`, which names\none specific stack the player owns (see `Types.ItemRecord`). Sending\none where the other is expected silently misses.\n\nCopyright (c) 2026 firebit. All rights reserved.\nfirebit/murder-escape - proprietary and confidential.&quot;,
     &quot;source&quot;: {
         &quot;line&quot;: 20,
         &quot;path&quot;: &quot;src/Shared/Types/ShopTypes.luau&quot;
     }
-}</pre></details></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#types" class="table-of-contents__link toc-highlight">Types</a><ul><li><a href="#BoxInfo" class="table-of-contents__link toc-highlight">BoxInfo</a></li><li><a href="#BoxPoolItem" class="table-of-contents__link toc-highlight">BoxPoolItem</a></li><li><a href="#Rotation" class="table-of-contents__link toc-highlight">Rotation</a></li><li><a href="#RotationSlot" class="table-of-contents__link toc-highlight">RotationSlot</a></li><li><a href="#ShopBoxInfoPayload" class="table-of-contents__link toc-highlight">ShopBoxInfoPayload</a></li><li><a href="#ShopBoxOpenPayload" class="table-of-contents__link toc-highlight">ShopBoxOpenPayload</a></li><li><a href="#ShopBoxOpenResult" class="table-of-contents__link toc-highlight">ShopBoxOpenResult</a></li><li><a href="#ShopEquipPayload" class="table-of-contents__link toc-highlight">ShopEquipPayload</a></li><li><a href="#ShopGiveItemPayload" class="table-of-contents__link toc-highlight">ShopGiveItemPayload</a></li><li><a href="#ShopOpenCratePayload" class="table-of-contents__link toc-highlight">ShopOpenCratePayload</a></li><li><a href="#ShopPurchasePayload" class="table-of-contents__link toc-highlight">ShopPurchasePayload</a></li><li><a href="#ShopRedeemCodePayload" class="table-of-contents__link toc-highlight">ShopRedeemCodePayload</a></li><li><a href="#ShopRemoveItemPayload" class="table-of-contents__link toc-highlight">ShopRemoveItemPayload</a></li><li><a href="#ShopRotationPurchasePayload" class="table-of-contents__link toc-highlight">ShopRotationPurchasePayload</a></li><li><a href="#ShopTradeUpPayload" class="table-of-contents__link toc-highlight">ShopTradeUpPayload</a></li><li><a href="#ShopTradeUpResult" class="table-of-contents__link toc-highlight">ShopTradeUpResult</a></li><li><a href="#ShopUnequipPayload" class="table-of-contents__link toc-highlight">ShopUnequipPayload</a></li></ul></li></ul></div></div></div></div></main></div></div><footer class="theme-layout-footer footer footer--dark"><div class="container container-fluid"><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2026 firebit-dev. Built with Moonwave and Docusaurus.</div></div></div></footer></div>
+}</pre></details></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#types" class="table-of-contents__link toc-highlight">Types</a><ul><li><a href="#BoxInfo" class="table-of-contents__link toc-highlight">BoxInfo</a></li><li><a href="#BoxPoolItem" class="table-of-contents__link toc-highlight">BoxPoolItem</a></li><li><a href="#Rotation" class="table-of-contents__link toc-highlight">Rotation</a></li><li><a href="#RotationSlot" class="table-of-contents__link toc-highlight">RotationSlot</a></li><li><a href="#ShopBoxInfoPayload" class="table-of-contents__link toc-highlight">ShopBoxInfoPayload</a></li><li><a href="#ShopBoxOpenPayload" class="table-of-contents__link toc-highlight">ShopBoxOpenPayload</a></li><li><a href="#ShopBoxOpenResult" class="table-of-contents__link toc-highlight">ShopBoxOpenResult</a></li><li><a href="#ShopEquipPayload" class="table-of-contents__link toc-highlight">ShopEquipPayload</a></li><li><a href="#ShopGiveItemPayload" class="table-of-contents__link toc-highlight">ShopGiveItemPayload</a></li><li><a href="#ShopPurchasePayload" class="table-of-contents__link toc-highlight">ShopPurchasePayload</a></li><li><a href="#ShopRedeemCodePayload" class="table-of-contents__link toc-highlight">ShopRedeemCodePayload</a></li><li><a href="#ShopRemoveItemPayload" class="table-of-contents__link toc-highlight">ShopRemoveItemPayload</a></li><li><a href="#ShopRotationPurchasePayload" class="table-of-contents__link toc-highlight">ShopRotationPurchasePayload</a></li><li><a href="#ShopTradeUpPayload" class="table-of-contents__link toc-highlight">ShopTradeUpPayload</a></li><li><a href="#ShopTradeUpResult" class="table-of-contents__link toc-highlight">ShopTradeUpResult</a></li><li><a href="#ShopUnequipPayload" class="table-of-contents__link toc-highlight">ShopUnequipPayload</a></li></ul></li></ul></div></div></div></div></main></div></div><footer class="theme-layout-footer footer footer--dark"><div class="container container-fluid"><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2026 firebit-dev. Built with Moonwave and Docusaurus.</div></div></div></footer></div>
 </body>
 </html>
