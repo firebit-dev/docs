@@ -14,7 +14,7 @@ lives at `inventory_equipped[&lt;slot&gt;]` and is written through
 
 Every character wears one holster per entry in `HOLSTERS`: the equipped
 knife skin on the right hip and the equipped gun skin on the left hip,
-resolved through `Gearkit.Config.resolveModel` so an unowned or missing
+resolved through `Gearkit.Catalog.resolveModel` so an unowned or missing
 skin falls back to the base gear model. Holsters are a lobby display: a
 holster turns invisible (particles stopped) while that gear&#x27;s Tool is in
 the character&#x27;s hands, and both are hidden for the whole round
@@ -35,7 +35,7 @@ lives at `inventory_equipped[&lt;slot&gt;]` and is written through
 
 Every character wears one holster per entry in `HOLSTERS`: the equipped
 knife skin on the right hip and the equipped gun skin on the left hip,
-resolved through `Gearkit.Config.resolveModel` so an unowned or missing
+resolved through `Gearkit.Catalog.resolveModel` so an unowned or missing
 skin falls back to the base gear model. Holsters are a lobby display: a
 holster turns invisible (particles stopped) while that gear&#x27;s Tool is in
 the character&#x27;s hands, and both are hidden for the whole round
@@ -46,8 +46,8 @@ cosmetics only persist across a rejoin once that flag is turned on.
 
 Copyright (c) 2026 firebit. All rights reserved.
 firebit/murder-escape - proprietary and confidential."><link data-rh="true" rel="canonical" href="https://firebit-dev.github.io/docs/murder-escape/api/CosmeticService"><link data-rh="true" rel="alternate" href="https://firebit-dev.github.io/docs/murder-escape/api/CosmeticService" hreflang="en"><link data-rh="true" rel="alternate" href="https://firebit-dev.github.io/docs/murder-escape/api/CosmeticService" hreflang="x-default"><link rel="stylesheet" href="/docs/murder-escape/assets/css/styles.3f63b0bb.css">
-<script src="/docs/murder-escape/assets/js/runtime~main.286d82b6.js" defer="defer"></script>
-<script src="/docs/murder-escape/assets/js/main.0ad7277c.js" defer="defer"></script>
+<script src="/docs/murder-escape/assets/js/runtime~main.3f8ae540.js" defer="defer"></script>
+<script src="/docs/murder-escape/assets/js/main.acd43299.js" defer="defer"></script>
 </head>
 <body>
 <svg style="display: none;"><defs>
@@ -68,7 +68,7 @@ firebit/murder-escape - proprietary and confidential."><link data-rh="true" rel=
 <p>
   Every character wears one holster per entry in <code>HOLSTERS</code>: the equipped
   knife skin on the right hip and the equipped gun skin on the left hip,
-  resolved through <code>Gearkit.Config.resolveModel</code> so an unowned or missing
+  resolved through <code>Gearkit.Catalog.resolveModel</code> so an unowned or missing
   skin falls back to the base gear model. Holsters are a lobby display: a
   holster turns invisible (particles stopped) while that gear's Tool is in
   the character's hands, and both are hidden for the whole round
@@ -283,7 +283,7 @@ firebit/murder-escape - proprietary and confidential."><link data-rh="true" rel=
     &quot;properties&quot;: [],
     &quot;types&quot;: [],
     &quot;name&quot;: &quot;CosmeticService&quot;,
-    &quot;desc&quot;: &quot;CosmeticService — owns cosmetic ownership/gift/equip behaviour and the\nalways-on hip holsters. Lives outside the legacy ItemProcessor pipeline\n(which is being phased out).\n\nOwnership lives in `profile.inventory` — the same [ItemRecord] array every\nother item type uses — checked via [InventoryUtil]; the equipped selection\nlives at `inventory_equipped[&lt;slot&gt;]` and is written through\n[ProfileService:equipItem].\n\nEvery character wears one holster per entry in `HOLSTERS`: the equipped\nknife skin on the right hip and the equipped gun skin on the left hip,\nresolved through `Gearkit.Config.resolveModel` so an unowned or missing\nskin falls back to the base gear model. Holsters are a lobby display: a\nholster turns invisible (particles stopped) while that gear&#x27;s Tool is in\nthe character&#x27;s hands, and both are hidden for the whole round\n(`RoundTag`), so no hip weapon or aura shows mid-round.\n\nNote: `FeatureFlags.SaveInventory` is currently off, so purchased\ncosmetics only persist across a rejoin once that flag is turned on.\n\nCopyright (c) 2026 firebit. All rights reserved.\nfirebit/murder-escape - proprietary and confidential.&quot;,
+    &quot;desc&quot;: &quot;CosmeticService — owns cosmetic ownership/gift/equip behaviour and the\nalways-on hip holsters. Lives outside the legacy ItemProcessor pipeline\n(which is being phased out).\n\nOwnership lives in `profile.inventory` — the same [ItemRecord] array every\nother item type uses — checked via [InventoryUtil]; the equipped selection\nlives at `inventory_equipped[&lt;slot&gt;]` and is written through\n[ProfileService:equipItem].\n\nEvery character wears one holster per entry in `HOLSTERS`: the equipped\nknife skin on the right hip and the equipped gun skin on the left hip,\nresolved through `Gearkit.Catalog.resolveModel` so an unowned or missing\nskin falls back to the base gear model. Holsters are a lobby display: a\nholster turns invisible (particles stopped) while that gear&#x27;s Tool is in\nthe character&#x27;s hands, and both are hidden for the whole round\n(`RoundTag`), so no hip weapon or aura shows mid-round.\n\nNote: `FeatureFlags.SaveInventory` is currently off, so purchased\ncosmetics only persist across a rejoin once that flag is turned on.\n\nCopyright (c) 2026 firebit. All rights reserved.\nfirebit/murder-escape - proprietary and confidential.&quot;,
     &quot;realm&quot;: [
         &quot;Server&quot;
     ],
