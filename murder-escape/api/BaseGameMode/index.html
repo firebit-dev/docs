@@ -228,8 +228,8 @@ enable it deliberately.
 
 Copyright (c) 2026 firebit. All rights reserved.
 firebit/murder-escape - proprietary and confidential."><link data-rh="true" rel="canonical" href="https://firebit-dev.github.io/docs/murder-escape/api/BaseGameMode"><link data-rh="true" rel="alternate" href="https://firebit-dev.github.io/docs/murder-escape/api/BaseGameMode" hreflang="en"><link data-rh="true" rel="alternate" href="https://firebit-dev.github.io/docs/murder-escape/api/BaseGameMode" hreflang="x-default"><link rel="stylesheet" href="/docs/murder-escape/assets/css/styles.3f63b0bb.css">
-<script src="/docs/murder-escape/assets/js/runtime~main.ef90b67c.js" defer="defer"></script>
-<script src="/docs/murder-escape/assets/js/main.1bc1e9b5.js" defer="defer"></script>
+<script src="/docs/murder-escape/assets/js/runtime~main.cc091a32.js" defer="defer"></script>
+<script src="/docs/murder-escape/assets/js/main.25a0b0e9.js" defer="defer"></script>
 </head>
 <body>
 <svg style="display: none;"><defs>
@@ -938,7 +938,7 @@ player</em> is a winner, adding the last winner ends the round. Modes where
   <li><code>Stop</code>, unless the round already stopped itself.</li>
 </ol>
 <p><strong>Yields</strong> for the whole round.</p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="Stop"><code style="text-decoration:none">Stop</code><a href="#Stop" class="hash-link" aria-label="Direct link to Stop" title="Direct link to Stop" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Server/Class/BaseGameMode.luau#L1844"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BaseGameMode<!-- -->:</code><code class="green_DgR4">Stop</code><code>(</code><code>) → </code><code>(</code><code>)</code></div><div>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="Stop"><code style="text-decoration:none">Stop</code><a href="#Stop" class="hash-link" aria-label="Direct link to Stop" title="Direct link to Stop" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Server/Class/BaseGameMode.luau#L1845"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BaseGameMode<!-- -->:</code><code class="green_DgR4">Stop</code><code>(</code><code>) → </code><code>(</code><code>)</code></div><div>
 <p>
   Ends the round: pays out winners, shows the summary, and cleans up. Safe to
   call from anywhere, including from inside a mode — <a href="/docs/murder-escape/api/BaseGameMode#BaseGameMode#Start">BaseGameMode:Start</a> checks
@@ -972,7 +972,7 @@ player</em> is a winner, adding the last winner ends the round. Modes where
 </p>
 <p>Finally calls <a href="/docs/murder-escape/api/BaseGameMode#BaseGameMode#Destroy">BaseGameMode:Destroy</a>.</p>
 <p><strong>Yields</strong> for several seconds across the teardown.</p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="Destroy"><code style="text-decoration:none">Destroy</code><a href="#Destroy" class="hash-link" aria-label="Direct link to Destroy" title="Direct link to Destroy" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Server/Class/BaseGameMode.luau#L2025"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BaseGameMode<!-- -->:</code><code class="green_DgR4">Destroy</code><code>(</code><code>) → </code><code>(</code><code>)</code></div><div>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="Destroy"><code style="text-decoration:none">Destroy</code><a href="#Destroy" class="hash-link" aria-label="Direct link to Destroy" title="Direct link to Destroy" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Server/Class/BaseGameMode.luau#L2026"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BaseGameMode<!-- -->:</code><code class="green_DgR4">Destroy</code><code>(</code><code>) → </code><code>(</code><code>)</code></div><div>
 <p>
   Final teardown: fires <code>Destroying</code> and destroys the Maid. Guarded so it only
   ever runs once, since <a href="/docs/murder-escape/api/BaseGameMode#BaseGameMode#Stop">BaseGameMode:Stop</a> calls it and callers may too.
@@ -1639,7 +1639,7 @@ player</em> is a winner, adding the last winner ends the round. Modes where
             &quot;returns&quot;: [],
             &quot;function_type&quot;: &quot;method&quot;,
             &quot;source&quot;: {
-                &quot;line&quot;: 1844,
+                &quot;line&quot;: 1845,
                 &quot;path&quot;: &quot;src/Server/Class/BaseGameMode.luau&quot;
             }
         },
@@ -1650,7 +1650,7 @@ player</em> is a winner, adding the last winner ends the round. Modes where
             &quot;returns&quot;: [],
             &quot;function_type&quot;: &quot;method&quot;,
             &quot;source&quot;: {
-                &quot;line&quot;: 2025,
+                &quot;line&quot;: 2026,
                 &quot;path&quot;: &quot;src/Server/Class/BaseGameMode.luau&quot;
             }
         }

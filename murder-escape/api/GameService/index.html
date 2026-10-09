@@ -94,8 +94,8 @@ every round. Leave it `nil` outside of debugging.
 Gated by [FeatureFlags].Minigames — disabled by default; per-project forks
 enable it deliberately. With the flag off `init` returns before installing the
 Heartbeat loop, so no round ever starts."><link data-rh="true" rel="canonical" href="https://firebit-dev.github.io/docs/murder-escape/api/GameService"><link data-rh="true" rel="alternate" href="https://firebit-dev.github.io/docs/murder-escape/api/GameService" hreflang="en"><link data-rh="true" rel="alternate" href="https://firebit-dev.github.io/docs/murder-escape/api/GameService" hreflang="x-default"><link rel="stylesheet" href="/docs/murder-escape/assets/css/styles.3f63b0bb.css">
-<script src="/docs/murder-escape/assets/js/runtime~main.ef90b67c.js" defer="defer"></script>
-<script src="/docs/murder-escape/assets/js/main.1bc1e9b5.js" defer="defer"></script>
+<script src="/docs/murder-escape/assets/js/runtime~main.cc091a32.js" defer="defer"></script>
+<script src="/docs/murder-escape/assets/js/main.25a0b0e9.js" defer="defer"></script>
 </head>
 <body>
 <svg style="display: none;"><defs>
@@ -192,7 +192,7 @@ Heartbeat loop, so no round ever starts."><link data-rh="true" rel="canonical" h
   lagging behind.
 </p>
 <p>No-ops entirely when the <code>Minigames</code> feature flag is off.</p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="voteWrap"><code style="text-decoration:none">voteWrap</code><a href="#voteWrap" class="hash-link" aria-label="Direct link to voteWrap" title="Direct link to voteWrap" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Server/Features/Minigames/GameService.luau#L294"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>GameService<!-- -->.</code><code class="green_DgR4">voteWrap</code><code>(</code><code>) → </code><code class="blue_P4bS">MinigameTypes.VotePoolItem?</code><span class="inlineDescription_G7Er">-- <span>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="voteWrap"><code style="text-decoration:none">voteWrap</code><a href="#voteWrap" class="hash-link" aria-label="Direct link to voteWrap" title="Direct link to voteWrap" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Server/Features/Minigames/GameService.luau#L304"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>GameService<!-- -->.</code><code class="green_DgR4">voteWrap</code><code>(</code><code>) → </code><code class="blue_P4bS">MinigameTypes.VotePoolItem?</code><span class="inlineDescription_G7Er">-- <span>
 <p>The chosen mode and map</p>
 </span></span></div><div>
 <p>
@@ -237,7 +237,7 @@ Heartbeat loop, so no round ever starts."><link data-rh="true" rel="canonical" h
   Afterwards it prunes voters who left, asks <a href="/docs/murder-escape/api/VoteService">VoteService</a> for the winner, shows
   the result to the surviving voters, and returns the winning candidate.
 </p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="gameWrap"><code style="text-decoration:none">gameWrap</code><a href="#gameWrap" class="hash-link" aria-label="Direct link to gameWrap" title="Direct link to gameWrap" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Server/Features/Minigames/GameService.luau#L489"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>GameService<!-- -->.</code><code class="green_DgR4">gameWrap</code><code>(</code><code>) → </code><code>(</code><code>)</code></div><div>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="gameWrap"><code style="text-decoration:none">gameWrap</code><a href="#gameWrap" class="hash-link" aria-label="Direct link to gameWrap" title="Direct link to gameWrap" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Server/Features/Minigames/GameService.luau#L499"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>GameService<!-- -->.</code><code class="green_DgR4">gameWrap</code><code>(</code><code>) → </code><code>(</code><code>)</code></div><div>
 <p>
   Runs one complete round and <strong>yields for its entire duration</strong>. Called by the
   lobby loop; it sets <code>inProgress</code> on entry, and the caller clears it on return.
@@ -289,7 +289,7 @@ Heartbeat loop, so no round ever starts."><link data-rh="true" rel="canonical" h
             ],
             &quot;function_type&quot;: &quot;static&quot;,
             &quot;source&quot;: {
-                &quot;line&quot;: 294,
+                &quot;line&quot;: 304,
                 &quot;path&quot;: &quot;src/Server/Features/Minigames/GameService.luau&quot;
             }
         },
@@ -300,7 +300,7 @@ Heartbeat loop, so no round ever starts."><link data-rh="true" rel="canonical" h
             &quot;returns&quot;: [],
             &quot;function_type&quot;: &quot;static&quot;,
             &quot;source&quot;: {
-                &quot;line&quot;: 489,
+                &quot;line&quot;: 499,
                 &quot;path&quot;: &quot;src/Server/Features/Minigames/GameService.luau&quot;
             }
         }

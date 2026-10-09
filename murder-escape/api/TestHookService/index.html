@@ -22,6 +22,7 @@ exists: its callback runs in the game&#x27;s own VM.
 | `largeServer` | `{ players? }` | player count that brings a second Sheriff; `nil` resets it |
 | `ownPasses` | `{ userId, passes }` | gameplay pass names (`GamePassData`) the active round treats as owned |
 | `setPity` | `{ userId, boxId, count }` | sets the player&#x27;s crate pity counter (`box_pity[boxId]`) |
+| `receipt` | `{ userId, productId, purchaseId?, price? }` | runs the game&#x27;s receipt handler with a fake receipt; returns the decision name |
 
 Copyright (c) 2026 firebit. All rights reserved.
 firebit/murder-escape - proprietary and confidential."><meta data-rh="true" property="og:description" content="Studio-only test hook for the playtest scenarios in `tests/scenarios/`. In
@@ -43,11 +44,12 @@ exists: its callback runs in the game&#x27;s own VM.
 | `largeServer` | `{ players? }` | player count that brings a second Sheriff; `nil` resets it |
 | `ownPasses` | `{ userId, passes }` | gameplay pass names (`GamePassData`) the active round treats as owned |
 | `setPity` | `{ userId, boxId, count }` | sets the player&#x27;s crate pity counter (`box_pity[boxId]`) |
+| `receipt` | `{ userId, productId, purchaseId?, price? }` | runs the game&#x27;s receipt handler with a fake receipt; returns the decision name |
 
 Copyright (c) 2026 firebit. All rights reserved.
 firebit/murder-escape - proprietary and confidential."><link data-rh="true" rel="canonical" href="https://firebit-dev.github.io/docs/murder-escape/api/TestHookService"><link data-rh="true" rel="alternate" href="https://firebit-dev.github.io/docs/murder-escape/api/TestHookService" hreflang="en"><link data-rh="true" rel="alternate" href="https://firebit-dev.github.io/docs/murder-escape/api/TestHookService" hreflang="x-default"><link rel="stylesheet" href="/docs/murder-escape/assets/css/styles.3f63b0bb.css">
-<script src="/docs/murder-escape/assets/js/runtime~main.ef90b67c.js" defer="defer"></script>
-<script src="/docs/murder-escape/assets/js/main.1bc1e9b5.js" defer="defer"></script>
+<script src="/docs/murder-escape/assets/js/runtime~main.cc091a32.js" defer="defer"></script>
+<script src="/docs/murder-escape/assets/js/main.25a0b0e9.js" defer="defer"></script>
 </head>
 <body>
 <svg style="display: none;"><defs>
@@ -112,13 +114,18 @@ firebit/murder-escape - proprietary and confidential."><link data-rh="true" rel=
       <td><code>{ userId, boxId, count }</code></td>
       <td>sets the player's crate pity counter (<code>box_pity[boxId]</code>)</td>
     </tr>
+    <tr>
+      <td><code>receipt</code></td>
+      <td><code>{ userId, productId, purchaseId?, price? }</code></td>
+      <td>runs the game's receipt handler with a fake receipt; returns the decision name</td>
+    </tr>
   </tbody>
 </table>
 <p>
   Copyright (c) 2026 firebit. All rights reserved.
   firebit/murder-escape - proprietary and confidential.
 </p>
-</div></header><h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="functions">Functions<a href="#functions" class="hash-link" aria-label="Direct link to Functions" title="Direct link to Functions" translate="no">​</a></h2><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="init"><code style="text-decoration:none">init</code><a href="#init" class="hash-link" aria-label="Direct link to init" title="Direct link to init" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Server/Features/Core/TestHookService.luau#L140"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>TestHookService<!-- -->.</code><code class="green_DgR4">init</code><code>(</code><code>) → </code><code>(</code><code>)</code></div><div>
+</div></header><h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="functions">Functions<a href="#functions" class="hash-link" aria-label="Direct link to Functions" title="Direct link to Functions" translate="no">​</a></h2><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="init"><code style="text-decoration:none">init</code><a href="#init" class="hash-link" aria-label="Direct link to init" title="Direct link to init" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/murder-escape/blob/main/src/Server/Features/Core/TestHookService.luau#L158"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>TestHookService<!-- -->.</code><code class="green_DgR4">init</code><code>(</code><code>) → </code><code>(</code><code>)</code></div><div>
 <p>Creates <code>ServerStorage.TestHook</code> in Studio. Does nothing on a live server.</p>
 </div></div></article></div><details><summary>Show raw api</summary><pre style="max-width:100%;white-space:pre-wrap">{
     &quot;functions&quot;: [
@@ -129,7 +136,7 @@ firebit/murder-escape - proprietary and confidential."><link data-rh="true" rel=
             &quot;returns&quot;: [],
             &quot;function_type&quot;: &quot;static&quot;,
             &quot;source&quot;: {
-                &quot;line&quot;: 140,
+                &quot;line&quot;: 158,
                 &quot;path&quot;: &quot;src/Server/Features/Core/TestHookService.luau&quot;
             }
         }
@@ -137,12 +144,12 @@ firebit/murder-escape - proprietary and confidential."><link data-rh="true" rel=
     &quot;properties&quot;: [],
     &quot;types&quot;: [],
     &quot;name&quot;: &quot;TestHookService&quot;,
-    &quot;desc&quot;: &quot;Studio-only test hook for the playtest scenarios in `tests/scenarios/`. In\nStudio it creates a `BindableFunction` named `TestHook` under\n`ServerStorage`; on a live server it creates nothing. There is no remote,\nso only server code, the command bar and the Studio MCP exec VM can call\nit. The MCP exec VM can&#x27;t see game module state, which is why the hook\nexists: its callback runs in the game&#x27;s own VM.\n\n`ServerStorage.TestHook:Invoke(command, args)` returns `(ok, result)`:\n\n| Command | Args | Does |\n| --- | --- | --- |\n| `grant` | `{ userId, coins?, xp?, itemId?, quantity? }` | credits through [CurrencyService] / [InventoryService] |\n| `read` | `{ userId, paths? }` | profile values as JSON (the whole profile without `paths`) |\n| `nextGame` | `{ gameMode, map }` | queues the next round&#x27;s mode and map |\n| `forceRoles` | `{ Murderer = { userId }, Sheriff = { userId } }` | roles for the next Murder Escape round |\n| `paidRandomItems` | `{ userId, restricted? }` | overrides the paid random items verdict; `nil` clears it |\n| `largeServer` | `{ players? }` | player count that brings a second Sheriff; `nil` resets it |\n| `ownPasses` | `{ userId, passes }` | gameplay pass names (`GamePassData`) the active round treats as owned |\n| `setPity` | `{ userId, boxId, count }` | sets the player&#x27;s crate pity counter (`box_pity[boxId]`) |\n\nCopyright (c) 2026 firebit. All rights reserved.\nfirebit/murder-escape - proprietary and confidential.&quot;,
+    &quot;desc&quot;: &quot;Studio-only test hook for the playtest scenarios in `tests/scenarios/`. In\nStudio it creates a `BindableFunction` named `TestHook` under\n`ServerStorage`; on a live server it creates nothing. There is no remote,\nso only server code, the command bar and the Studio MCP exec VM can call\nit. The MCP exec VM can&#x27;t see game module state, which is why the hook\nexists: its callback runs in the game&#x27;s own VM.\n\n`ServerStorage.TestHook:Invoke(command, args)` returns `(ok, result)`:\n\n| Command | Args | Does |\n| --- | --- | --- |\n| `grant` | `{ userId, coins?, xp?, itemId?, quantity? }` | credits through [CurrencyService] / [InventoryService] |\n| `read` | `{ userId, paths? }` | profile values as JSON (the whole profile without `paths`) |\n| `nextGame` | `{ gameMode, map }` | queues the next round&#x27;s mode and map |\n| `forceRoles` | `{ Murderer = { userId }, Sheriff = { userId } }` | roles for the next Murder Escape round |\n| `paidRandomItems` | `{ userId, restricted? }` | overrides the paid random items verdict; `nil` clears it |\n| `largeServer` | `{ players? }` | player count that brings a second Sheriff; `nil` resets it |\n| `ownPasses` | `{ userId, passes }` | gameplay pass names (`GamePassData`) the active round treats as owned |\n| `setPity` | `{ userId, boxId, count }` | sets the player&#x27;s crate pity counter (`box_pity[boxId]`) |\n| `receipt` | `{ userId, productId, purchaseId?, price? }` | runs the game&#x27;s receipt handler with a fake receipt; returns the decision name |\n\nCopyright (c) 2026 firebit. All rights reserved.\nfirebit/murder-escape - proprietary and confidential.&quot;,
     &quot;realm&quot;: [
         &quot;Server&quot;
     ],
     &quot;source&quot;: {
-        &quot;line&quot;: 28,
+        &quot;line&quot;: 29,
         &quot;path&quot;: &quot;src/Server/Features/Core/TestHookService.luau&quot;
     }
 }</pre></details></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#functions" class="table-of-contents__link toc-highlight">Functions</a><ul><li><a href="#init" class="table-of-contents__link toc-highlight">.init</a></li></ul></li></ul></div></div></div></div></main></div></div><footer class="theme-layout-footer footer footer--dark"><div class="container container-fluid"><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2026 firebit-dev. Built with Moonwave and Docusaurus.</div></div></div></footer></div>
