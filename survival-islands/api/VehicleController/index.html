@@ -1,0 +1,730 @@
+<!doctype html>
+<html lang="en" dir="ltr" class="plugin-moonwave plugin-id-moonwave" data-has-hydrated="false">
+<head>
+<meta charset="UTF-8">
+<meta name="generator" content="Docusaurus v3.10.1">
+<title data-rh="true">VehicleController | Survival Islands</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://firebit-dev.github.io/docs/survival-islands/api/VehicleController"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docusaurus_tag" content="default"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docsearch:docusaurus_tag" content="default"><meta data-rh="true" property="og:title" content="VehicleController | Survival Islands"><meta data-rh="true" name="description" content="Handles client-side vehicle physics (Ackermann steering, throttle,
+submarine mode), input, and distance tracking.
+
+### Why the physics is client-side
+
+The server owns *existence* — spawning, despawning, seat authority, and the
+distance stat — while the driver&#x27;s own client owns *motion*. The client that
+occupies the `DriverSeat` has network ownership of the assembly anyway, so
+simulating there is both authoritative in practice and latency-free. The
+server is told only the outcome (`VEHICLE_LOG_DISTANCE` on dismount).
+
+### Singleton, not per-vehicle
+
+This is a module-level singleton holding **one** `car` at a time — the vehicle
+this client may drive. [VehicleController.setupCar] overwrites that reference
+wholesale. Other players&#x27; vehicles are not tracked at all; their enter prompt
+is simply destroyed so they cannot be boarded.
+
+### Two states
+
+A vehicle is either `driving` or `submarine`, switched by
+[VehicleController.setState] off the character&#x27;s `Swimming` attribute. The two
+modes drive completely different mechanisms and only one is ever live:
+
+- **driving** — four `CylindricalConstraint` wheel motors plus two front
+  spring attachments used as steering knuckles. Torque on, flight constraints
+  off.
+- **submarine** — an `AlignOrientation`/`AlignPosition`/`VectorForce` rig that
+  flies the chassis; the camera becomes the control surface. Torque zeroed,
+  wheel motors idle.
+
+### Update pipeline
+
+[VehicleController.startControl] binds [VehicleController.update] to Heartbeat.
+Each frame `update` handles the shared concerns — idle detection, station
+keeping, and cutting power when the seat is empty — then delegates to
+[VehicleController.updateCar] or [VehicleController.updateSubmarine].
+
+### Steering geometry
+
+Wheelbase and track width are measured from the *actual* constraint
+attachments in [VehicleController.setupCar] using `Magnitude`, so they are
+rotation-invariant and a re-authored car model needs no code change.
+
+Gated by [FeatureFlags].Vehicle — disabled by default; per-project forks
+enable it deliberately. Both [VehicleController.init] and
+[VehicleController.start] return immediately when the flag is off, so nothing
+is tagged, bound or subscribed.
+
+Copyright (c) 2026 firebit. All rights reserved.
+firebit/survival-islands - proprietary and confidential."><meta data-rh="true" property="og:description" content="Handles client-side vehicle physics (Ackermann steering, throttle,
+submarine mode), input, and distance tracking.
+
+### Why the physics is client-side
+
+The server owns *existence* — spawning, despawning, seat authority, and the
+distance stat — while the driver&#x27;s own client owns *motion*. The client that
+occupies the `DriverSeat` has network ownership of the assembly anyway, so
+simulating there is both authoritative in practice and latency-free. The
+server is told only the outcome (`VEHICLE_LOG_DISTANCE` on dismount).
+
+### Singleton, not per-vehicle
+
+This is a module-level singleton holding **one** `car` at a time — the vehicle
+this client may drive. [VehicleController.setupCar] overwrites that reference
+wholesale. Other players&#x27; vehicles are not tracked at all; their enter prompt
+is simply destroyed so they cannot be boarded.
+
+### Two states
+
+A vehicle is either `driving` or `submarine`, switched by
+[VehicleController.setState] off the character&#x27;s `Swimming` attribute. The two
+modes drive completely different mechanisms and only one is ever live:
+
+- **driving** — four `CylindricalConstraint` wheel motors plus two front
+  spring attachments used as steering knuckles. Torque on, flight constraints
+  off.
+- **submarine** — an `AlignOrientation`/`AlignPosition`/`VectorForce` rig that
+  flies the chassis; the camera becomes the control surface. Torque zeroed,
+  wheel motors idle.
+
+### Update pipeline
+
+[VehicleController.startControl] binds [VehicleController.update] to Heartbeat.
+Each frame `update` handles the shared concerns — idle detection, station
+keeping, and cutting power when the seat is empty — then delegates to
+[VehicleController.updateCar] or [VehicleController.updateSubmarine].
+
+### Steering geometry
+
+Wheelbase and track width are measured from the *actual* constraint
+attachments in [VehicleController.setupCar] using `Magnitude`, so they are
+rotation-invariant and a re-authored car model needs no code change.
+
+Gated by [FeatureFlags].Vehicle — disabled by default; per-project forks
+enable it deliberately. Both [VehicleController.init] and
+[VehicleController.start] return immediately when the flag is off, so nothing
+is tagged, bound or subscribed.
+
+Copyright (c) 2026 firebit. All rights reserved.
+firebit/survival-islands - proprietary and confidential."><link data-rh="true" rel="canonical" href="https://firebit-dev.github.io/docs/survival-islands/api/VehicleController"><link data-rh="true" rel="alternate" href="https://firebit-dev.github.io/docs/survival-islands/api/VehicleController" hreflang="en"><link data-rh="true" rel="alternate" href="https://firebit-dev.github.io/docs/survival-islands/api/VehicleController" hreflang="x-default"><link rel="stylesheet" href="/docs/survival-islands/assets/css/styles.d954f017.css">
+<script src="/docs/survival-islands/assets/js/runtime~main.43105527.js" defer="defer"></script>
+<script src="/docs/survival-islands/assets/js/main.19b6b4af.js" defer="defer"></script>
+</head>
+<body>
+<svg style="display: none;"><defs>
+<symbol id="theme-svg-external-link" viewBox="0 0 24 24"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"/></symbol>
+</defs></svg>
+<script>!function(){var t=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme")}catch(t){}}();document.documentElement.setAttribute("data-theme",t||(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light")),document.documentElement.setAttribute("data-theme-choice",t||"system")}(),function(){try{const c=new URLSearchParams(window.location.search).entries();for(var[t,e]of c)if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id="__docusaurus"><div role="region" aria-label="Skip to main content"><a class="skipToContent_fXgn" href="#__docusaurus_skipToContent_fallback">Skip to main content</a></div><nav aria-label="Main" class="theme-layout-navbar navbar navbar--fixed-top"><div class="navbar__inner"><div class="theme-layout-navbar-left navbar__items"><button aria-label="Toggle navigation bar" aria-expanded="false" class="navbar__toggle clean-btn" type="button"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/docs/survival-islands/"><b class="navbar__title text--truncate">Survival Islands</b></a><a class="navbar__item navbar__link" href="/docs/survival-islands/docs/intro">Docs</a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/docs/survival-islands/api/">API</a></div><div class="theme-layout-navbar-right navbar__items navbar__items--right"><a href="https://github.com/firebit-dev/survival-islands" target="_blank" rel="noopener noreferrer" class="navbar__item navbar__link">GitHub<svg width="13.5" height="13.5" aria-label="(opens in new tab)" class="iconExternalLink_nPIU"><use href="#theme-svg-external-link"></use></svg></a><div class="toggle_vylO colorModeToggle_DEke"><button class="clean-btn toggleButton_gllP toggleButtonDisabled_aARS" type="button" disabled="" title="system mode" aria-label="Switch between dark and light mode (currently system mode)"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP lightToggleIcon_pyhR"><path fill="currentColor" d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP darkToggleIcon_wfgR"><path fill="currentColor" d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP systemToggleIcon_QzmC"><path fill="currentColor" d="m12 21c4.971 0 9-4.029 9-9s-4.029-9-9-9-9 4.029-9 9 4.029 9 9 9zm4.95-13.95c1.313 1.313 2.05 3.093 2.05 4.95s-0.738 3.637-2.05 4.95c-1.313 1.313-3.093 2.05-4.95 2.05v-14c1.857 0 3.637 0.737 4.95 2.05z"></path></svg></button></div><div class="navbarSearchContainer_Bca1"><div class="navbar__search"><span aria-label="expand searchbar" role="button" class="search-icon" tabindex="0"></span><input id="search_input_react" type="search" placeholder="Loading..." aria-label="Search" class="navbar__search-input search-bar" disabled=""></div></div></div></div><div role="presentation" class="navbar-sidebar__backdrop"></div></nav><div id="__docusaurus_skipToContent_fallback" class="theme-layout-main main-wrapper mainWrapper_z2l0 docPageContainer_wNNk"><div class="docPage_Dpn1"><div class="docSidebarContainer_o_re"><div class="sidebar_njMd"><nav aria-label="Docs sidebar" class="menu thin-scrollbar menu_SIkG"><ul class="theme-doc-sidebar-menu menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Actions"><span title="​Actions" class="linkLabel_WmDU">​Actions</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/AdminService"><span title="​Admin​Service" class="linkLabel_WmDU">​Admin​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Analytics"><span title="​Analytics" class="linkLabel_WmDU">​Analytics</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/AnalyticsService"><span title="​Analytics​Service" class="linkLabel_WmDU">​Analytics​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/AnchorDescendants"><span title="​Anchor​Descendants" class="linkLabel_WmDU">​Anchor​Descendants</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/AnimalPen"><span title="​Animal​Pen" class="linkLabel_WmDU">​Animal​Pen</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/AnimalPenBaseClass"><span title="​Animal​Pen​Base​Class" class="linkLabel_WmDU">​Animal​Pen​Base​Class</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Attrify"><span title="​Attrify" class="linkLabel_WmDU">​Attrify</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/AutoCanvasSize"><span title="​Auto​Canvas​Size" class="linkLabel_WmDU">​Auto​Canvas​Size</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/BaseGameMode"><span title="​Base​Game​Mode" class="linkLabel_WmDU">​Base​Game​Mode</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/BaseUtil"><span title="​Base​Util" class="linkLabel_WmDU">​Base​Util</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Bezier"><span title="​Bezier" class="linkLabel_WmDU">​Bezier</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Blur"><span title="​Blur" class="linkLabel_WmDU">​Blur</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Bootstrap"><span title="​Bootstrap" class="linkLabel_WmDU">​Bootstrap</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/BoxService"><span title="​Box​Service" class="linkLabel_WmDU">​Box​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ButtonSoundController"><span title="​Button​Sound​Controller" class="linkLabel_WmDU">​Button​Sound​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/BuySkillNodeHandler"><span title="​Buy​Skill​Node​Handler" class="linkLabel_WmDU">​Buy​Skill​Node​Handler</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Character"><span title="​Character" class="linkLabel_WmDU">​Character</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/CharacterGrip"><span title="​Character​Grip" class="linkLabel_WmDU">​Character​Grip</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ChatCommand"><span title="​Chat​Command" class="linkLabel_WmDU">​Chat​Command</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ChatNameController"><span title="​Chat​Name​Controller" class="linkLabel_WmDU">​Chat​Name​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ClientState"><span title="​Client​State" class="linkLabel_WmDU">​Client​State</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/CollectionObject"><span title="​Collection​Object" class="linkLabel_WmDU">​Collection​Object</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/CollectionWatcher"><span title="​Collection​Watcher" class="linkLabel_WmDU">​Collection​Watcher</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/CollectionWatcherController"><span title="​Collection​Watcher​Controller" class="linkLabel_WmDU">​Collection​Watcher​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/CollectionWatcherService"><span title="​Collection​Watcher​Service" class="linkLabel_WmDU">​Collection​Watcher​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/CollisionService"><span title="​Collision​Service" class="linkLabel_WmDU">​Collision​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Colors"><span title="​Colors" class="linkLabel_WmDU">​Colors</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ConeCast"><span title="​Cone​Cast" class="linkLabel_WmDU">​Cone​Cast</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Confetti"><span title="​Confetti" class="linkLabel_WmDU">​Confetti</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ControlsData"><span title="​Controls​Data" class="linkLabel_WmDU">​Controls​Data</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Cooldown"><span title="​Cooldown" class="linkLabel_WmDU">​Cooldown</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/CoreService"><span title="​Core​Service" class="linkLabel_WmDU">​Core​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/CoreState"><span title="​Core​State" class="linkLabel_WmDU">​Core​State</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/CosmeticService"><span title="​Cosmetic​Service" class="linkLabel_WmDU">​Cosmetic​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/CreateCharacterWeld"><span title="​Create​Character​Weld" class="linkLabel_WmDU">​Create​Character​Weld</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/CreateFullViewport"><span title="​Create​Full​Viewport" class="linkLabel_WmDU">​Create​Full​Viewport</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/CreateNumberTween"><span title="​Create​Number​Tween" class="linkLabel_WmDU">​Create​Number​Tween</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/CreateTween"><span title="​Create​Tween" class="linkLabel_WmDU">​Create​Tween</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/CreateWeld"><span title="​Create​Weld" class="linkLabel_WmDU">​Create​Weld</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/CropTypes"><span title="​Crop​Types" class="linkLabel_WmDU">​Crop​Types</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/CrownGrab"><span title="​Crown​Grab" class="linkLabel_WmDU">​Crown​Grab</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/CurrencyService"><span title="​Currency​Service" class="linkLabel_WmDU">​Currency​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/DailyRewards"><span title="​Daily​Rewards" class="linkLabel_WmDU">​Daily​Rewards</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/DailyRotationService"><span title="​Daily​Rotation​Service" class="linkLabel_WmDU">​Daily​Rotation​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/DataController"><span title="​Data​Controller" class="linkLabel_WmDU">​Data​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/DefaultProps"><span title="​Default​Props" class="linkLabel_WmDU">​Default​Props</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Device"><span title="​Device" class="linkLabel_WmDU">​Device</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/DodgeTheTeapots"><span title="​Dodge​The​Teapots" class="linkLabel_WmDU">​Dodge​The​Teapots</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Door"><span title="​Door" class="linkLabel_WmDU">​Door</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/DropsController"><span title="​Drops​Controller" class="linkLabel_WmDU">​Drops​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/DuplicateProtection"><span title="​Duplicate​Protection" class="linkLabel_WmDU">​Duplicate​Protection</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Effects"><span title="​Effects" class="linkLabel_WmDU">​Effects</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/EmoteController"><span title="​Emote​Controller" class="linkLabel_WmDU">​Emote​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/FeatureFlags"><span title="​Feature​Flags" class="linkLabel_WmDU">​Feature​Flags</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/GameService"><span title="​Game​Service" class="linkLabel_WmDU">​Game​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/GamepadSelection"><span title="​Gamepad​Selection" class="linkLabel_WmDU">​Gamepad​Selection</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/GearController"><span title="​Gear​Controller" class="linkLabel_WmDU">​Gear​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/GearDebugService"><span title="​Gear​Debug​Service" class="linkLabel_WmDU">​Gear​Debug​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/GearService"><span title="​Gear​Service" class="linkLabel_WmDU">​Gear​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/GearkitSetup"><span title="​Gearkit​Setup" class="linkLabel_WmDU">​Gearkit​Setup</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/GradientUtil"><span title="​Gradient​Util" class="linkLabel_WmDU">​Gradient​Util</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/GridNav"><span title="​Grid​Nav" class="linkLabel_WmDU">​Grid​Nav</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/HealthBar"><span title="​Health​Bar" class="linkLabel_WmDU">​Health​Bar</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/HighlightedPrompt"><span title="​Highlighted​Prompt" class="linkLabel_WmDU">​Highlighted​Prompt</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/InstanceSync"><span title="​Instance​Sync" class="linkLabel_WmDU">​Instance​Sync</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/InventoryHandler"><span title="​Inventory​Handler" class="linkLabel_WmDU">​Inventory​Handler</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/InventoryService"><span title="​Inventory​Service" class="linkLabel_WmDU">​Inventory​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/InventoryTypes"><span title="​Inventory​Types" class="linkLabel_WmDU">​Inventory​Types</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/InventoryUtil"><span title="​Inventory​Util" class="linkLabel_WmDU">​Inventory​Util</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/InviteFriends"><span title="​Invite​Friends" class="linkLabel_WmDU">​Invite​Friends</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ItemSlotIcon"><span title="​Item​Slot​Icon" class="linkLabel_WmDU">​Item​Slot​Icon</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ItemTypes"><span title="​Item​Types" class="linkLabel_WmDU">​Item​Types</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/KillEffectController"><span title="​Kill​Effect​Controller" class="linkLabel_WmDU">​Kill​Effect​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Leaderstats"><span title="​Leaderstats" class="linkLabel_WmDU">​Leaderstats</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Level"><span title="​Level" class="linkLabel_WmDU">​Level</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/LevelService"><span title="​Level​Service" class="linkLabel_WmDU">​Level​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/LevelTeleport"><span title="​Level​Teleport" class="linkLabel_WmDU">​Level​Teleport</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ListenForKey"><span title="​Listen​For​Key" class="linkLabel_WmDU">​Listen​For​Key</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/MarketplaceData"><span title="​Marketplace​Data" class="linkLabel_WmDU">​Marketplace​Data</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/MarketplaceService"><span title="​Marketplace​Service" class="linkLabel_WmDU">​Marketplace​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/MemoryStoreService"><span title="​Memory​Store​Service" class="linkLabel_WmDU">​Memory​Store​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/MessageController"><span title="​Message​Controller" class="linkLabel_WmDU">​Message​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/MineablesController"><span title="​Mineables​Controller" class="linkLabel_WmDU">​Mineables​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/MinigameData"><span title="​Minigame​Data" class="linkLabel_WmDU">​Minigame​Data</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/MinigameService"><span title="​Minigame​Service" class="linkLabel_WmDU">​Minigame​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/MinigameUtil"><span title="​Minigame​Util" class="linkLabel_WmDU">​Minigame​Util</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Minigames"><span title="​Minigames" class="linkLabel_WmDU">​Minigames</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ModelWrap"><span title="​Model​Wrap" class="linkLabel_WmDU">​Model​Wrap</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Monetization"><span title="​Monetization" class="linkLabel_WmDU">​Monetization</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/MonetizationController"><span title="​Monetization​Controller" class="linkLabel_WmDU">​Monetization​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/MonetizationService"><span title="​Monetization​Service" class="linkLabel_WmDU">​Monetization​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/MovingGradientController"><span title="​Moving​Gradient​Controller" class="linkLabel_WmDU">​Moving​Gradient​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/NPC"><span title="​N​P​C" class="linkLabel_WmDU">​N​P​C</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/NavigationController"><span title="​Navigation​Controller" class="linkLabel_WmDU">​Navigation​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Nuisance"><span title="​Nuisance" class="linkLabel_WmDU">​Nuisance</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/PetController"><span title="​Pet​Controller" class="linkLabel_WmDU">​Pet​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/PlaceUtility"><span title="​Place​Utility" class="linkLabel_WmDU">​Place​Utility</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/PlaySFX"><span title="​Play​S​F​X" class="linkLabel_WmDU">​Play​S​F​X</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/PlayerOverhead"><span title="​Player​Overhead" class="linkLabel_WmDU">​Player​Overhead</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/PlayerService"><span title="​Player​Service" class="linkLabel_WmDU">​Player​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/PlayerState"><span title="​Player​State" class="linkLabel_WmDU">​Player​State</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/PoissonDisk"><span title="​Poisson​Disk" class="linkLabel_WmDU">​Poisson​Disk</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ProfileService"><span title="​Profile​Service" class="linkLabel_WmDU">​Profile​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ProfileTypes"><span title="​Profile​Types" class="linkLabel_WmDU">​Profile​Types</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ProgressBar"><span title="​Progress​Bar" class="linkLabel_WmDU">​Progress​Bar</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/PropBaseClass"><span title="​Prop​Base​Class" class="linkLabel_WmDU">​Prop​Base​Class</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/PropTypes"><span title="​Prop​Types" class="linkLabel_WmDU">​Prop​Types</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/QueueService"><span title="​Queue​Service" class="linkLabel_WmDU">​Queue​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/RandomizeYOrientation"><span title="​Randomize​Y​Orientation" class="linkLabel_WmDU">​Randomize​Y​Orientation</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Range"><span title="​Range" class="linkLabel_WmDU">​Range</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/RarityData"><span title="​Rarity​Data" class="linkLabel_WmDU">​Rarity​Data</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Rng"><span title="​Rng" class="linkLabel_WmDU">​Rng</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Round"><span title="​Round" class="linkLabel_WmDU">​Round</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Router"><span title="​Router" class="linkLabel_WmDU">​Router</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/RunMode"><span title="​Run​Mode" class="linkLabel_WmDU">​Run​Mode</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/SafeSet"><span title="​Safe​Set" class="linkLabel_WmDU">​Safe​Set</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Sanitation"><span title="​Sanitation" class="linkLabel_WmDU">​Sanitation</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ScaleTween"><span title="​Scale​Tween" class="linkLabel_WmDU">​Scale​Tween</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ScalingButton"><span title="​Scaling​Button" class="linkLabel_WmDU">​Scaling​Button</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/SeasonData"><span title="​Season​Data" class="linkLabel_WmDU">​Season​Data</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/SeasonService"><span title="​Season​Service" class="linkLabel_WmDU">​Season​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/SecurityController"><span title="​Security​Controller" class="linkLabel_WmDU">​Security​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/SecurityService"><span title="​Security​Service" class="linkLabel_WmDU">​Security​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ShopController"><span title="​Shop​Controller" class="linkLabel_WmDU">​Shop​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ShopHandler"><span title="​Shop​Handler" class="linkLabel_WmDU">​Shop​Handler</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ShopItems"><span title="​Shop​Items" class="linkLabel_WmDU">​Shop​Items</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ShopService"><span title="​Shop​Service" class="linkLabel_WmDU">​Shop​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ShopTypes"><span title="​Shop​Types" class="linkLabel_WmDU">​Shop​Types</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Shuffle"><span title="​Shuffle" class="linkLabel_WmDU">​Shuffle</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/SkillTreeData"><span title="​Skill​Tree​Data" class="linkLabel_WmDU">​Skill​Tree​Data</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/SkillTreeService"><span title="​Skill​Tree​Service" class="linkLabel_WmDU">​Skill​Tree​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Smoothstep"><span title="​Smoothstep" class="linkLabel_WmDU">​Smoothstep</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/SocialController"><span title="​Social​Controller" class="linkLabel_WmDU">​Social​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Soil"><span title="​Soil" class="linkLabel_WmDU">​Soil</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/SoundController"><span title="​Sound​Controller" class="linkLabel_WmDU">​Sound​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Sounds"><span title="​Sounds" class="linkLabel_WmDU">​Sounds</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Spring"><span title="​Spring" class="linkLabel_WmDU">​Spring</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/StatsController"><span title="​Stats​Controller" class="linkLabel_WmDU">​Stats​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/TeleportPad"><span title="​Teleport​Pad" class="linkLabel_WmDU">​Teleport​Pad</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Town"><span title="​Town" class="linkLabel_WmDU">​Town</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/TrackedPlayerValues"><span title="​Tracked​Player​Values" class="linkLabel_WmDU">​Tracked​Player​Values</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/UITypes"><span title="​U​I​Types" class="linkLabel_WmDU">​U​I​Types</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Vehicle"><span title="​Vehicle" class="linkLabel_WmDU">​Vehicle</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/VehicleAttachmentData"><span title="​Vehicle​Attachment​Data" class="linkLabel_WmDU">​Vehicle​Attachment​Data</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link menu__link--active" aria-current="page" href="/docs/survival-islands/api/VehicleController"><span title="​Vehicle​Controller" class="linkLabel_WmDU">​Vehicle​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/VehicleService"><span title="​Vehicle​Service" class="linkLabel_WmDU">​Vehicle​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/VehicleTypes"><span title="​Vehicle​Types" class="linkLabel_WmDU">​Vehicle​Types</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/VoteService"><span title="​Vote​Service" class="linkLabel_WmDU">​Vote​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/WaitForPrimaryPart"><span title="​Wait​For​Primary​Part" class="linkLabel_WmDU">​Wait​For​Primary​Part</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Zombie"><span title="​Zombie" class="linkLabel_WmDU">​Zombie</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Zone"><span title="​Zone" class="linkLabel_WmDU">​Zone</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/adjustValueByUserPriceLevel"><span title="adjust​Value​By​User​Price​Level" class="linkLabel_WmDU">adjust​Value​By​User​Price​Level</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/breakJoints"><span title="break​Joints" class="linkLabel_WmDU">break​Joints</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/getFirstTaggedDescendant"><span title="get​First​Tagged​Descendant" class="linkLabel_WmDU">get​First​Tagged​Descendant</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/getFriendsInServer"><span title="get​Friends​In​Server" class="linkLabel_WmDU">get​Friends​In​Server</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/getPriceLevel"><span title="get​Price​Level" class="linkLabel_WmDU">get​Price​Level</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/getProductInfo"><span title="get​Product​Info" class="linkLabel_WmDU">get​Product​Info</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/quantityToUrgencyText"><span title="quantity​To​Urgency​Text" class="linkLabel_WmDU">quantity​To​Urgency​Text</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/spawnParticle"><span title="spawn​Particle" class="linkLabel_WmDU">spawn​Particle</span></a></li></ul></nav></div></div><main class="docMainContainer_HJE1"><div class="container padding-vert--lg"><div class="row"><div class="col docItemCol_MU3C"><div class="docItemContainer_Wv98"><article><div class="member_J0w1 markdown"><div class="tocCollapsible_ETCw theme-doc-toc-mobile tocMobile_oUs_"><button type="button" class="clean-btn tocCollapsibleButton_TO0P">On this page</button></div><header><h1 class="docTitle_mZRt" style="text-decoration:none"><span style="display:inline-block">Vehicle</span><span style="display:inline-block">Controller</span></h1><div class="luaClassTags_EipM"><span class="badge_Ba2I" style="color:#349AD5"><span class="badgeTooltip_cWXP">This item only works when running on the client.</span><span class="badgeToolTipTail_H9D_"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 337 304" fill="#349AD5" role="img" aria-label="This item only works when running on the client."><path d="M0 201h337v36H0v-36zm0 0zM0 0v188h337V0H0zM218 287h30c12 0 12 17 0 17H88c-11 0-11-17 0-17h31l10-39h79l10 39z"></path></svg> <!-- -->Client</span></span><span class="docTag__6UZ" style="border-color:#ff5252;color:#ff5252">dormant</span></div><div>
+<p>
+  Handles client-side vehicle physics (Ackermann steering, throttle,
+  submarine mode), input, and distance tracking.
+</p>
+<h3>Why the physics is client-side</h3>
+<p>
+  The server owns <em>existence</em> — spawning, despawning, seat authority, and the
+  distance stat — while the driver's own client owns <em>motion</em>. The client that
+  occupies the <code>DriverSeat</code> has network ownership of the assembly anyway, so
+  simulating there is both authoritative in practice and latency-free. The
+  server is told only the outcome (<code>VEHICLE_LOG_DISTANCE</code> on dismount).
+</p>
+<h3>Singleton, not per-vehicle</h3>
+<p>
+  This is a module-level singleton holding <strong>one</strong> <code>car</code> at a time — the vehicle
+  this client may drive. <a href="/docs/survival-islands/api/VehicleController#setupCar">VehicleController.setupCar</a> overwrites that reference
+  wholesale. Other players' vehicles are not tracked at all; their enter prompt
+  is simply destroyed so they cannot be boarded.
+</p>
+<h3>Two states</h3>
+<p>
+  A vehicle is either <code>driving</code> or <code>submarine</code>, switched by
+  <a href="/docs/survival-islands/api/VehicleController#setState">VehicleController.setState</a> off the character's <code>Swimming</code> attribute. The two
+  modes drive completely different mechanisms and only one is ever live:
+</p>
+<ul>
+  <li>
+    <strong>driving</strong> — four <code>CylindricalConstraint</code> wheel motors plus two front
+    spring attachments used as steering knuckles. Torque on, flight constraints
+    off.
+  </li>
+  <li>
+    <strong>submarine</strong> — an <code>AlignOrientation</code>/<code>AlignPosition</code>/<code>VectorForce</code> rig that
+    flies the chassis; the camera becomes the control surface. Torque zeroed,
+    wheel motors idle.
+  </li>
+</ul>
+<h3>Update pipeline</h3>
+<p>
+  <a href="/docs/survival-islands/api/VehicleController#startControl">VehicleController.startControl</a> binds <a href="/docs/survival-islands/api/VehicleController#update">VehicleController.update</a> to Heartbeat.
+  Each frame <code>update</code> handles the shared concerns — idle detection, station
+  keeping, and cutting power when the seat is empty — then delegates to
+  <a href="/docs/survival-islands/api/VehicleController#updateCar">VehicleController.updateCar</a> or <a href="/docs/survival-islands/api/VehicleController#updateSubmarine">VehicleController.updateSubmarine</a>.
+</p>
+<h3>Steering geometry</h3>
+<p>
+  Wheelbase and track width are measured from the <em>actual</em> constraint
+  attachments in <a href="/docs/survival-islands/api/VehicleController#setupCar">VehicleController.setupCar</a> using <code>Magnitude</code>, so they are
+  rotation-invariant and a re-authored car model needs no code change.
+</p>
+<p>
+  Gated by <a href="/docs/survival-islands/api/FeatureFlags">FeatureFlags</a>.Vehicle — disabled by default; per-project forks
+  enable it deliberately. Both <a href="/docs/survival-islands/api/VehicleController#init">VehicleController.init</a> and
+  <a href="/docs/survival-islands/api/VehicleController#start">VehicleController.start</a> return immediately when the flag is off, so nothing
+  is tagged, bound or subscribed.
+</p>
+<p>
+  Copyright (c) 2026 firebit. All rights reserved.
+  firebit/survival-islands - proprietary and confidential.
+</p>
+</div></header><h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="functions">Functions<a href="#functions" class="hash-link" aria-label="Direct link to Functions" title="Direct link to Functions" translate="no">​</a></h2><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="init"><code style="text-decoration:none">init</code><a href="#init" class="hash-link" aria-label="Direct link to init" title="Direct link to init" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Client/Features/Vehicle/Controllers/VehicleController.luau#L215"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>VehicleController<!-- -->.</code><code class="green_DgR4">init</code><code>(</code><code>) → </code><code>(</code><code>)</code></div><div>
+<p>
+  Bootstrap hook. Adopts every existing <code>Vehicle</code>-tagged model and subscribes to
+  later additions.
+</p>
+<p>No-ops entirely when the <code>Vehicle</code> feature flag is off.</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="start"><code style="text-decoration:none">start</code><a href="#start" class="hash-link" aria-label="Direct link to start" title="Direct link to start" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Client/Features/Vehicle/Controllers/VehicleController.luau#L240"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>VehicleController<!-- -->.</code><code class="green_DgR4">start</code><code>(</code><code>) → </code><code>(</code><code>)</code></div><div>
+<p>
+  Bootstrap hook. Subscribes to <code>VEHICLE_START_CONTROL</code>, the action the server
+  dispatches when this player takes or leaves the driver's seat. Taking control
+  hides the enter prompt and starts the physics loop; releasing it does the
+  reverse.
+</p>
+<p>No-ops entirely when the <code>Vehicle</code> feature flag is off.</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="setupCar"><code style="text-decoration:none">setupCar</code><a href="#setupCar" class="hash-link" aria-label="Direct link to setupCar" title="Direct link to setupCar" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Client/Features/Vehicle/Controllers/VehicleController.luau#L292"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>VehicleController<!-- -->.</code><code class="green_DgR4">setupCar</code><code>(</code><div class="inset_uKQm"><div><code>car<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/Model" target="_blank" rel="noopener noreferrer">Model<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
+<p>The vehicle model to adopt</p>
+</span></span></div></div><code>) → </code><code>(</code><code>)</code></div><div>
+<p>
+  Adopts <code>car</code> as the vehicle this client controls: resolves every instance the
+  physics loop needs, measures the steering geometry, resets all motion state,
+  and wires the lifetime listeners.
+</p>
+<p>
+  Expects a specific model layout — <code>DriverSeat</code>, <code>Chasis/Platform/Engine</code>, the
+  four <code>Cylindrical*</code> wheel motors on the engine, <code>SpringAttachmentF*</code> on the
+  platform, and a <code>Flight</code> folder holding the submarine constraints. Every
+  lookup is a <code>WaitForChild</code>, so a model missing any of these <strong>hangs here
+rather than erroring</strong>.
+</p>
+<p>
+  Steering geometry is derived from the live attachment positions rather than
+  hard-coded: track width from the two front spring attachments, wheelbase from
+  front-left to rear-left. Both use <code>Magnitude</code>, so they hold regardless of how
+  the model is oriented when this runs.
+</p>
+<p>
+  The car is un-anchored at the end — models are spawned anchored so they cannot
+  drift before their constraints are configured.
+</p>
+<p>
+  The initial state is chosen from the character's <code>Swimming</code> attribute, and a
+  listener keeps it in sync afterwards. Transitions <em>out</em> of water deliberately
+  wait 0.4s (guarded by <code>switchingState</code>) so the vehicle does not snap back to
+  driving mode while it is still breaching the surface.
+</p>
+<p><strong>Yields</strong> on the <code>WaitForChild</code> calls.</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="setState"><code style="text-decoration:none">setState</code><a href="#setState" class="hash-link" aria-label="Direct link to setState" title="Direct link to setState" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Client/Features/Vehicle/Controllers/VehicleController.luau#L454"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>VehicleController<!-- -->.</code><code class="green_DgR4">setState</code><code>(</code><div class="inset_uKQm"><div><code>state<!-- -->: </code><code class="blue_P4bS">VehicleTypes.CarState</code><span class="inlineDescription_G7Er">-- <span>
+<p><code>"driving"</code> or <code>"submarine"</code></p>
+</span></span></div></div><code>) → </code><code>(</code><code>)</code></div><div>
+<p>
+  Switches the vehicle between <code>driving</code> and <code>submarine</code>. No-ops if already in
+  that state.
+</p>
+<p>
+  The two modes are mutually exclusive by construction: the four flight
+  constraints are enabled only for <code>submarine</code>, and wheel <code>MotorMaxTorque</code> is
+  set to the full torque for <code>driving</code> and to <strong>zero</strong> otherwise. Zeroing torque
+  rather than disabling the constraints leaves the wheels free-spinning, which
+  is what lets a submarine coast rather than dragging its brakes.
+</p>
+<p>
+  Before switching, the target orientation is seeded from the vehicle's current
+  world orientation so a submarine does not snap to an arbitrary heading the
+  instant it enters the water.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="updateSubPhysics"><code style="text-decoration:none">updateSubPhysics</code><a href="#updateSubPhysics" class="hash-link" aria-label="Direct link to updateSubPhysics" title="Direct link to updateSubPhysics" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Client/Features/Vehicle/Controllers/VehicleController.luau#L529"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>VehicleController<!-- -->.</code><code class="green_DgR4">updateSubPhysics</code><code>(</code><code>) → </code><code>(</code><code>)</code></div><div>
+<p>Recomputes the submarine rig from the vehicle's current mass.</p>
+<p>
+  <code>subForce</code> is exactly <code>mass * gravity</code> — the force the anti-gravity
+  <code>VectorForce</code> must apply to hold the vehicle neutrally buoyant, so vertical
+  control becomes a signed offset around zero rather than a fight against
+  gravity. The station-keeping <code>AlignPosition</code> gets a quarter of that, deliberately
+  weak so it holds position without fighting the movement force.
+</p>
+<p>
+  While in submarine mode it also re-anchors the hold position to where the
+  vehicle actually is, so the rig never tries to drag it back to a stale point.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="updateTorque"><code style="text-decoration:none">updateTorque</code><a href="#updateTorque" class="hash-link" aria-label="Direct link to updateTorque" title="Direct link to updateTorque" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Client/Features/Vehicle/Controllers/VehicleController.luau#L569"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>VehicleController<!-- -->.</code><code class="green_DgR4">updateTorque</code><code>(</code><code>) → </code><code>(</code><code>)</code></div><div>
+<p>
+  Recomputes wheel torque from the vehicle's mass and applies it to the seat and
+  all four motors. Re-runs whenever the platform's <code>AssemblyMass</code> changes — that
+  is, whenever a passenger boards or leaves — so a loaded vehicle does not
+  become sluggish.
+</p>
+<p>
+  Torque is <code>MAX_SPEED * mass * 1.3</code>: sizing torque against mass keeps
+  acceleration roughly constant regardless of load, and the 1.3 is headroom for
+  slopes. Each occupant additionally adds a flat 100 to the mass estimate,
+  because character assemblies are not part of the vehicle's <code>AssemblyMass</code>.
+</p>
+<p>
+  Always calls <a href="/docs/survival-islands/api/VehicleController#updateSubPhysics">VehicleController.updateSubPhysics</a> first — which is also what
+  re-reads the true assembly mass — then returns early unless the state is
+  <code>driving</code>, since torque means nothing in submarine mode.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="startControl"><code style="text-decoration:none">startControl</code><a href="#startControl" class="hash-link" aria-label="Direct link to startControl" title="Direct link to startControl" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Client/Features/Vehicle/Controllers/VehicleController.luau#L632"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>VehicleController<!-- -->.</code><code class="green_DgR4">startControl</code><code>(</code><code>) → </code><code>(</code><code>)</code></div><div>
+<p>
+  Takes control of the vehicle: binds the physics loop to Heartbeat, refreshes
+  torque, raises <code>ClientState.inVehicle</code>, reconfigures the camera for driving
+  (classic mode, wide zoom range, subject back on the humanoid) and plays the
+  seatbelt SFX.
+</p>
+<p>
+  It also binds a sink action over the gameplay inputs that would otherwise fire
+  while driving — left click, <code>E</code>, <code>R</code>, <code>G</code> and the equivalent gamepad buttons.
+  Right mouse button is deliberately <strong>not</strong> sunk, because that is camera orbit.
+</p>
+<p>Called from the <code>VEHICLE_START_CONTROL</code> subscription, not directly.</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="stopControl"><code style="text-decoration:none">stopControl</code><a href="#stopControl" class="hash-link" aria-label="Direct link to stopControl" title="Direct link to stopControl" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Client/Features/Vehicle/Controllers/VehicleController.luau#L696"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>VehicleController<!-- -->.</code><code class="green_DgR4">stopControl</code><code>(</code><code>) → </code><code>(</code><code>)</code></div><div>
+<p>
+  Releases control: zeroes every throttle and steering input, holds all four
+  wheels at zero angular velocity with full torque (so the vehicle brakes and
+  stays put rather than rolling away driverless), clears
+  <code>ClientState.inVehicle</code>, and unbinds the input sink.
+</p>
+<p>
+  Finally it reports the distance travelled to the server via
+  <code>VEHICLE_LOG_DISTANCE</code> and resets the counter — dismounting is the only time
+  the odometer is flushed, so a client that never dismounts never banks the
+  stat.
+</p>
+<p>
+  Called both from the <code>VEHICLE_START_CONTROL</code> subscription and from the car's
+  <code>Destroying</code> handler.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="updateCar"><code style="text-decoration:none">updateCar</code><a href="#updateCar" class="hash-link" aria-label="Direct link to updateCar" title="Direct link to updateCar" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Client/Features/Vehicle/Controllers/VehicleController.luau#L781"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>VehicleController<!-- -->.</code><code class="green_DgR4">updateCar</code><code>(</code><div class="inset_uKQm"><div><code>deltaTime<!-- -->: </code><code class="blue_P4bS">number</code><span class="inlineDescription_G7Er">-- <span>
+<p>Frame delta from Heartbeat</p>
+</span></span></div></div><code>) → </code><code>(</code><code>)</code></div><div>
+<p>
+  One frame of car physics. Called by <a href="/docs/survival-islands/api/VehicleController#update">VehicleController.update</a> while the state
+  is <code>driving</code>.
+</p>
+<p>
+  <strong>Steering.</strong> The seat's <code>SteerFloat</code> is scaled to <code>MAX_STEER_ANGLE</code> and
+  approached exponentially rather than snapped. The approach rate itself scales
+  with speed (8 at idle up to 38 at full throttle), so parking manoeuvres feel
+  weighty while highway corrections feel sharp. Both front spring attachments
+  are then oriented to the resulting angle — this is the Ackermann knuckle
+  rotation; the wheels themselves are driven separately below.
+</p>
+<p>
+  <strong>Throttle.</strong> <code>ThrottleFloat</code> is approached at <code>THROTTLE_ACCELERATION</code> and
+  clamped to ±1, then multiplied by <code>MAX_SPEED</code> and the car's <code>SpeedMultiplier</code>
+  attribute (set by the server from the vehicle's upgrades). Below 10% input the
+  throttle bleeds toward zero, which is the engine-braking feel — releasing the
+  key coasts to a stop instead of freewheeling.
+</p>
+<p>
+  <strong>Differential.</strong> Rather than computing true Ackermann per-wheel speeds, the
+  inner wheels are simply slowed proportionally to steering lock (up to 60% at
+  full lock). The resulting speed difference across the axle produces a yaw
+  moment that helps the car rotate, which is cheaper and more forgiving than
+  geometric Ackermann on Roblox's constraint solver. Right-side wheels take the
+  negated speed because they face the opposite way.
+</p>
+<p>
+  <strong>Odometer.</strong> Per-frame displacement is accumulated, ignoring sub-0.1-stud
+  deltas so physics jitter on a parked car does not inflate the total.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="updateSubmarine"><code style="text-decoration:none">updateSubmarine</code><a href="#updateSubmarine" class="hash-link" aria-label="Direct link to updateSubmarine" title="Direct link to updateSubmarine" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Client/Features/Vehicle/Controllers/VehicleController.luau#L927"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>VehicleController<!-- -->.</code><code class="green_DgR4">updateSubmarine</code><code>(</code><div class="inset_uKQm"><div><code>deltaTime<!-- -->: </code><code class="blue_P4bS">number</code><span class="inlineDescription_G7Er">-- <span>
+<p>Frame delta from Heartbeat</p>
+</span></span></div></div><code>) → </code><code>(</code><code>)</code></div><div>
+<p>
+  One frame of submarine physics. Called by <a href="/docs/survival-islands/api/VehicleController#update">VehicleController.update</a> while the
+  state is <code>submarine</code>.
+</p>
+<p>
+  Underwater the camera <em>is</em> the control surface. Steering input yaws the camera
+  (lerped, not snapped), the vehicle's <code>AlignOrientation</code> then chases the
+  camera's heading, and the camera's <strong>pitch</strong> — offset by
+  <code>THROTTLE_VERTICAL_DEGREE_OFFSET</code> and normalized against
+  <code>THROTTLE_MAX_VERTICAL_DEGREE</code> — becomes the dive/climb command. Looking down
+  while accelerating dives; looking up climbs. Vertical speed is scaled by
+  throttle magnitude, so pointing the camera down while stationary does nothing.
+</p>
+<p>
+  Throttle and steering both ease toward their goals and bleed back to zero
+  below 10% input, the same engine-braking feel as the car. All submarine speeds
+  are additionally scaled by <code>SUBMARINE_SPEED_DAMPENING</code> so the vehicle feels
+  heavier in water than on land.
+</p>
+<p>
+  Two forces do the work: <code>subMovementForce</code> drives lateral and forward motion
+  in the vehicle's own frame, and <code>subAntiGravity</code> carries the neutral-buoyancy
+  baseline (<code>mass * gravity</code>) plus the vertical command on top. Because vertical
+  control is an offset around neutral buoyancy, releasing the controls leaves the
+  vehicle hovering rather than sinking.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="update"><code style="text-decoration:none">update</code><a href="#update" class="hash-link" aria-label="Direct link to update" title="Direct link to update" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Client/Features/Vehicle/Controllers/VehicleController.luau#L1056"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>VehicleController<!-- -->.</code><code class="green_DgR4">update</code><code>(</code><div class="inset_uKQm"><div><code>deltaTime<!-- -->: </code><code class="blue_P4bS">number</code><span class="inlineDescription_G7Er">-- <span>
+<p>Frame delta from Heartbeat</p>
+</span></span></div></div><code>) → </code><code>(</code><code>)</code></div><div>
+<p>
+  Per-frame driver bound to Heartbeat by <a href="/docs/survival-islands/api/VehicleController#startControl">VehicleController.startControl</a>.
+  Handles what is common to both modes, then dispatches to
+  <a href="/docs/survival-islands/api/VehicleController#updateCar">VehicleController.updateCar</a> or <a href="/docs/survival-islands/api/VehicleController#updateSubmarine">VehicleController.updateSubmarine</a>.
+</p>
+<p>
+  <strong>Idle station-keeping.</strong> After <code>CAR_IDLE_TIME</code> with no input, a submarine
+  engages its <code>AlignPosition</code> and re-anchors the hold point every 0.2s. That is
+  what stops a released submarine from drifting with residual velocity; a car
+  needs no equivalent because friction handles it.
+</p>
+<p>
+  <strong>Empty seat.</strong> If nobody is in the driver's seat, throttle is zeroed and all
+  four wheels are held at zero velocity with full torque, and the frame ends
+  there — an unoccupied vehicle brakes rather than coasting. This is a safety
+  net for the window between the occupant leaving and
+  <a href="/docs/survival-islands/api/VehicleController#stopControl">VehicleController.stopControl</a> running.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="showPrompts"><code style="text-decoration:none">showPrompts</code><a href="#showPrompts" class="hash-link" aria-label="Direct link to showPrompts" title="Direct link to showPrompts" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Client/Features/Vehicle/Controllers/VehicleController.luau#L1144"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>VehicleController<!-- -->.</code><code class="green_DgR4">showPrompts</code><code>(</code><div class="inset_uKQm"><div><code>value<!-- -->: </code><code class="blue_P4bS">boolean</code><span class="inlineDescription_G7Er">-- <span>
+<p><code>true</code> to show the prompt</p>
+</span></span></div></div><code>) → </code><code>(</code><code>)</code></div><div>
+<p>
+  Enables or disables the vehicle's enter prompt. Turned off while driving so
+  the prompt does not sit on screen in front of the seated player.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="isControllingVehicle"><code style="text-decoration:none">isControllingVehicle</code><a href="#isControllingVehicle" class="hash-link" aria-label="Direct link to isControllingVehicle" title="Direct link to isControllingVehicle" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Client/Features/Vehicle/Controllers/VehicleController.luau#L1161"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>VehicleController<!-- -->.</code><code class="green_DgR4">isControllingVehicle</code><code>(</code><code>) → </code><code class="blue_P4bS">boolean</code></div><div>
+<p>
+  Whether this client is currently driving. Other systems use this to suppress
+  behaviour that would conflict with driving.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="carLookAt"><code style="text-decoration:none">carLookAt</code><a href="#carLookAt" class="hash-link" aria-label="Direct link to carLookAt" title="Direct link to carLookAt" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Client/Features/Vehicle/Controllers/VehicleController.luau#L1181"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>VehicleController<!-- -->.</code><code class="green_DgR4">carLookAt</code><code>(</code><div class="inset_uKQm"><div><code>position<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/Vector3" target="_blank" rel="noopener noreferrer">Vector3<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
+<p>World point to face</p>
+</span></span></div></div><code>) → </code><code>(</code><code>)</code></div><div>
+<p>
+  Rotates the vehicle to face <code>position</code> over a one-second eased tween, keeping
+  it level — the target is flattened onto the vehicle's own Y plane, so this
+  only ever changes yaw.
+</p>
+<p>
+  Implemented by tweening a scratch <code>CFrameValue</code> and piping its <code>Changed</code> into
+  <code>PivotTo</code>, since models cannot be tweened directly. All three temporaries are
+  cleaned up afterwards.
+</p>
+<p><strong>Yields</strong> until the tween completes.</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="isLookingInDirectionOfPosition"><code style="text-decoration:none">isLookingInDirectionOfPosition</code><a href="#isLookingInDirectionOfPosition" class="hash-link" aria-label="Direct link to isLookingInDirectionOfPosition" title="Direct link to isLookingInDirectionOfPosition" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Client/Features/Vehicle/Controllers/VehicleController.luau#L1223"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>VehicleController<!-- -->.</code><code class="green_DgR4">isLookingInDirectionOfPosition</code><code>(</code><div class="inset_uKQm"><div><code>position<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/Vector3" target="_blank" rel="noopener noreferrer">Vector3<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
+<p>World point to test against</p>
+</span></span></div></div><code>) → </code><code class="blue_P4bS">boolean</code></div><div>
+<p>
+  Whether the vehicle is roughly pointed at <code>position</code>. Both the vehicle's look
+  vector and the direction to the target are flattened to the horizontal plane,
+  so pitch is ignored; the test is <code>dot > LOOK_ANGLE</code> (0.95), about an 18° cone.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="setCarAnchoring"><code style="text-decoration:none">setCarAnchoring</code><a href="#setCarAnchoring" class="hash-link" aria-label="Direct link to setCarAnchoring" title="Direct link to setCarAnchoring" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Client/Features/Vehicle/Controllers/VehicleController.luau#L1249"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>VehicleController<!-- -->.</code><code class="green_DgR4">setCarAnchoring</code><code>(</code><div class="inset_uKQm"><div><code>state<!-- -->: </code><code class="blue_P4bS">boolean</code><span class="inlineDescription_G7Er">-- <span>
+<p><code>true</code> to anchor</p>
+</span></span></div></div><code>) → </code><code>(</code><code>)</code></div><div>
+<p>
+  Anchors or un-anchors the vehicle by toggling <code>Anchored</code> on the driver's seat,
+  which is the assembly's root — anchoring the seat freezes the whole vehicle.
+  Used to pin a vehicle in place for scripted moments.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="spawn"><code style="text-decoration:none">spawn</code><a href="#spawn" class="hash-link" aria-label="Direct link to spawn" title="Direct link to spawn" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Client/Features/Vehicle/Controllers/VehicleController.luau#L1289"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>VehicleController<!-- -->.</code><code class="green_DgR4">spawn</code><code>(</code><code>) → </code><code>(</code><code>)</code></div><div>
+<p>
+  Toggle handler for the spawn button: despawns the current vehicle if one is
+  live, otherwise finds a legal spot and asks the server to spawn one.
+  Debounced, so a double-tap cannot fire two requests.
+</p>
+<p>
+  Placement is resolved entirely client-side before the request goes out, in two
+  steps:
+</p>
+<ol>
+  <li>
+    <strong>Ground find.</strong> A point <code>SPAWN_DISTANCE</code> studs in front of the player is
+    raycast straight down (from 10 studs up, 100 studs deep) to find the floor.
+    No floor means no spawn — this is what stops a vehicle appearing over a
+    ledge or above water.
+  </li>
+  <li>
+    <strong>Clearance check.</strong> A temporary invisible part the size of the car model's
+    bounding box is placed at the resolved spot and <code>GetPartsInPart</code> is run
+    against it. Any hit aborts.
+  </li>
+</ol>
+<p>
+  Both queries filter against the same list of <code>Spawner</code>- and <code>Water</code>-tagged
+  instances, so spawn pads and water do not count as obstructions. The car is
+  dropped 2 studs above the floor hit and raised by half its own height, keeping
+  its original yaw.
+</p>
+<p>
+  The server re-validates; this check exists to give immediate feedback and to
+  avoid spamming rejected requests.
+</p>
+</div></div></article></div><details><summary>Show raw api</summary><pre style="max-width:100%;white-space:pre-wrap">{
+    &quot;functions&quot;: [
+        {
+            &quot;name&quot;: &quot;init&quot;,
+            &quot;desc&quot;: &quot;Bootstrap hook. Adopts every existing `Vehicle`-tagged model and subscribes to\nlater additions.\n\nNo-ops entirely when the `Vehicle` feature flag is off.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 215,
+                &quot;path&quot;: &quot;src/Client/Features/Vehicle/Controllers/VehicleController.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;start&quot;,
+            &quot;desc&quot;: &quot;Bootstrap hook. Subscribes to `VEHICLE_START_CONTROL`, the action the server\ndispatches when this player takes or leaves the driver&#x27;s seat. Taking control\nhides the enter prompt and starts the physics loop; releasing it does the\nreverse.\n\nNo-ops entirely when the `Vehicle` feature flag is off.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 240,
+                &quot;path&quot;: &quot;src/Client/Features/Vehicle/Controllers/VehicleController.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;setupCar&quot;,
+            &quot;desc&quot;: &quot;Adopts `car` as the vehicle this client controls: resolves every instance the\nphysics loop needs, measures the steering geometry, resets all motion state,\nand wires the lifetime listeners.\n\nExpects a specific model layout — `DriverSeat`, `Chasis/Platform/Engine`, the\nfour `Cylindrical*` wheel motors on the engine, `SpringAttachmentF*` on the\nplatform, and a `Flight` folder holding the submarine constraints. Every\nlookup is a `WaitForChild`, so a model missing any of these **hangs here\nrather than erroring**.\n\nSteering geometry is derived from the live attachment positions rather than\nhard-coded: track width from the two front spring attachments, wheelbase from\nfront-left to rear-left. Both use `Magnitude`, so they hold regardless of how\nthe model is oriented when this runs.\n\nThe car is un-anchored at the end — models are spawned anchored so they cannot\ndrift before their constraints are configured.\n\nThe initial state is chosen from the character&#x27;s `Swimming` attribute, and a\nlistener keeps it in sync afterwards. Transitions *out* of water deliberately\nwait 0.4s (guarded by `switchingState`) so the vehicle does not snap back to\ndriving mode while it is still breaching the surface.\n\n**Yields** on the `WaitForChild` calls.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;car&quot;,
+                    &quot;desc&quot;: &quot;The vehicle model to adopt&quot;,
+                    &quot;lua_type&quot;: &quot;Model&quot;
+                }
+            ],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 292,
+                &quot;path&quot;: &quot;src/Client/Features/Vehicle/Controllers/VehicleController.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;setState&quot;,
+            &quot;desc&quot;: &quot;Switches the vehicle between `driving` and `submarine`. No-ops if already in\nthat state.\n\nThe two modes are mutually exclusive by construction: the four flight\nconstraints are enabled only for `submarine`, and wheel `MotorMaxTorque` is\nset to the full torque for `driving` and to **zero** otherwise. Zeroing torque\nrather than disabling the constraints leaves the wheels free-spinning, which\nis what lets a submarine coast rather than dragging its brakes.\n\nBefore switching, the target orientation is seeded from the vehicle&#x27;s current\nworld orientation so a submarine does not snap to an arbitrary heading the\ninstant it enters the water.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;state&quot;,
+                    &quot;desc&quot;: &quot;`\&quot;driving\&quot;` or `\&quot;submarine\&quot;`&quot;,
+                    &quot;lua_type&quot;: &quot;VehicleTypes.CarState&quot;
+                }
+            ],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 454,
+                &quot;path&quot;: &quot;src/Client/Features/Vehicle/Controllers/VehicleController.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;updateSubPhysics&quot;,
+            &quot;desc&quot;: &quot;Recomputes the submarine rig from the vehicle&#x27;s current mass.\n\n`subForce` is exactly `mass * gravity` — the force the anti-gravity\n`VectorForce` must apply to hold the vehicle neutrally buoyant, so vertical\ncontrol becomes a signed offset around zero rather than a fight against\ngravity. The station-keeping `AlignPosition` gets a quarter of that, deliberately\nweak so it holds position without fighting the movement force.\n\nWhile in submarine mode it also re-anchors the hold position to where the\nvehicle actually is, so the rig never tries to drag it back to a stale point.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 529,
+                &quot;path&quot;: &quot;src/Client/Features/Vehicle/Controllers/VehicleController.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;updateTorque&quot;,
+            &quot;desc&quot;: &quot;Recomputes wheel torque from the vehicle&#x27;s mass and applies it to the seat and\nall four motors. Re-runs whenever the platform&#x27;s `AssemblyMass` changes — that\nis, whenever a passenger boards or leaves — so a loaded vehicle does not\nbecome sluggish.\n\nTorque is `MAX_SPEED * mass * 1.3`: sizing torque against mass keeps\nacceleration roughly constant regardless of load, and the 1.3 is headroom for\nslopes. Each occupant additionally adds a flat 100 to the mass estimate,\nbecause character assemblies are not part of the vehicle&#x27;s `AssemblyMass`.\n\nAlways calls [VehicleController.updateSubPhysics] first — which is also what\nre-reads the true assembly mass — then returns early unless the state is\n`driving`, since torque means nothing in submarine mode.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 569,
+                &quot;path&quot;: &quot;src/Client/Features/Vehicle/Controllers/VehicleController.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;startControl&quot;,
+            &quot;desc&quot;: &quot;Takes control of the vehicle: binds the physics loop to Heartbeat, refreshes\ntorque, raises `ClientState.inVehicle`, reconfigures the camera for driving\n(classic mode, wide zoom range, subject back on the humanoid) and plays the\nseatbelt SFX.\n\nIt also binds a sink action over the gameplay inputs that would otherwise fire\nwhile driving — left click, `E`, `R`, `G` and the equivalent gamepad buttons.\nRight mouse button is deliberately **not** sunk, because that is camera orbit.\n\nCalled from the `VEHICLE_START_CONTROL` subscription, not directly.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 632,
+                &quot;path&quot;: &quot;src/Client/Features/Vehicle/Controllers/VehicleController.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;stopControl&quot;,
+            &quot;desc&quot;: &quot;Releases control: zeroes every throttle and steering input, holds all four\nwheels at zero angular velocity with full torque (so the vehicle brakes and\nstays put rather than rolling away driverless), clears\n`ClientState.inVehicle`, and unbinds the input sink.\n\nFinally it reports the distance travelled to the server via\n`VEHICLE_LOG_DISTANCE` and resets the counter — dismounting is the only time\nthe odometer is flushed, so a client that never dismounts never banks the\nstat.\n\nCalled both from the `VEHICLE_START_CONTROL` subscription and from the car&#x27;s\n`Destroying` handler.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 696,
+                &quot;path&quot;: &quot;src/Client/Features/Vehicle/Controllers/VehicleController.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;updateCar&quot;,
+            &quot;desc&quot;: &quot;One frame of car physics. Called by [VehicleController.update] while the state\nis `driving`.\n\n**Steering.** The seat&#x27;s `SteerFloat` is scaled to `MAX_STEER_ANGLE` and\napproached exponentially rather than snapped. The approach rate itself scales\nwith speed (8 at idle up to 38 at full throttle), so parking manoeuvres feel\nweighty while highway corrections feel sharp. Both front spring attachments\nare then oriented to the resulting angle — this is the Ackermann knuckle\nrotation; the wheels themselves are driven separately below.\n\n**Throttle.** `ThrottleFloat` is approached at `THROTTLE_ACCELERATION` and\nclamped to ±1, then multiplied by `MAX_SPEED` and the car&#x27;s `SpeedMultiplier`\nattribute (set by the server from the vehicle&#x27;s upgrades). Below 10% input the\nthrottle bleeds toward zero, which is the engine-braking feel — releasing the\nkey coasts to a stop instead of freewheeling.\n\n**Differential.** Rather than computing true Ackermann per-wheel speeds, the\ninner wheels are simply slowed proportionally to steering lock (up to 60% at\nfull lock). The resulting speed difference across the axle produces a yaw\nmoment that helps the car rotate, which is cheaper and more forgiving than\ngeometric Ackermann on Roblox&#x27;s constraint solver. Right-side wheels take the\nnegated speed because they face the opposite way.\n\n**Odometer.** Per-frame displacement is accumulated, ignoring sub-0.1-stud\ndeltas so physics jitter on a parked car does not inflate the total.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;deltaTime&quot;,
+                    &quot;desc&quot;: &quot;Frame delta from Heartbeat&quot;,
+                    &quot;lua_type&quot;: &quot;number&quot;
+                }
+            ],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 781,
+                &quot;path&quot;: &quot;src/Client/Features/Vehicle/Controllers/VehicleController.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;updateSubmarine&quot;,
+            &quot;desc&quot;: &quot;One frame of submarine physics. Called by [VehicleController.update] while the\nstate is `submarine`.\n\nUnderwater the camera *is* the control surface. Steering input yaws the camera\n(lerped, not snapped), the vehicle&#x27;s `AlignOrientation` then chases the\ncamera&#x27;s heading, and the camera&#x27;s **pitch** — offset by\n`THROTTLE_VERTICAL_DEGREE_OFFSET` and normalized against\n`THROTTLE_MAX_VERTICAL_DEGREE` — becomes the dive/climb command. Looking down\nwhile accelerating dives; looking up climbs. Vertical speed is scaled by\nthrottle magnitude, so pointing the camera down while stationary does nothing.\n\nThrottle and steering both ease toward their goals and bleed back to zero\nbelow 10% input, the same engine-braking feel as the car. All submarine speeds\nare additionally scaled by `SUBMARINE_SPEED_DAMPENING` so the vehicle feels\nheavier in water than on land.\n\nTwo forces do the work: `subMovementForce` drives lateral and forward motion\nin the vehicle&#x27;s own frame, and `subAntiGravity` carries the neutral-buoyancy\nbaseline (`mass * gravity`) plus the vertical command on top. Because vertical\ncontrol is an offset around neutral buoyancy, releasing the controls leaves the\nvehicle hovering rather than sinking.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;deltaTime&quot;,
+                    &quot;desc&quot;: &quot;Frame delta from Heartbeat&quot;,
+                    &quot;lua_type&quot;: &quot;number&quot;
+                }
+            ],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 927,
+                &quot;path&quot;: &quot;src/Client/Features/Vehicle/Controllers/VehicleController.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;update&quot;,
+            &quot;desc&quot;: &quot;Per-frame driver bound to Heartbeat by [VehicleController.startControl].\nHandles what is common to both modes, then dispatches to\n[VehicleController.updateCar] or [VehicleController.updateSubmarine].\n\n**Idle station-keeping.** After `CAR_IDLE_TIME` with no input, a submarine\nengages its `AlignPosition` and re-anchors the hold point every 0.2s. That is\nwhat stops a released submarine from drifting with residual velocity; a car\nneeds no equivalent because friction handles it.\n\n**Empty seat.** If nobody is in the driver&#x27;s seat, throttle is zeroed and all\nfour wheels are held at zero velocity with full torque, and the frame ends\nthere — an unoccupied vehicle brakes rather than coasting. This is a safety\nnet for the window between the occupant leaving and\n[VehicleController.stopControl] running.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;deltaTime&quot;,
+                    &quot;desc&quot;: &quot;Frame delta from Heartbeat&quot;,
+                    &quot;lua_type&quot;: &quot;number&quot;
+                }
+            ],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 1056,
+                &quot;path&quot;: &quot;src/Client/Features/Vehicle/Controllers/VehicleController.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;showPrompts&quot;,
+            &quot;desc&quot;: &quot;Enables or disables the vehicle&#x27;s enter prompt. Turned off while driving so\nthe prompt does not sit on screen in front of the seated player.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;value&quot;,
+                    &quot;desc&quot;: &quot;`true` to show the prompt&quot;,
+                    &quot;lua_type&quot;: &quot;boolean&quot;
+                }
+            ],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 1144,
+                &quot;path&quot;: &quot;src/Client/Features/Vehicle/Controllers/VehicleController.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;isControllingVehicle&quot;,
+            &quot;desc&quot;: &quot;Whether this client is currently driving. Other systems use this to suppress\nbehaviour that would conflict with driving.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;boolean&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 1161,
+                &quot;path&quot;: &quot;src/Client/Features/Vehicle/Controllers/VehicleController.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;carLookAt&quot;,
+            &quot;desc&quot;: &quot;Rotates the vehicle to face `position` over a one-second eased tween, keeping\nit level — the target is flattened onto the vehicle&#x27;s own Y plane, so this\nonly ever changes yaw.\n\nImplemented by tweening a scratch `CFrameValue` and piping its `Changed` into\n`PivotTo`, since models cannot be tweened directly. All three temporaries are\ncleaned up afterwards.\n\n**Yields** until the tween completes.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;position&quot;,
+                    &quot;desc&quot;: &quot;World point to face&quot;,
+                    &quot;lua_type&quot;: &quot;Vector3&quot;
+                }
+            ],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 1181,
+                &quot;path&quot;: &quot;src/Client/Features/Vehicle/Controllers/VehicleController.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;isLookingInDirectionOfPosition&quot;,
+            &quot;desc&quot;: &quot;Whether the vehicle is roughly pointed at `position`. Both the vehicle&#x27;s look\nvector and the direction to the target are flattened to the horizontal plane,\nso pitch is ignored; the test is `dot &gt; LOOK_ANGLE` (0.95), about an 18° cone.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;position&quot;,
+                    &quot;desc&quot;: &quot;World point to test against&quot;,
+                    &quot;lua_type&quot;: &quot;Vector3&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;boolean&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 1223,
+                &quot;path&quot;: &quot;src/Client/Features/Vehicle/Controllers/VehicleController.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;setCarAnchoring&quot;,
+            &quot;desc&quot;: &quot;Anchors or un-anchors the vehicle by toggling `Anchored` on the driver&#x27;s seat,\nwhich is the assembly&#x27;s root — anchoring the seat freezes the whole vehicle.\nUsed to pin a vehicle in place for scripted moments.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;state&quot;,
+                    &quot;desc&quot;: &quot;`true` to anchor&quot;,
+                    &quot;lua_type&quot;: &quot;boolean&quot;
+                }
+            ],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 1249,
+                &quot;path&quot;: &quot;src/Client/Features/Vehicle/Controllers/VehicleController.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;spawn&quot;,
+            &quot;desc&quot;: &quot;Toggle handler for the spawn button: despawns the current vehicle if one is\nlive, otherwise finds a legal spot and asks the server to spawn one.\nDebounced, so a double-tap cannot fire two requests.\n\nPlacement is resolved entirely client-side before the request goes out, in two\nsteps:\n\n1. **Ground find.** A point `SPAWN_DISTANCE` studs in front of the player is\n   raycast straight down (from 10 studs up, 100 studs deep) to find the floor.\n   No floor means no spawn — this is what stops a vehicle appearing over a\n   ledge or above water.\n2. **Clearance check.** A temporary invisible part the size of the car model&#x27;s\n   bounding box is placed at the resolved spot and `GetPartsInPart` is run\n   against it. Any hit aborts.\n\nBoth queries filter against the same list of `Spawner`- and `Water`-tagged\ninstances, so spawn pads and water do not count as obstructions. The car is\ndropped 2 studs above the floor hit and raised by half its own height, keeping\nits original yaw.\n\nThe server re-validates; this check exists to give immediate feedback and to\navoid spamming rejected requests.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 1289,
+                &quot;path&quot;: &quot;src/Client/Features/Vehicle/Controllers/VehicleController.luau&quot;
+            }
+        }
+    ],
+    &quot;properties&quot;: [],
+    &quot;types&quot;: [],
+    &quot;name&quot;: &quot;VehicleController&quot;,
+    &quot;desc&quot;: &quot;Handles client-side vehicle physics (Ackermann steering, throttle,\nsubmarine mode), input, and distance tracking.\n\n### Why the physics is client-side\n\nThe server owns *existence* — spawning, despawning, seat authority, and the\ndistance stat — while the driver&#x27;s own client owns *motion*. The client that\noccupies the `DriverSeat` has network ownership of the assembly anyway, so\nsimulating there is both authoritative in practice and latency-free. The\nserver is told only the outcome (`VEHICLE_LOG_DISTANCE` on dismount).\n\n### Singleton, not per-vehicle\n\nThis is a module-level singleton holding **one** `car` at a time — the vehicle\nthis client may drive. [VehicleController.setupCar] overwrites that reference\nwholesale. Other players&#x27; vehicles are not tracked at all; their enter prompt\nis simply destroyed so they cannot be boarded.\n\n### Two states\n\nA vehicle is either `driving` or `submarine`, switched by\n[VehicleController.setState] off the character&#x27;s `Swimming` attribute. The two\nmodes drive completely different mechanisms and only one is ever live:\n\n- **driving** — four `CylindricalConstraint` wheel motors plus two front\n  spring attachments used as steering knuckles. Torque on, flight constraints\n  off.\n- **submarine** — an `AlignOrientation`/`AlignPosition`/`VectorForce` rig that\n  flies the chassis; the camera becomes the control surface. Torque zeroed,\n  wheel motors idle.\n\n### Update pipeline\n\n[VehicleController.startControl] binds [VehicleController.update] to Heartbeat.\nEach frame `update` handles the shared concerns — idle detection, station\nkeeping, and cutting power when the seat is empty — then delegates to\n[VehicleController.updateCar] or [VehicleController.updateSubmarine].\n\n### Steering geometry\n\nWheelbase and track width are measured from the *actual* constraint\nattachments in [VehicleController.setupCar] using `Magnitude`, so they are\nrotation-invariant and a re-authored car model needs no code change.\n\nGated by [FeatureFlags].Vehicle — disabled by default; per-project forks\nenable it deliberately. Both [VehicleController.init] and\n[VehicleController.start] return immediately when the flag is off, so nothing\nis tagged, bound or subscribed.\n\nCopyright (c) 2026 firebit. All rights reserved.\nfirebit/survival-islands - proprietary and confidential.&quot;,
+    &quot;tags&quot;: [
+        &quot;dormant&quot;
+    ],
+    &quot;realm&quot;: [
+        &quot;Client&quot;
+    ],
+    &quot;source&quot;: {
+        &quot;line&quot;: 58,
+        &quot;path&quot;: &quot;src/Client/Features/Vehicle/Controllers/VehicleController.luau&quot;
+    }
+}</pre></details></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#functions" class="table-of-contents__link toc-highlight">Functions</a><ul><li><a href="#carLookAt" class="table-of-contents__link toc-highlight">.carLookAt</a></li><li><a href="#init" class="table-of-contents__link toc-highlight">.init</a></li><li><a href="#isControllingVehicle" class="table-of-contents__link toc-highlight">.isControllingVehicle</a></li><li><a href="#isLookingInDirectionOfPosition" class="table-of-contents__link toc-highlight">.isLookingInDirectionOfPosition</a></li><li><a href="#setCarAnchoring" class="table-of-contents__link toc-highlight">.setCarAnchoring</a></li><li><a href="#setState" class="table-of-contents__link toc-highlight">.setState</a></li><li><a href="#setupCar" class="table-of-contents__link toc-highlight">.setupCar</a></li><li><a href="#showPrompts" class="table-of-contents__link toc-highlight">.showPrompts</a></li><li><a href="#spawn" class="table-of-contents__link toc-highlight">.spawn</a></li><li><a href="#start" class="table-of-contents__link toc-highlight">.start</a></li><li><a href="#startControl" class="table-of-contents__link toc-highlight">.startControl</a></li><li><a href="#stopControl" class="table-of-contents__link toc-highlight">.stopControl</a></li><li><a href="#update" class="table-of-contents__link toc-highlight">.update</a></li><li><a href="#updateCar" class="table-of-contents__link toc-highlight">.updateCar</a></li><li><a href="#updateSubmarine" class="table-of-contents__link toc-highlight">.updateSubmarine</a></li><li><a href="#updateSubPhysics" class="table-of-contents__link toc-highlight">.updateSubPhysics</a></li><li><a href="#updateTorque" class="table-of-contents__link toc-highlight">.updateTorque</a></li></ul></li></ul></div></div></div></div></main></div></div><footer class="theme-layout-footer footer"><div class="container container-fluid"><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © firebit</div></div></div></footer></div>
+</body>
+</html>

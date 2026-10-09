@@ -1,0 +1,1249 @@
+<!doctype html>
+<html lang="en" dir="ltr" class="plugin-moonwave plugin-id-moonwave" data-has-hydrated="false">
+<head>
+<meta charset="UTF-8">
+<meta name="generator" content="Docusaurus v3.10.1">
+<title data-rh="true">ShopService | Survival Islands</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://firebit-dev.github.io/docs/survival-islands/api/ShopService"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docusaurus_tag" content="default"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docsearch:docusaurus_tag" content="default"><meta data-rh="true" property="og:title" content="ShopService | Survival Islands"><meta data-rh="true" name="description" content="Handles shop management, including stock for multiple shop types.
+
+One [Replica] is created per non-custom shop defined in `ShopData.SHOPS`,
+each holding a `{ [itemId]: StockItem }` map that is the single source of
+truth clients read stock from. Shops marked `custom` (skins, player market)
+ship their own component and are skipped entirely — they do not participate
+in the stock system.
+
+## Restock scheduling
+
+Restocking is derived from wall-clock time rather than tracked per item.
+Two intervals interact:
+
+- `ShopData.STOCK_REFRESH_INTERVAL` — the global cycle. `_lastRestockCycle`
+  records the cycle ordinal already processed, which is what stops a cycle
+  from firing twice.
+- `item.stockData.restockInterval` — per item. An item&#x27;s most recent due
+  restock is `floor(now / interval) * interval`; it refills to
+  `maxStockQuantity` only when that timestamp falls inside the current
+  global window, otherwise it keeps its quantity.
+
+[ShopService.startRestockLoop] polls [ShopService.getTimeUntilRestock] at
+most once a second and calls [ShopService.performRestock] when the window
+opens.
+
+:::caution Stock is not persisted
+Despite the `save*` naming, `LocalStorage` is a plain in-memory table on the
+server — [ShopService.saveStockToLocalStorage] and
+[ShopService.saveRestockTime] write no DataStore, so stock and the restock
+clock reset on every server start. The only DataStore this module touches is
+`redeemed_codes`, used by the redeem-code flow.
+:::
+
+## Feature gate
+
+`FeatureFlags.ScarcityShop` is **off** by default. When off,
+[ShopService.init] never builds the shop replicas, never populates stock and
+never starts the restock loop, and [ShopService.purchaseStock] skips its
+stock-decrement step entirely — so stock is effectively infinite and
+purchases are limited only by currency and ownership limits. Handlers,
+redeem codes, crates and the marketplace item callback all remain active.
+
+Copyright (c) 2026 firebit. All rights reserved.
+firebit/survival-islands - proprietary and confidential."><meta data-rh="true" property="og:description" content="Handles shop management, including stock for multiple shop types.
+
+One [Replica] is created per non-custom shop defined in `ShopData.SHOPS`,
+each holding a `{ [itemId]: StockItem }` map that is the single source of
+truth clients read stock from. Shops marked `custom` (skins, player market)
+ship their own component and are skipped entirely — they do not participate
+in the stock system.
+
+## Restock scheduling
+
+Restocking is derived from wall-clock time rather than tracked per item.
+Two intervals interact:
+
+- `ShopData.STOCK_REFRESH_INTERVAL` — the global cycle. `_lastRestockCycle`
+  records the cycle ordinal already processed, which is what stops a cycle
+  from firing twice.
+- `item.stockData.restockInterval` — per item. An item&#x27;s most recent due
+  restock is `floor(now / interval) * interval`; it refills to
+  `maxStockQuantity` only when that timestamp falls inside the current
+  global window, otherwise it keeps its quantity.
+
+[ShopService.startRestockLoop] polls [ShopService.getTimeUntilRestock] at
+most once a second and calls [ShopService.performRestock] when the window
+opens.
+
+:::caution Stock is not persisted
+Despite the `save*` naming, `LocalStorage` is a plain in-memory table on the
+server — [ShopService.saveStockToLocalStorage] and
+[ShopService.saveRestockTime] write no DataStore, so stock and the restock
+clock reset on every server start. The only DataStore this module touches is
+`redeemed_codes`, used by the redeem-code flow.
+:::
+
+## Feature gate
+
+`FeatureFlags.ScarcityShop` is **off** by default. When off,
+[ShopService.init] never builds the shop replicas, never populates stock and
+never starts the restock loop, and [ShopService.purchaseStock] skips its
+stock-decrement step entirely — so stock is effectively infinite and
+purchases are limited only by currency and ownership limits. Handlers,
+redeem codes, crates and the marketplace item callback all remain active.
+
+Copyright (c) 2026 firebit. All rights reserved.
+firebit/survival-islands - proprietary and confidential."><link data-rh="true" rel="canonical" href="https://firebit-dev.github.io/docs/survival-islands/api/ShopService"><link data-rh="true" rel="alternate" href="https://firebit-dev.github.io/docs/survival-islands/api/ShopService" hreflang="en"><link data-rh="true" rel="alternate" href="https://firebit-dev.github.io/docs/survival-islands/api/ShopService" hreflang="x-default"><link rel="stylesheet" href="/docs/survival-islands/assets/css/styles.d954f017.css">
+<script src="/docs/survival-islands/assets/js/runtime~main.43105527.js" defer="defer"></script>
+<script src="/docs/survival-islands/assets/js/main.19b6b4af.js" defer="defer"></script>
+</head>
+<body>
+<svg style="display: none;"><defs>
+<symbol id="theme-svg-external-link" viewBox="0 0 24 24"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"/></symbol>
+</defs></svg>
+<script>!function(){var t=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme")}catch(t){}}();document.documentElement.setAttribute("data-theme",t||(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light")),document.documentElement.setAttribute("data-theme-choice",t||"system")}(),function(){try{const c=new URLSearchParams(window.location.search).entries();for(var[t,e]of c)if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id="__docusaurus"><div role="region" aria-label="Skip to main content"><a class="skipToContent_fXgn" href="#__docusaurus_skipToContent_fallback">Skip to main content</a></div><nav aria-label="Main" class="theme-layout-navbar navbar navbar--fixed-top"><div class="navbar__inner"><div class="theme-layout-navbar-left navbar__items"><button aria-label="Toggle navigation bar" aria-expanded="false" class="navbar__toggle clean-btn" type="button"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/docs/survival-islands/"><b class="navbar__title text--truncate">Survival Islands</b></a><a class="navbar__item navbar__link" href="/docs/survival-islands/docs/intro">Docs</a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/docs/survival-islands/api/">API</a></div><div class="theme-layout-navbar-right navbar__items navbar__items--right"><a href="https://github.com/firebit-dev/survival-islands" target="_blank" rel="noopener noreferrer" class="navbar__item navbar__link">GitHub<svg width="13.5" height="13.5" aria-label="(opens in new tab)" class="iconExternalLink_nPIU"><use href="#theme-svg-external-link"></use></svg></a><div class="toggle_vylO colorModeToggle_DEke"><button class="clean-btn toggleButton_gllP toggleButtonDisabled_aARS" type="button" disabled="" title="system mode" aria-label="Switch between dark and light mode (currently system mode)"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP lightToggleIcon_pyhR"><path fill="currentColor" d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP darkToggleIcon_wfgR"><path fill="currentColor" d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP systemToggleIcon_QzmC"><path fill="currentColor" d="m12 21c4.971 0 9-4.029 9-9s-4.029-9-9-9-9 4.029-9 9 4.029 9 9 9zm4.95-13.95c1.313 1.313 2.05 3.093 2.05 4.95s-0.738 3.637-2.05 4.95c-1.313 1.313-3.093 2.05-4.95 2.05v-14c1.857 0 3.637 0.737 4.95 2.05z"></path></svg></button></div><div class="navbarSearchContainer_Bca1"><div class="navbar__search"><span aria-label="expand searchbar" role="button" class="search-icon" tabindex="0"></span><input id="search_input_react" type="search" placeholder="Loading..." aria-label="Search" class="navbar__search-input search-bar" disabled=""></div></div></div></div><div role="presentation" class="navbar-sidebar__backdrop"></div></nav><div id="__docusaurus_skipToContent_fallback" class="theme-layout-main main-wrapper mainWrapper_z2l0 docPageContainer_wNNk"><div class="docPage_Dpn1"><div class="docSidebarContainer_o_re"><div class="sidebar_njMd"><nav aria-label="Docs sidebar" class="menu thin-scrollbar menu_SIkG"><ul class="theme-doc-sidebar-menu menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Actions"><span title="​Actions" class="linkLabel_WmDU">​Actions</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/AdminService"><span title="​Admin​Service" class="linkLabel_WmDU">​Admin​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Analytics"><span title="​Analytics" class="linkLabel_WmDU">​Analytics</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/AnalyticsService"><span title="​Analytics​Service" class="linkLabel_WmDU">​Analytics​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/AnchorDescendants"><span title="​Anchor​Descendants" class="linkLabel_WmDU">​Anchor​Descendants</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/AnimalPen"><span title="​Animal​Pen" class="linkLabel_WmDU">​Animal​Pen</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/AnimalPenBaseClass"><span title="​Animal​Pen​Base​Class" class="linkLabel_WmDU">​Animal​Pen​Base​Class</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Attrify"><span title="​Attrify" class="linkLabel_WmDU">​Attrify</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/AutoCanvasSize"><span title="​Auto​Canvas​Size" class="linkLabel_WmDU">​Auto​Canvas​Size</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/BaseGameMode"><span title="​Base​Game​Mode" class="linkLabel_WmDU">​Base​Game​Mode</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/BaseUtil"><span title="​Base​Util" class="linkLabel_WmDU">​Base​Util</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Bezier"><span title="​Bezier" class="linkLabel_WmDU">​Bezier</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Blur"><span title="​Blur" class="linkLabel_WmDU">​Blur</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Bootstrap"><span title="​Bootstrap" class="linkLabel_WmDU">​Bootstrap</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/BoxService"><span title="​Box​Service" class="linkLabel_WmDU">​Box​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ButtonSoundController"><span title="​Button​Sound​Controller" class="linkLabel_WmDU">​Button​Sound​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/BuySkillNodeHandler"><span title="​Buy​Skill​Node​Handler" class="linkLabel_WmDU">​Buy​Skill​Node​Handler</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Character"><span title="​Character" class="linkLabel_WmDU">​Character</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/CharacterGrip"><span title="​Character​Grip" class="linkLabel_WmDU">​Character​Grip</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ChatCommand"><span title="​Chat​Command" class="linkLabel_WmDU">​Chat​Command</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ChatNameController"><span title="​Chat​Name​Controller" class="linkLabel_WmDU">​Chat​Name​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ClientState"><span title="​Client​State" class="linkLabel_WmDU">​Client​State</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/CollectionObject"><span title="​Collection​Object" class="linkLabel_WmDU">​Collection​Object</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/CollectionWatcher"><span title="​Collection​Watcher" class="linkLabel_WmDU">​Collection​Watcher</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/CollectionWatcherController"><span title="​Collection​Watcher​Controller" class="linkLabel_WmDU">​Collection​Watcher​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/CollectionWatcherService"><span title="​Collection​Watcher​Service" class="linkLabel_WmDU">​Collection​Watcher​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/CollisionService"><span title="​Collision​Service" class="linkLabel_WmDU">​Collision​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Colors"><span title="​Colors" class="linkLabel_WmDU">​Colors</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ConeCast"><span title="​Cone​Cast" class="linkLabel_WmDU">​Cone​Cast</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Confetti"><span title="​Confetti" class="linkLabel_WmDU">​Confetti</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ControlsData"><span title="​Controls​Data" class="linkLabel_WmDU">​Controls​Data</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Cooldown"><span title="​Cooldown" class="linkLabel_WmDU">​Cooldown</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/CoreService"><span title="​Core​Service" class="linkLabel_WmDU">​Core​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/CoreState"><span title="​Core​State" class="linkLabel_WmDU">​Core​State</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/CosmeticService"><span title="​Cosmetic​Service" class="linkLabel_WmDU">​Cosmetic​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/CreateCharacterWeld"><span title="​Create​Character​Weld" class="linkLabel_WmDU">​Create​Character​Weld</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/CreateFullViewport"><span title="​Create​Full​Viewport" class="linkLabel_WmDU">​Create​Full​Viewport</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/CreateNumberTween"><span title="​Create​Number​Tween" class="linkLabel_WmDU">​Create​Number​Tween</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/CreateTween"><span title="​Create​Tween" class="linkLabel_WmDU">​Create​Tween</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/CreateWeld"><span title="​Create​Weld" class="linkLabel_WmDU">​Create​Weld</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/CropTypes"><span title="​Crop​Types" class="linkLabel_WmDU">​Crop​Types</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/CrownGrab"><span title="​Crown​Grab" class="linkLabel_WmDU">​Crown​Grab</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/CurrencyService"><span title="​Currency​Service" class="linkLabel_WmDU">​Currency​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/DailyRewards"><span title="​Daily​Rewards" class="linkLabel_WmDU">​Daily​Rewards</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/DailyRotationService"><span title="​Daily​Rotation​Service" class="linkLabel_WmDU">​Daily​Rotation​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/DataController"><span title="​Data​Controller" class="linkLabel_WmDU">​Data​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/DefaultProps"><span title="​Default​Props" class="linkLabel_WmDU">​Default​Props</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Device"><span title="​Device" class="linkLabel_WmDU">​Device</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/DodgeTheTeapots"><span title="​Dodge​The​Teapots" class="linkLabel_WmDU">​Dodge​The​Teapots</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Door"><span title="​Door" class="linkLabel_WmDU">​Door</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/DropsController"><span title="​Drops​Controller" class="linkLabel_WmDU">​Drops​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/DuplicateProtection"><span title="​Duplicate​Protection" class="linkLabel_WmDU">​Duplicate​Protection</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Effects"><span title="​Effects" class="linkLabel_WmDU">​Effects</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/EmoteController"><span title="​Emote​Controller" class="linkLabel_WmDU">​Emote​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/FeatureFlags"><span title="​Feature​Flags" class="linkLabel_WmDU">​Feature​Flags</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/GameService"><span title="​Game​Service" class="linkLabel_WmDU">​Game​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/GamepadSelection"><span title="​Gamepad​Selection" class="linkLabel_WmDU">​Gamepad​Selection</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/GearController"><span title="​Gear​Controller" class="linkLabel_WmDU">​Gear​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/GearDebugService"><span title="​Gear​Debug​Service" class="linkLabel_WmDU">​Gear​Debug​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/GearService"><span title="​Gear​Service" class="linkLabel_WmDU">​Gear​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/GearkitSetup"><span title="​Gearkit​Setup" class="linkLabel_WmDU">​Gearkit​Setup</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/GradientUtil"><span title="​Gradient​Util" class="linkLabel_WmDU">​Gradient​Util</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/GridNav"><span title="​Grid​Nav" class="linkLabel_WmDU">​Grid​Nav</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/HealthBar"><span title="​Health​Bar" class="linkLabel_WmDU">​Health​Bar</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/HighlightedPrompt"><span title="​Highlighted​Prompt" class="linkLabel_WmDU">​Highlighted​Prompt</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/InstanceSync"><span title="​Instance​Sync" class="linkLabel_WmDU">​Instance​Sync</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/InventoryHandler"><span title="​Inventory​Handler" class="linkLabel_WmDU">​Inventory​Handler</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/InventoryService"><span title="​Inventory​Service" class="linkLabel_WmDU">​Inventory​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/InventoryTypes"><span title="​Inventory​Types" class="linkLabel_WmDU">​Inventory​Types</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/InventoryUtil"><span title="​Inventory​Util" class="linkLabel_WmDU">​Inventory​Util</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/InviteFriends"><span title="​Invite​Friends" class="linkLabel_WmDU">​Invite​Friends</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ItemSlotIcon"><span title="​Item​Slot​Icon" class="linkLabel_WmDU">​Item​Slot​Icon</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ItemTypes"><span title="​Item​Types" class="linkLabel_WmDU">​Item​Types</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/KillEffectController"><span title="​Kill​Effect​Controller" class="linkLabel_WmDU">​Kill​Effect​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Leaderstats"><span title="​Leaderstats" class="linkLabel_WmDU">​Leaderstats</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Level"><span title="​Level" class="linkLabel_WmDU">​Level</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/LevelService"><span title="​Level​Service" class="linkLabel_WmDU">​Level​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/LevelTeleport"><span title="​Level​Teleport" class="linkLabel_WmDU">​Level​Teleport</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ListenForKey"><span title="​Listen​For​Key" class="linkLabel_WmDU">​Listen​For​Key</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/MarketplaceData"><span title="​Marketplace​Data" class="linkLabel_WmDU">​Marketplace​Data</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/MarketplaceService"><span title="​Marketplace​Service" class="linkLabel_WmDU">​Marketplace​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/MemoryStoreService"><span title="​Memory​Store​Service" class="linkLabel_WmDU">​Memory​Store​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/MessageController"><span title="​Message​Controller" class="linkLabel_WmDU">​Message​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/MineablesController"><span title="​Mineables​Controller" class="linkLabel_WmDU">​Mineables​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/MinigameData"><span title="​Minigame​Data" class="linkLabel_WmDU">​Minigame​Data</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/MinigameService"><span title="​Minigame​Service" class="linkLabel_WmDU">​Minigame​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/MinigameUtil"><span title="​Minigame​Util" class="linkLabel_WmDU">​Minigame​Util</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Minigames"><span title="​Minigames" class="linkLabel_WmDU">​Minigames</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ModelWrap"><span title="​Model​Wrap" class="linkLabel_WmDU">​Model​Wrap</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Monetization"><span title="​Monetization" class="linkLabel_WmDU">​Monetization</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/MonetizationController"><span title="​Monetization​Controller" class="linkLabel_WmDU">​Monetization​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/MonetizationService"><span title="​Monetization​Service" class="linkLabel_WmDU">​Monetization​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/MovingGradientController"><span title="​Moving​Gradient​Controller" class="linkLabel_WmDU">​Moving​Gradient​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/NPC"><span title="​N​P​C" class="linkLabel_WmDU">​N​P​C</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/NavigationController"><span title="​Navigation​Controller" class="linkLabel_WmDU">​Navigation​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Nuisance"><span title="​Nuisance" class="linkLabel_WmDU">​Nuisance</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/PetController"><span title="​Pet​Controller" class="linkLabel_WmDU">​Pet​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/PlaceUtility"><span title="​Place​Utility" class="linkLabel_WmDU">​Place​Utility</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/PlaySFX"><span title="​Play​S​F​X" class="linkLabel_WmDU">​Play​S​F​X</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/PlayerOverhead"><span title="​Player​Overhead" class="linkLabel_WmDU">​Player​Overhead</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/PlayerService"><span title="​Player​Service" class="linkLabel_WmDU">​Player​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/PlayerState"><span title="​Player​State" class="linkLabel_WmDU">​Player​State</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/PoissonDisk"><span title="​Poisson​Disk" class="linkLabel_WmDU">​Poisson​Disk</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ProfileService"><span title="​Profile​Service" class="linkLabel_WmDU">​Profile​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ProfileTypes"><span title="​Profile​Types" class="linkLabel_WmDU">​Profile​Types</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ProgressBar"><span title="​Progress​Bar" class="linkLabel_WmDU">​Progress​Bar</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/PropBaseClass"><span title="​Prop​Base​Class" class="linkLabel_WmDU">​Prop​Base​Class</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/PropTypes"><span title="​Prop​Types" class="linkLabel_WmDU">​Prop​Types</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/QueueService"><span title="​Queue​Service" class="linkLabel_WmDU">​Queue​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/RandomizeYOrientation"><span title="​Randomize​Y​Orientation" class="linkLabel_WmDU">​Randomize​Y​Orientation</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Range"><span title="​Range" class="linkLabel_WmDU">​Range</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/RarityData"><span title="​Rarity​Data" class="linkLabel_WmDU">​Rarity​Data</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Rng"><span title="​Rng" class="linkLabel_WmDU">​Rng</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Round"><span title="​Round" class="linkLabel_WmDU">​Round</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Router"><span title="​Router" class="linkLabel_WmDU">​Router</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/RunMode"><span title="​Run​Mode" class="linkLabel_WmDU">​Run​Mode</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/SafeSet"><span title="​Safe​Set" class="linkLabel_WmDU">​Safe​Set</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Sanitation"><span title="​Sanitation" class="linkLabel_WmDU">​Sanitation</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ScaleTween"><span title="​Scale​Tween" class="linkLabel_WmDU">​Scale​Tween</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ScalingButton"><span title="​Scaling​Button" class="linkLabel_WmDU">​Scaling​Button</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/SeasonData"><span title="​Season​Data" class="linkLabel_WmDU">​Season​Data</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/SeasonService"><span title="​Season​Service" class="linkLabel_WmDU">​Season​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/SecurityController"><span title="​Security​Controller" class="linkLabel_WmDU">​Security​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/SecurityService"><span title="​Security​Service" class="linkLabel_WmDU">​Security​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ShopController"><span title="​Shop​Controller" class="linkLabel_WmDU">​Shop​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ShopHandler"><span title="​Shop​Handler" class="linkLabel_WmDU">​Shop​Handler</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ShopItems"><span title="​Shop​Items" class="linkLabel_WmDU">​Shop​Items</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link menu__link--active" aria-current="page" href="/docs/survival-islands/api/ShopService"><span title="​Shop​Service" class="linkLabel_WmDU">​Shop​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ShopTypes"><span title="​Shop​Types" class="linkLabel_WmDU">​Shop​Types</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Shuffle"><span title="​Shuffle" class="linkLabel_WmDU">​Shuffle</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/SkillTreeData"><span title="​Skill​Tree​Data" class="linkLabel_WmDU">​Skill​Tree​Data</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/SkillTreeService"><span title="​Skill​Tree​Service" class="linkLabel_WmDU">​Skill​Tree​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Smoothstep"><span title="​Smoothstep" class="linkLabel_WmDU">​Smoothstep</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/SocialController"><span title="​Social​Controller" class="linkLabel_WmDU">​Social​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Soil"><span title="​Soil" class="linkLabel_WmDU">​Soil</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/SoundController"><span title="​Sound​Controller" class="linkLabel_WmDU">​Sound​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Sounds"><span title="​Sounds" class="linkLabel_WmDU">​Sounds</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Spring"><span title="​Spring" class="linkLabel_WmDU">​Spring</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/StatsController"><span title="​Stats​Controller" class="linkLabel_WmDU">​Stats​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/TeleportPad"><span title="​Teleport​Pad" class="linkLabel_WmDU">​Teleport​Pad</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Town"><span title="​Town" class="linkLabel_WmDU">​Town</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/TrackedPlayerValues"><span title="​Tracked​Player​Values" class="linkLabel_WmDU">​Tracked​Player​Values</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/UITypes"><span title="​U​I​Types" class="linkLabel_WmDU">​U​I​Types</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Vehicle"><span title="​Vehicle" class="linkLabel_WmDU">​Vehicle</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/VehicleAttachmentData"><span title="​Vehicle​Attachment​Data" class="linkLabel_WmDU">​Vehicle​Attachment​Data</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/VehicleController"><span title="​Vehicle​Controller" class="linkLabel_WmDU">​Vehicle​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/VehicleService"><span title="​Vehicle​Service" class="linkLabel_WmDU">​Vehicle​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/VehicleTypes"><span title="​Vehicle​Types" class="linkLabel_WmDU">​Vehicle​Types</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/VoteService"><span title="​Vote​Service" class="linkLabel_WmDU">​Vote​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/WaitForPrimaryPart"><span title="​Wait​For​Primary​Part" class="linkLabel_WmDU">​Wait​For​Primary​Part</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Zombie"><span title="​Zombie" class="linkLabel_WmDU">​Zombie</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Zone"><span title="​Zone" class="linkLabel_WmDU">​Zone</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/adjustValueByUserPriceLevel"><span title="adjust​Value​By​User​Price​Level" class="linkLabel_WmDU">adjust​Value​By​User​Price​Level</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/breakJoints"><span title="break​Joints" class="linkLabel_WmDU">break​Joints</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/getFirstTaggedDescendant"><span title="get​First​Tagged​Descendant" class="linkLabel_WmDU">get​First​Tagged​Descendant</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/getFriendsInServer"><span title="get​Friends​In​Server" class="linkLabel_WmDU">get​Friends​In​Server</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/getPriceLevel"><span title="get​Price​Level" class="linkLabel_WmDU">get​Price​Level</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/getProductInfo"><span title="get​Product​Info" class="linkLabel_WmDU">get​Product​Info</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/quantityToUrgencyText"><span title="quantity​To​Urgency​Text" class="linkLabel_WmDU">quantity​To​Urgency​Text</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/spawnParticle"><span title="spawn​Particle" class="linkLabel_WmDU">spawn​Particle</span></a></li></ul></nav></div></div><main class="docMainContainer_HJE1"><div class="container padding-vert--lg"><div class="row"><div class="col docItemCol_MU3C"><div class="docItemContainer_Wv98"><article><div class="member_J0w1 markdown"><div class="tocCollapsible_ETCw theme-doc-toc-mobile tocMobile_oUs_"><button type="button" class="clean-btn tocCollapsibleButton_TO0P">On this page</button></div><header><h1 class="docTitle_mZRt" style="text-decoration:none"><span style="display:inline-block">Shop</span><span style="display:inline-block">Service</span></h1><div class="luaClassTags_EipM"><span class="badge_Ba2I" style="color:#00CC67"><span class="badgeTooltip_cWXP">This item only works when running on the server.</span><span class="badgeToolTipTail_H9D_"><svg fill="#00CC67" xmlns="http://www.w3.org/2000/svg" version="1.1" x="0px" y="0px" viewBox="0 0 90 90" role="img" aria-label="This item only works when running on the server."><polygon points="6.125,72.421 58.544,88.523 58.544,24.372 6.125,8.269 "></polygon><polygon points="79.818,15.77 79.868,15.755 29.615,1.453 10.328,6.318 60.102,21.609 "></polygon><path d="M61.643,78.738l22.232-6.582V17.801l-22.232,6.584V78.738z M73.811,69.257c-1.174,0-2.125-1.19-2.125-2.659  c0-1.468,0.951-2.658,2.125-2.658c1.172,0,2.123,1.19,2.123,2.658C75.934,68.066,74.982,69.257,73.811,69.257z M64.898,32.121  l16.336-4.41v7.117l-16.336,4.409V32.121z M64.898,41.292l16.336-4.41v7.116l-16.336,4.409V41.292z M64.898,50.463l16.336-4.411  v7.116l-16.336,4.411V50.463z"></path><polygon points="83.875,74.893 61.643,81.477 61.643,88.547 83.875,81.963 "></polygon></svg> <!-- -->Server</span></span></div><label class="privateToggle_lmfE"><span class="privateCheckboxContainer_psRa"><input class="privateCheckboxInternal_IKP2" type="checkbox" name="checkbox"><span class="privateCheckboxControl_Ov8U"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-width="3" d="M4 11.91l5.37 5.37L19.79 5.59"></path></svg></span></span><span class="privateCheckboxLabel_Vmvs">Show Private</span></label><div>
+<p>Handles shop management, including stock for multiple shop types.</p>
+<p>
+  One [Replica] is created per non-custom shop defined in <code>ShopData.SHOPS</code>,
+  each holding a <code>{ [itemId]: StockItem }</code> map that is the single source of
+  truth clients read stock from. Shops marked <code>custom</code> (skins, player market)
+  ship their own component and are skipped entirely — they do not participate
+  in the stock system.
+</p>
+<h2>Restock scheduling</h2>
+<p>
+  Restocking is derived from wall-clock time rather than tracked per item.
+  Two intervals interact:
+</p>
+<ul>
+  <li>
+    <code>ShopData.STOCK_REFRESH_INTERVAL</code> — the global cycle. <code>_lastRestockCycle</code>
+    records the cycle ordinal already processed, which is what stops a cycle
+    from firing twice.
+  </li>
+  <li>
+    <code>item.stockData.restockInterval</code> — per item. An item's most recent due
+    restock is <code>floor(now / interval) * interval</code>; it refills to
+    <code>maxStockQuantity</code> only when that timestamp falls inside the current
+    global window, otherwise it keeps its quantity.
+  </li>
+</ul>
+<p>
+  <a href="/docs/survival-islands/api/ShopService#startRestockLoop">ShopService.startRestockLoop</a> polls <a href="/docs/survival-islands/api/ShopService#getTimeUntilRestock">ShopService.getTimeUntilRestock</a> at
+  most once a second and calls <a href="/docs/survival-islands/api/ShopService#performRestock">ShopService.performRestock</a> when the window
+  opens.
+</p>
+
+  
+    
+    
+      <div class="admonition admonition-caution alert alert--warning">
+        <div class="admonition-heading">
+          <h5><span class="admonition-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+                <path d="M8.893 1.5c-.183-.31-.52-.5-.887-.5s-.703.19-.886.5L.138 13.499a.98.98 0 0 0 0 1.001c.193.31.53.501.886.501h13.964c.367 0 .704-.19.877-.5a1.03 1.03 0 0 0 .01-1.002L8.893 1.5zm.133 11.497H6.987v-2.003h2.039v2.003zm0-3.004H6.987V5.987h2.039v4.006z"></path>
+              </svg></span><span class="admonition-title">Stock is not persisted</span></h5>
+        </div>
+        <div class="admonition-content">
+          <p>
+            Despite the <code>save*</code> naming, <code>LocalStorage</code> is a plain in-memory table on the
+            server — <a href="/docs/survival-islands/api/ShopService#saveStockToLocalStorage">ShopService.saveStockToLocalStorage</a> and
+            <a href="/docs/survival-islands/api/ShopService#saveRestockTime">ShopService.saveRestockTime</a> write no DataStore, so stock and the restock
+            clock reset on every server start. The only DataStore this module touches is
+            <code>redeemed_codes</code>, used by the redeem-code flow.
+          </p>
+        </div>
+      </div>
+    
+  
+
+<h2>Feature gate</h2>
+<p>
+  <code>FeatureFlags.ScarcityShop</code> is <strong>off</strong> by default. When off,
+  <a href="/docs/survival-islands/api/ShopService#init">ShopService.init</a> never builds the shop replicas, never populates stock and
+  never starts the restock loop, and <a href="/docs/survival-islands/api/ShopService#purchaseStock">ShopService.purchaseStock</a> skips its
+  stock-decrement step entirely — so stock is effectively infinite and
+  purchases are limited only by currency and ownership limits. Handlers,
+  redeem codes, crates and the marketplace item callback all remain active.
+</p>
+<p>
+  Copyright (c) 2026 firebit. All rights reserved.
+  firebit/survival-islands - proprietary and confidential.
+</p>
+</div></header><h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="functions">Functions<a href="#functions" class="hash-link" aria-label="Direct link to Functions" title="Direct link to Functions" translate="no">​</a></h2><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="fetch"><code style="text-decoration:none">fetch</code><a href="#fetch" class="hash-link" aria-label="Direct link to fetch" title="Direct link to fetch" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Server/Features/Shop/ShopService.luau#L142"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>ShopService<!-- -->.</code><code class="green_DgR4">fetch</code><code>(</code><div class="inset_uKQm"><div><code>player<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/Player" target="_blank" rel="noopener noreferrer">Player<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code>,</code><span class="inlineDescription_G7Er">-- <span>
+<p>recipient</p>
+</span></span></div><div><code>shopType<!-- -->: </code><code class="blue_P4bS">string</code><span class="inlineDescription_G7Er">-- <span>
+<p>key in <code>ShopData.SHOPS</code></p>
+</span></span></div></div><code>) → </code><code>(</code><code>)</code></div><div>
+<p>
+  Sends one shop's current stock to a single player as a <code>SHOP_REFRESH</code>
+  dispatch. Silently no-ops for an unknown shop.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="generateStock"><code style="text-decoration:none">generateStock</code><a href="#generateStock" class="hash-link" aria-label="Direct link to generateStock" title="Direct link to generateStock" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Server/Features/Shop/ShopService.luau#L175"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>ShopService<!-- -->.</code><code class="green_DgR4">generateStock</code><code>(</code><code>) → </code><code class="purple_ieR2">{</code><span><code>[</code><code class="blue_P4bS">string</code><code>]</code></span><code>: </code><code class="green_DgR4">{</code><span><code>[</code><code class="blue_P4bS">string</code><code>]</code></span><code>: </code><code class="blue_P4bS">number</code><code class="green_DgR4">}</code><code class="purple_ieR2">}</code><span class="inlineDescription_G7Er">-- <span>
+<p>shopType -> itemId -> quantity</p>
+</span></span></div><div>
+<p>
+  Computes the stock every shop should be holding right now and writes it into
+  the shop replicas.
+</p>
+<p>
+  For each item it finds the most recent restock time that should have
+  occurred (<code>floor(now / restockInterval) * restockInterval</code>) and refills to
+  <code>maxStockQuantity</code> only when that moment lies inside the current global
+  restock window; otherwise the existing quantity is carried forward. Replicas
+  are only written when something actually changed, so an idle cycle costs no
+  replication.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="applyStock"><code style="text-decoration:none">applyStock</code><a href="#applyStock" class="hash-link" aria-label="Direct link to applyStock" title="Direct link to applyStock" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Server/Features/Shop/ShopService.luau#L253"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>ShopService<!-- -->.</code><code class="green_DgR4">applyStock</code><code>(</code><div class="inset_uKQm"><div><code>stockByShop<!-- -->: </code><code class="purple_ieR2">{</code><span><code>[</code><code class="blue_P4bS">string</code><code>]</code></span><code>: </code><code class="green_DgR4">{</code><span><code>[</code><code class="blue_P4bS">string</code><code>]</code></span><code>: </code><code class="blue_P4bS">number</code><code class="green_DgR4">}</code><code class="purple_ieR2">}</code><span class="inlineDescription_G7Er">-- <span>
+<p>shopType -> itemId -> quantity</p>
+</span></span></div></div><code>) → </code><code>(</code><code>)</code></div><div>
+<p>
+  Writes a previously computed stock table back onto the shop replicas,
+  clamping quantities at zero. Unknown shops and unknown items are skipped,
+  and replicas are only touched when a quantity actually changed.
+</p>
+<p>
+  Used by <a href="/docs/survival-islands/api/ShopService#initializeStock">ShopService.initializeStock</a> to restore in-memory stock rather than
+  regenerating it.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="getCurrentStock"><code style="text-decoration:none">getCurrentStock</code><a href="#getCurrentStock" class="hash-link" aria-label="Direct link to getCurrentStock" title="Direct link to getCurrentStock" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Server/Features/Shop/ShopService.luau#L288"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>ShopService<!-- -->.</code><code class="green_DgR4">getCurrentStock</code><code>(</code><code>) → </code><code class="purple_ieR2">{</code><span><code>[</code><code class="blue_P4bS">string</code><code>]</code></span><code>: </code><code class="green_DgR4">{</code><span><code>[</code><code class="blue_P4bS">string</code><code>]</code></span><code>: </code><code class="blue_P4bS">number</code><code class="green_DgR4">}</code><code class="purple_ieR2">}</code><code class="blue_P4bS">?</code></div><div>
+<p>
+  Returns the in-memory stock snapshot, or nil when none has been taken yet
+  this server lifetime.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="getTimeUntilRestock"><code style="text-decoration:none">getTimeUntilRestock</code><a href="#getTimeUntilRestock" class="hash-link" aria-label="Direct link to getTimeUntilRestock" title="Direct link to getTimeUntilRestock" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Server/Features/Shop/ShopService.luau#L310"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>ShopService<!-- -->.</code><code class="green_DgR4">getTimeUntilRestock</code><code>(</code><code>) → </code><code class="blue_P4bS">number</code><span class="inlineDescription_G7Er">-- <span>
+<p>seconds until restock, 0 when due</p>
+</span></span></div><div>
+<p>
+  Returns the seconds remaining until the next global restock window, or 0
+  when a window is open right now and this server has not yet processed it.
+</p>
+<p>
+  "Open right now" means within one second of a
+  <code>ShopData.STOCK_REFRESH_INTERVAL</code> boundary and on a cycle ordinal greater
+  than <code>_lastRestockCycle</code> — the ordinal comparison is what prevents the same
+  cycle firing repeatedly during that one-second window.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="saveStockToLocalStorage"><code style="text-decoration:none">saveStockToLocalStorage</code><a href="#saveStockToLocalStorage" class="hash-link" aria-label="Direct link to saveStockToLocalStorage" title="Direct link to saveStockToLocalStorage" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Server/Features/Shop/ShopService.luau#L343"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>ShopService<!-- -->.</code><code class="green_DgR4">saveStockToLocalStorage</code><code>(</code><div class="inset_uKQm"><div><code>stockByShop<!-- -->: </code><code class="purple_ieR2">{</code><span><code>[</code><code class="blue_P4bS">string</code><code>]</code></span><code>: </code><code class="green_DgR4">{</code><span><code>[</code><code class="blue_P4bS">string</code><code>]</code></span><code>: </code><code class="blue_P4bS">number</code><code class="green_DgR4">}</code><code class="purple_ieR2">}</code><span class="inlineDescription_G7Er">-- <span>
+<p>shopType -> itemId -> quantity</p>
+</span></span></div></div><code>) → </code><code>(</code><code>)</code></div><div>
+<p>
+  Stores a stock snapshot in the module-level <code>LocalStorage</code> table. In-memory
+  only — nothing is written to a DataStore, so this does not survive a server
+  restart.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="saveRestockTime"><code style="text-decoration:none">saveRestockTime</code><a href="#saveRestockTime" class="hash-link" aria-label="Direct link to saveRestockTime" title="Direct link to saveRestockTime" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Server/Features/Shop/ShopService.luau#L358"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>ShopService<!-- -->.</code><code class="green_DgR4">saveRestockTime</code><code>(</code><code>) → </code><code>(</code><code>)</code></div><div>
+<p>
+  Stamps the current server time onto every shop replica's <code>lastRestockTime</code>
+  and into <code>LocalStorage</code>. The replica field is retained for client
+  compatibility; the scheduling itself is derived from the clock rather than
+  from this value.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="performRestock"><code style="text-decoration:none">performRestock</code><a href="#performRestock" class="hash-link" aria-label="Direct link to performRestock" title="Direct link to performRestock" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Server/Features/Shop/ShopService.luau#L393"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>ShopService<!-- -->.</code><code class="green_DgR4">performRestock</code><code>(</code><code>) → </code><code>(</code><code>)</code></div><div>
+<p>
+  Runs one restock cycle: regenerates stock, advances <code>_lastRestockCycle</code> to
+  the current cycle ordinal so this window cannot fire again, snapshots the
+  result, and broadcasts a single "The shops have restocked!" toast to
+  everyone if any shop ended up holding stock.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="getShopStock"><code style="text-decoration:none">getShopStock</code><a href="#getShopStock" class="hash-link" aria-label="Direct link to getShopStock" title="Direct link to getShopStock" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Server/Features/Shop/ShopService.luau#L441"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>ShopService<!-- -->.</code><code class="green_DgR4">getShopStock</code><code>(</code><div class="inset_uKQm"><div><code>shopType<!-- -->: </code><code class="blue_P4bS">string</code><span class="inlineDescription_G7Er">-- <span>
+<p>key in <code>ShopData.SHOPS</code></p>
+</span></span></div></div><code>) → </code><code class="purple_ieR2">{</code><span><code>[</code><code class="blue_P4bS">string</code><code>]</code></span><code>: </code><code class="blue_P4bS">ShopData.StockItem</code><code class="purple_ieR2">}</code><code class="blue_P4bS">?</code></div><div>
+<p>
+  Returns a shop's live <code>StockItem</code> map straight off its replica (carrying both
+  <code>quantity</code> and <code>maxStockQuantity</code>), or nil for an unknown shop.
+</p>
+<p>
+  The returned table is the replica's own data — mutating it must be followed
+  by a <code>replica:Set("items", …)</code> to replicate.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="decrementStock"><code style="text-decoration:none">decrementStock</code><a href="#decrementStock" class="hash-link" aria-label="Direct link to decrementStock" title="Direct link to decrementStock" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Server/Features/Shop/ShopService.luau#L523"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>ShopService<!-- -->.</code><code class="green_DgR4">decrementStock</code><code>(</code><div class="inset_uKQm"><div><code>shopType<!-- -->: </code><code class="blue_P4bS">string</code><code>,</code><span class="inlineDescription_G7Er">-- <span>
+<p>key in <code>ShopData.SHOPS</code></p>
+</span></span></div><div><code>itemId<!-- -->: </code><code class="blue_P4bS">string</code><code>,</code><span class="inlineDescription_G7Er">-- <span>
+<p>item being bought</p>
+</span></span></div><div><code>quantity<!-- -->: </code><code class="blue_P4bS">number</code><span class="inlineDescription_G7Er">-- <span>
+<p>amount requested; checked but not applied</p>
+</span></span></div></div><code>) → </code><code class="blue_P4bS">boolean</code><span class="inlineDescription_G7Er">-- <span>
+<p>false when the shop, item or available stock is insufficient</p>
+</span></span></div><div>
+<p>
+  Consumes stock for a purchase, replicating the change and mirroring it into
+  the in-memory snapshot.
+</p>
+
+  
+    
+    
+      <div class="admonition admonition-caution alert alert--warning">
+        <div class="admonition-heading">
+          <h5><span class="admonition-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+                <path d="M8.893 1.5c-.183-.31-.52-.5-.887-.5s-.703.19-.886.5L.138 13.499a.98.98 0 0 0 0 1.001c.193.31.53.501.886.501h13.964c.367 0 .704-.19.877-.5a1.03 1.03 0 0 0 .01-1.002L8.893 1.5zm.133 11.497H6.987v-2.003h2.039v2.003zm0-3.004H6.987V5.987h2.039v4.006z"></path>
+              </svg></span><span class="admonition-title">Ignores <code>quantity</code></span></h5>
+        </div>
+        <div class="admonition-content">
+          <p>
+            <code>quantity</code> is only used for the affordability check — the body always
+            decrements by exactly 1 regardless of how many were bought. Multi-buys
+            therefore under-consume stock. Use
+            <a href="/docs/survival-islands/api/ShopService#subtractQuantityFromItem">ShopService.subtractQuantityFromItem</a> when the amount must be honoured.
+          </p>
+        </div>
+      </div>
+    
+  
+
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="giveItemToPlayer"><code style="text-decoration:none">giveItemToPlayer</code><a href="#giveItemToPlayer" class="hash-link" aria-label="Direct link to giveItemToPlayer" title="Direct link to giveItemToPlayer" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Server/Features/Shop/ShopService.luau#L555"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>ShopService<!-- -->.</code><code class="green_DgR4">giveItemToPlayer</code><code>(</code><div class="inset_uKQm"><div><code>player<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/Player" target="_blank" rel="noopener noreferrer">Player<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code>,</code><span class="inlineDescription_G7Er">-- <span>
+<p>recipient</p>
+</span></span></div><div><code>itemId<!-- -->: </code><code class="blue_P4bS">string</code><code>,</code><span class="inlineDescription_G7Er">-- <span>
+<p>item to grant</p>
+</span></span></div><div><code>quantity<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>amount, defaults to 1</p>
+</span></span></div></div><code>) → </code><code class="blue_P4bS">boolean</code></div><div>
+<p>
+  Grants an item into the player's inventory through
+  <a href="/docs/survival-islands/api/InventoryService#addQuantityToItemId">InventoryService.addQuantityToItemId</a>, which handles stacking and slot
+  allocation.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="subtractQuantityFromItem"><code style="text-decoration:none">subtractQuantityFromItem</code><a href="#subtractQuantityFromItem" class="hash-link" aria-label="Direct link to subtractQuantityFromItem" title="Direct link to subtractQuantityFromItem" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Server/Features/Shop/ShopService.luau#L578"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>ShopService<!-- -->.</code><code class="green_DgR4">subtractQuantityFromItem</code><code>(</code><div class="inset_uKQm"><div><code>shopType<!-- -->: </code><code class="blue_P4bS">string</code><code>,</code><span class="inlineDescription_G7Er">-- <span>
+<p>key in <code>ShopData.SHOPS</code></p>
+</span></span></div><div><code>itemId<!-- -->: </code><code class="blue_P4bS">string</code><code>,</code><span class="inlineDescription_G7Er">-- <span>
+<p>item to reduce</p>
+</span></span></div><div><code>amount<!-- -->: </code><code class="blue_P4bS">number</code><span class="inlineDescription_G7Er">-- <span>
+<p>how much stock to remove</p>
+</span></span></div></div><code>) → </code><code class="blue_P4bS">boolean</code><span class="inlineDescription_G7Er">-- <span>
+<p>false when the shop or item is unknown, or stock is already zero</p>
+</span></span></div><div>
+<p>
+  Removes an arbitrary amount of stock from a shop item, clamped at zero, then
+  replicates and snapshots the change. Unlike <a href="/docs/survival-islands/api/ShopService#decrementStock">ShopService.decrementStock</a>,
+  this honours the amount passed.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="checkOwnershipLimit"><code style="text-decoration:none">checkOwnershipLimit</code><a href="#checkOwnershipLimit" class="hash-link" aria-label="Direct link to checkOwnershipLimit" title="Direct link to checkOwnershipLimit" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Server/Features/Shop/ShopService.luau#L619"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>ShopService<!-- -->.</code><code class="green_DgR4">checkOwnershipLimit</code><code>(</code><div class="inset_uKQm"><div><code>player<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/Player" target="_blank" rel="noopener noreferrer">Player<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code>,</code><span class="inlineDescription_G7Er">-- <span>
+<p>prospective buyer</p>
+</span></span></div><div><code>itemId<!-- -->: </code><code class="blue_P4bS">string</code><span class="inlineDescription_G7Er">-- <span>
+<p>item to check</p>
+</span></span></div></div><code>) → </code><code>(</code><div class="inset_uKQm"><div><code class="blue_P4bS">boolean</code><code>,</code><span class="inlineDescription_G7Er">-- <span>
+<p>whether a purchase is permitted</p>
+</span></span></div><div><code class="blue_P4bS">number</code><span class="inlineDescription_G7Er">-- <span>
+<p>how many the player already owns</p>
+</span></span></div></div><code>)</code></div><div>
+<p>
+  Returns whether the player can purchase the item and the number of items
+  they own.
+</p>
+<p>
+  Items with no <code>ownershipLimit</code> (or a limit of 0) are unlimited and always
+  pass. Counting differs by item type:
+</p>
+<ul>
+  <li>
+    <strong>Skin</strong> — an [ItemRecord] in <code>profile.inventory</code> like everything else,
+    but treated as a boolean unlock via <a href="/docs/survival-islands/api/CosmeticService#ownsSkin">CosmeticService.ownsSkin</a>.
+  </li>
+  <li>
+    <strong>Prop</strong> — inventory quantity plus any props the player has already
+    placed in the world. That second term currently always reads zero: the
+    <code>BaseService</code> dependency is a local stub pending the Base system port.
+  </li>
+  <li>everything else — the summed quantity of matching inventory records.</li>
+</ul>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="purchase"><code style="text-decoration:none">purchase</code><a href="#purchase" class="hash-link" aria-label="Direct link to purchase" title="Direct link to purchase" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Server/Features/Shop/ShopService.luau#L680"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>ShopService<!-- -->.</code><code class="green_DgR4">purchase</code><code>(</code><div class="inset_uKQm"><div><code>player<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/Player" target="_blank" rel="noopener noreferrer">Player<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code>,</code><span class="inlineDescription_G7Er">-- <span>
+<p>buyer</p>
+</span></span></div><div><code>itemId<!-- -->: </code><code class="blue_P4bS">string</code><code>,</code><span class="inlineDescription_G7Er">-- <span>
+<p>item to buy</p>
+</span></span></div><div><code>quantity<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>asserted positive; not otherwise honoured</p>
+</span></span></div></div><code>) → </code><code class="blue_P4bS">boolean</code></div><div>
+<p>Buys a <strong>non-stocked</strong> item with soft currency.</p>
+<p>
+  Rejects anything hidden, unpriced, or carrying <code>stockData</code> — stocked items
+  go through <a href="/docs/survival-islands/api/ShopService#purchaseStock">ShopService.purchaseStock</a> instead. Checks the ownership limit
+  and the balance, debits via <a href="/docs/survival-islands/api/CurrencyService#take">CurrencyService.take</a>, logs a <code>Sink</code> resource
+  event, then grants one copy.
+</p>
+<p>
+  Note that <code>quantity</code> is asserted positive but is otherwise unused: exactly
+  one item is charged for and granted.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="purchaseStock"><code style="text-decoration:none">purchaseStock</code><a href="#purchaseStock" class="hash-link" aria-label="Direct link to purchaseStock" title="Direct link to purchaseStock" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Server/Features/Shop/ShopService.luau#L763"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>ShopService<!-- -->.</code><code class="green_DgR4">purchaseStock</code><code>(</code><div class="inset_uKQm"><div><code>player<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/Player" target="_blank" rel="noopener noreferrer">Player<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code>,</code><span class="inlineDescription_G7Er">-- <span>
+<p>buyer</p>
+</span></span></div><div><code>shopType<!-- -->: </code><code class="blue_P4bS">string</code><code>,</code><span class="inlineDescription_G7Er">-- <span>
+<p>what shop the player is buying from</p>
+</span></span></div><div><code>itemId<!-- -->: </code><code class="blue_P4bS">string</code><code>,</code><span class="inlineDescription_G7Er">-- <span>
+<p>item to buy</p>
+</span></span></div><div><code>quantity<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>amount, defaults to 1; priced per unit</p>
+</span></span></div></div><code>) → </code><code class="blue_P4bS">boolean</code></div><div>
+<p>Buys an item from a specific shop, honouring stock when scarcity is enabled.</p>
+<p>
+  The order of operations is: validate the item, check the ownership limit,
+  verify the balance, <strong>debit the currency</strong>, then attempt the stock
+  decrement. Because payment happens before the stock check, a failed
+  decrement is compensated by an explicit refund (logged as a <code>Refund</code>
+  resource event) rather than avoided.
+</p>
+<p>
+  The stock decrement only runs when both hold: <code>FeatureFlags.ScarcityShop</code>
+  is on and the item declares <code>stockData</code>. With the flag off (the default)
+  the branch is skipped entirely and stock is effectively infinite.
+</p>
+<p>
+  Skins are handled by <a href="/docs/survival-islands/api/CosmeticService#markPurchased">CosmeticService.markPurchased</a> instead of
+  [ShopService.giveItemToPlayer]: they're recorded as a boolean unlock, not
+  a stackable quantity, and are auto-equipped and applied to both the
+  character and the held item.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="clearLocalStorage"><code style="text-decoration:none">clearLocalStorage</code><a href="#clearLocalStorage" class="hash-link" aria-label="Direct link to clearLocalStorage" title="Direct link to clearLocalStorage" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Server/Features/Shop/ShopService.luau#L1014"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>ShopService<!-- -->.</code><code class="green_DgR4">clearLocalStorage</code><code>(</code><code>) → </code><code>(</code><code>)</code></div><div>
+<p>
+  Clears the in-memory stock snapshot and restock timestamp. Useful for
+  testing — the next <a href="/docs/survival-islands/api/ShopService#initializeStock">ShopService.initializeStock</a> will regenerate stock from
+  scratch rather than restoring it.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="getRestockInfo"><code style="text-decoration:none">getRestockInfo</code><a href="#getRestockInfo" class="hash-link" aria-label="Direct link to getRestockInfo" title="Direct link to getRestockInfo" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Server/Features/Shop/ShopService.luau#L1032"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>ShopService<!-- -->.</code><code class="green_DgR4">getRestockInfo</code><code>(</code><code>) → </code><code class="blue_P4bS">table</code><span class="inlineDescription_G7Er">-- <span>
+<p><code>{ globalRefresh = {...}, shops = { [shopType] = { [itemId] = {...} } } }</code></p>
+</span></span></div><div>
+<p>
+  Builds a debug snapshot of restock timing: the global refresh interval and
+  the time left on it, plus per-shop, per-item restock interval, time
+  remaining and current quantity. <code>modulus</code> on each entry is the elapsed time
+  within that interval, which is what the scheduling comparisons key off.
+</p>
+<p>Read-only — computing this does not advance any cycle.</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="manualRestock"><code style="text-decoration:none">manualRestock</code><a href="#manualRestock" class="hash-link" aria-label="Direct link to manualRestock" title="Direct link to manualRestock" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Server/Features/Shop/ShopService.luau#L1113"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>ShopService<!-- -->.</code><code class="green_DgR4">manualRestock</code><code>(</code><div class="inset_uKQm"><div><code>shopType<!-- -->: </code><code class="blue_P4bS">string</code><span class="inlineDescription_G7Er">-- <span>
+<p>key in <code>ShopData.SHOPS</code></p>
+</span></span></div></div><code>) → </code><code class="blue_P4bS">boolean</code><span class="inlineDescription_G7Er">-- <span>
+<p>whether anything actually restocked</p>
+</span></span></div><div>
+<p>
+  Force-restocks a single shop, used at boot so items are available
+  immediately rather than after the first scheduled window.
+</p>
+<p>
+  Differs from the scheduled path in what it guarantees: items of
+  <code>INITIAL_STOCK_RARITY</code> ("Common") and all props are filled to
+  <code>maxStockQuantity</code> unconditionally, while rarer items only restock if their
+  own interval boundary is within the last second — and even then they refill
+  to 0 rather than their max, so rare stock is never seeded at boot.
+</p>
+<p>
+  Advances <code>_lastRestockCycle</code> on success so the scheduled loop does not
+  immediately repeat the work, and broadcasts the restock toast.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="redeemCode"><code style="text-decoration:none">redeemCode</code><a href="#redeemCode" class="hash-link" aria-label="Direct link to redeemCode" title="Direct link to redeemCode" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Server/Features/Shop/ShopService.luau#L1368"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>ShopService<!-- -->.</code><code class="green_DgR4">redeemCode</code><code>(</code><div class="inset_uKQm"><div><code>player<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/Player" target="_blank" rel="noopener noreferrer">Player<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code>,</code><span class="inlineDescription_G7Er">-- <span>
+<p>redeemer</p>
+</span></span></div><div><code>payload<!-- -->: </code><code class="blue_P4bS">ShopTypes.ShopRedeemCodePayload</code><span class="inlineDescription_G7Er">-- <span>
+<p>carries the entered code</p>
+</span></span></div></div><code>) → </code><code>(</code><code>)</code></div><div>
+<p>Redeems a promo code from <code>Data/ShopCodes</code> and grants its item.</p>
+<p>
+  The code is upper-cased before lookup. Redemption is rejected when the code
+  is unknown, its item does not exist, it requires Premium the player lacks,
+  the server is Studio (codes are disabled there), or it has already been
+  redeemed. Otherwise the redemption is written to the <code>redeemed_codes</code>
+  DataStore <strong>first</strong> — the grant only happens if that write succeeds, so a
+  datastore failure cannot produce a free duplicate.
+</p>
+<p>Replies with a <code>UI_TOAST</code> on success or <code>ITEM_SHOP_ERROR</code> on any rejection.</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="purchaseItem"><code style="text-decoration:none">purchaseItem</code><a href="#purchaseItem" class="hash-link" aria-label="Direct link to purchaseItem" title="Direct link to purchaseItem" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Server/Features/Shop/ShopService.luau#L1440"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>ShopService<!-- -->.</code><code class="green_DgR4">purchaseItem</code><code>(</code><div class="inset_uKQm"><div><code>player<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/Player" target="_blank" rel="noopener noreferrer">Player<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code>,</code><span class="inlineDescription_G7Er">-- <span>
+<p>buyer</p>
+</span></span></div><div><code>payload<!-- -->: </code><code class="blue_P4bS">ShopTypes.ShopPurchasePayload</code><span class="inlineDescription_G7Er">-- <span>
+<p>carries the item id</p>
+</span></span></div></div><code>) → </code><code>(</code><code>)</code></div><div>
+<p>Legacy catalogue purchase path, driven from the shop UI.</p>
+<p>
+  Checks the ownership limit (reporting <code>owned/limit</code> back to the player when
+  exceeded), then debits coins through <a href="/docs/survival-islands/api/CurrencyService#take">CurrencyService.take</a>, which refuses a
+  purchase the balance can't cover. Unlike the other purchase paths it does not
+  log a resource analytics event. Items with no <code>purchasePrice</code> are granted free.
+</p>
+<p>
+  Crates are granted without popping the inventory open, since the client
+  plays its own opening flow.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="openCrate"><code style="text-decoration:none">openCrate</code><a href="#openCrate" class="hash-link" aria-label="Direct link to openCrate" title="Direct link to openCrate" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Server/Features/Shop/ShopService.luau#L1526"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>ShopService<!-- -->.</code><code class="green_DgR4">openCrate</code><code>(</code><div class="inset_uKQm"><div><code>player<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/Player" target="_blank" rel="noopener noreferrer">Player<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code>,</code><span class="inlineDescription_G7Er">-- <span>
+<p>opener</p>
+</span></span></div><div><code>payload<!-- -->: </code><code class="blue_P4bS">ShopTypes.ShopOpenCratePayload</code><span class="inlineDescription_G7Er">-- <span>
+<p>crate item id and inventory recordId</p>
+</span></span></div></div><code>) → </code><code>(</code><code>)</code></div><div>
+<p>Opens an owned crate and grants a rolled item.</p>
+<p>
+  Verifies via <a href="/docs/survival-islands/api/ShopService#playerOwnsItem">ShopService.playerOwnsItem</a> that the record really belongs to
+  the player, rolls a reward with <code>ShopItems.chooseCrateItem</code>, grants it and
+  replies with <code>ITEM_SHOP_CRATE_OPEN</code>. Non-common results additionally
+  broadcast a server-wide <code>CHAT_ALERT</code>, delayed 6 seconds to land after the
+  client's reel animation finishes.
+</p>
+
+  
+    
+    
+      <div class="admonition admonition-warning alert alert--warning">
+        <div class="admonition-heading">
+          <h5><span class="admonition-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+                <path d="M8.893 1.5c-.183-.31-.52-.5-.887-.5s-.703.19-.886.5L.138 13.499a.98.98 0 0 0 0 1.001c.193.31.53.501.886.501h13.964c.367 0 .704-.19.877-.5a1.03 1.03 0 0 0 .01-1.002L8.893 1.5zm.133 11.497H6.987v-2.003h2.039v2.003zm0-3.004H6.987V5.987h2.039v4.006z"></path>
+              </svg></span><span class="admonition-title">Crate is not consumed</span></h5>
+        </div>
+        <div class="admonition-content">
+          <p>
+            The removal of the crate record is commented out and replaced by an empty
+            stub table, so opening a crate does not currently destroy it — the same
+            crate can be opened repeatedly.
+          </p>
+        </div>
+      </div>
+    
+  
+
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="init"><code style="text-decoration:none">init</code><a href="#init" class="hash-link" aria-label="Direct link to init" title="Direct link to init" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Server/Features/Shop/ShopService.luau#L1619"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>ShopService<!-- -->.</code><code class="green_DgR4">init</code><code>(</code><code>) → </code><code>(</code><code>)</code></div><div>
+<p>
+  Boots the service: binds the <code>Handlers</code> folder, and registers the <code>item</code>
+  developer-product callback so a purchased item is granted through
+  <a href="/docs/survival-islands/api/InventoryService">InventoryService</a> once the receipt is processed.
+</p>
+<p>
+  The shop stock machinery — replica setup, item population, initial stock,
+  the per-shop boot restock and the restock loop — is entirely behind
+  <code>FeatureFlags.ScarcityShop</code>, which is off by default. With it off, no shop
+  replicas exist at all and clients see no stock data.
+</p>
+</div></div></article></div><details><summary>Show raw api</summary><pre style="max-width:100%;white-space:pre-wrap">{
+    &quot;functions&quot;: [
+        {
+            &quot;name&quot;: &quot;fetch&quot;,
+            &quot;desc&quot;: &quot;Sends one shop&#x27;s current stock to a single player as a `SHOP_REFRESH`\ndispatch. Silently no-ops for an unknown shop.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;player&quot;,
+                    &quot;desc&quot;: &quot;recipient&quot;,
+                    &quot;lua_type&quot;: &quot;Player&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;shopType&quot;,
+                    &quot;desc&quot;: &quot;key in `ShopData.SHOPS`&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;
+                }
+            ],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 142,
+                &quot;path&quot;: &quot;src/Server/Features/Shop/ShopService.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;generateStock&quot;,
+            &quot;desc&quot;: &quot;Computes the stock every shop should be holding right now and writes it into\nthe shop replicas.\n\nFor each item it finds the most recent restock time that should have\noccurred (`floor(now / restockInterval) * restockInterval`) and refills to\n`maxStockQuantity` only when that moment lies inside the current global\nrestock window; otherwise the existing quantity is carried forward. Replicas\nare only written when something actually changed, so an idle cycle costs no\nreplication.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;shopType -&gt; itemId -&gt; quantity&quot;,
+                    &quot;lua_type&quot;: &quot;{ [string]: { [string]: number } }&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 175,
+                &quot;path&quot;: &quot;src/Server/Features/Shop/ShopService.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;applyStock&quot;,
+            &quot;desc&quot;: &quot;Writes a previously computed stock table back onto the shop replicas,\nclamping quantities at zero. Unknown shops and unknown items are skipped,\nand replicas are only touched when a quantity actually changed.\n\nUsed by [ShopService.initializeStock] to restore in-memory stock rather than\nregenerating it.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;stockByShop&quot;,
+                    &quot;desc&quot;: &quot;shopType -&gt; itemId -&gt; quantity&quot;,
+                    &quot;lua_type&quot;: &quot;{ [string]: { [string]: number } }&quot;
+                }
+            ],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 253,
+                &quot;path&quot;: &quot;src/Server/Features/Shop/ShopService.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;getCurrentStock&quot;,
+            &quot;desc&quot;: &quot;Returns the in-memory stock snapshot, or nil when none has been taken yet\nthis server lifetime.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;{ [string]: { [string]: number } }?&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 288,
+                &quot;path&quot;: &quot;src/Server/Features/Shop/ShopService.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;getTimeUntilRestock&quot;,
+            &quot;desc&quot;: &quot;Returns the seconds remaining until the next global restock window, or 0\nwhen a window is open right now and this server has not yet processed it.\n\n\&quot;Open right now\&quot; means within one second of a\n`ShopData.STOCK_REFRESH_INTERVAL` boundary and on a cycle ordinal greater\nthan `_lastRestockCycle` — the ordinal comparison is what prevents the same\ncycle firing repeatedly during that one-second window.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;seconds until restock, 0 when due&quot;,
+                    &quot;lua_type&quot;: &quot;number&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 310,
+                &quot;path&quot;: &quot;src/Server/Features/Shop/ShopService.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;saveStockToLocalStorage&quot;,
+            &quot;desc&quot;: &quot;Stores a stock snapshot in the module-level `LocalStorage` table. In-memory\nonly — nothing is written to a DataStore, so this does not survive a server\nrestart.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;stockByShop&quot;,
+                    &quot;desc&quot;: &quot;shopType -&gt; itemId -&gt; quantity&quot;,
+                    &quot;lua_type&quot;: &quot;{ [string]: { [string]: number } }&quot;
+                }
+            ],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 343,
+                &quot;path&quot;: &quot;src/Server/Features/Shop/ShopService.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;saveRestockTime&quot;,
+            &quot;desc&quot;: &quot;Stamps the current server time onto every shop replica&#x27;s `lastRestockTime`\nand into `LocalStorage`. The replica field is retained for client\ncompatibility; the scheduling itself is derived from the clock rather than\nfrom this value.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 358,
+                &quot;path&quot;: &quot;src/Server/Features/Shop/ShopService.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;persistStockAndTime&quot;,
+            &quot;desc&quot;: &quot;Unified stock persistence: snapshots the stock and stamps the restock time\nin one call. Both writes are in-memory.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;stock&quot;,
+                    &quot;desc&quot;: &quot;shopType -&gt; itemId -&gt; quantity&quot;,
+                    &quot;lua_type&quot;: &quot;{ [string]: { [string]: number } }&quot;
+                }
+            ],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;private&quot;: true,
+            &quot;source&quot;: {
+                &quot;line&quot;: 379,
+                &quot;path&quot;: &quot;src/Server/Features/Shop/ShopService.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;performRestock&quot;,
+            &quot;desc&quot;: &quot;Runs one restock cycle: regenerates stock, advances `_lastRestockCycle` to\nthe current cycle ordinal so this window cannot fire again, snapshots the\nresult, and broadcasts a single \&quot;The shops have restocked!\&quot; toast to\neveryone if any shop ended up holding stock.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 393,
+                &quot;path&quot;: &quot;src/Server/Features/Shop/ShopService.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;getShopStock&quot;,
+            &quot;desc&quot;: &quot;Returns a shop&#x27;s live `StockItem` map straight off its replica (carrying both\n`quantity` and `maxStockQuantity`), or nil for an unknown shop.\n\nThe returned table is the replica&#x27;s own data — mutating it must be followed\nby a `replica:Set(\&quot;items\&quot;, …)` to replicate.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;shopType&quot;,
+                    &quot;desc&quot;: &quot;key in `ShopData.SHOPS`&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;{ [string]: ShopData.StockItem }?&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 441,
+                &quot;path&quot;: &quot;src/Server/Features/Shop/ShopService.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;validateStockOperation&quot;,
+            &quot;desc&quot;: &quot;Consolidated stock validation for the decrement paths. Resolves the shop and\nits stock entry, returning nil unless the shop exists, stocks that item, and\ncurrently holds a quantity above zero.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;shopType&quot;,
+                    &quot;desc&quot;: &quot;key in `ShopData.SHOPS`&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;itemId&quot;,
+                    &quot;desc&quot;: &quot;item to validate&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;the shop, when valid&quot;,
+                    &quot;lua_type&quot;: &quot;ShopData?&quot;
+                },
+                {
+                    &quot;desc&quot;: &quot;the stock entry, when valid&quot;,
+                    &quot;lua_type&quot;: &quot;ShopData.StockItem?&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;private&quot;: true,
+            &quot;source&quot;: {
+                &quot;line&quot;: 461,
+                &quot;path&quot;: &quot;src/Server/Features/Shop/ShopService.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;persistStockChange&quot;,
+            &quot;desc&quot;: &quot;Mirrors a single item&#x27;s new quantity into the in-memory stock snapshot, so a\nlater [ShopService.applyStock] restores post-purchase quantities rather than\nthe last generated ones. No-ops when no snapshot exists or the item is not\nin it.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;shopType&quot;,
+                    &quot;desc&quot;: &quot;key in `ShopData.SHOPS`&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;itemId&quot;,
+                    &quot;desc&quot;: &quot;item that changed&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;newQuantity&quot;,
+                    &quot;desc&quot;: &quot;quantity to record&quot;,
+                    &quot;lua_type&quot;: &quot;number&quot;
+                }
+            ],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;private&quot;: true,
+            &quot;source&quot;: {
+                &quot;line&quot;: 496,
+                &quot;path&quot;: &quot;src/Server/Features/Shop/ShopService.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;decrementStock&quot;,
+            &quot;desc&quot;: &quot;Consumes stock for a purchase, replicating the change and mirroring it into\nthe in-memory snapshot.\n\n:::caution Ignores `quantity`\n`quantity` is only used for the affordability check — the body always\ndecrements by exactly 1 regardless of how many were bought. Multi-buys\ntherefore under-consume stock. Use\n[ShopService.subtractQuantityFromItem] when the amount must be honoured.\n:::&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;shopType&quot;,
+                    &quot;desc&quot;: &quot;key in `ShopData.SHOPS`&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;itemId&quot;,
+                    &quot;desc&quot;: &quot;item being bought&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;quantity&quot;,
+                    &quot;desc&quot;: &quot;amount requested; checked but not applied&quot;,
+                    &quot;lua_type&quot;: &quot;number&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;false when the shop, item or available stock is insufficient&quot;,
+                    &quot;lua_type&quot;: &quot;boolean&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 523,
+                &quot;path&quot;: &quot;src/Server/Features/Shop/ShopService.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;giveItemToPlayer&quot;,
+            &quot;desc&quot;: &quot;Grants an item into the player&#x27;s inventory through\n[InventoryService.addQuantityToItemId], which handles stacking and slot\nallocation.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;player&quot;,
+                    &quot;desc&quot;: &quot;recipient&quot;,
+                    &quot;lua_type&quot;: &quot;Player&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;itemId&quot;,
+                    &quot;desc&quot;: &quot;item to grant&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;quantity&quot;,
+                    &quot;desc&quot;: &quot;amount, defaults to 1&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;boolean&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 555,
+                &quot;path&quot;: &quot;src/Server/Features/Shop/ShopService.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;subtractQuantityFromItem&quot;,
+            &quot;desc&quot;: &quot;Removes an arbitrary amount of stock from a shop item, clamped at zero, then\nreplicates and snapshots the change. Unlike [ShopService.decrementStock],\nthis honours the amount passed.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;shopType&quot;,
+                    &quot;desc&quot;: &quot;key in `ShopData.SHOPS`&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;itemId&quot;,
+                    &quot;desc&quot;: &quot;item to reduce&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;amount&quot;,
+                    &quot;desc&quot;: &quot;how much stock to remove&quot;,
+                    &quot;lua_type&quot;: &quot;number&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;false when the shop or item is unknown, or stock is already zero&quot;,
+                    &quot;lua_type&quot;: &quot;boolean&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 578,
+                &quot;path&quot;: &quot;src/Server/Features/Shop/ShopService.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;checkOwnershipLimit&quot;,
+            &quot;desc&quot;: &quot;Returns whether the player can purchase the item and the number of items\nthey own.\n\nItems with no `ownershipLimit` (or a limit of 0) are unlimited and always\npass. Counting differs by item type:\n\n- **Skin** — an [ItemRecord] in `profile.inventory` like everything else,\n  but treated as a boolean unlock via [CosmeticService.ownsSkin].\n- **Prop** — inventory quantity plus any props the player has already\n  placed in the world. That second term currently always reads zero: the\n  `BaseService` dependency is a local stub pending the Base system port.\n- everything else — the summed quantity of matching inventory records.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;player&quot;,
+                    &quot;desc&quot;: &quot;prospective buyer&quot;,
+                    &quot;lua_type&quot;: &quot;Player&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;itemId&quot;,
+                    &quot;desc&quot;: &quot;item to check&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;whether a purchase is permitted&quot;,
+                    &quot;lua_type&quot;: &quot;boolean&quot;
+                },
+                {
+                    &quot;desc&quot;: &quot;how many the player already owns&quot;,
+                    &quot;lua_type&quot;: &quot;number&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 619,
+                &quot;path&quot;: &quot;src/Server/Features/Shop/ShopService.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;purchase&quot;,
+            &quot;desc&quot;: &quot;Buys a **non-stocked** item with soft currency.\n\nRejects anything hidden, unpriced, or carrying `stockData` — stocked items\ngo through [ShopService.purchaseStock] instead. Checks the ownership limit\nand the balance, debits via [CurrencyService.take], logs a `Sink` resource\nevent, then grants one copy.\n\nNote that `quantity` is asserted positive but is otherwise unused: exactly\none item is charged for and granted.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;player&quot;,
+                    &quot;desc&quot;: &quot;buyer&quot;,
+                    &quot;lua_type&quot;: &quot;Player&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;itemId&quot;,
+                    &quot;desc&quot;: &quot;item to buy&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;quantity&quot;,
+                    &quot;desc&quot;: &quot;asserted positive; not otherwise honoured&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;boolean&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 680,
+                &quot;path&quot;: &quot;src/Server/Features/Shop/ShopService.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;purchaseStock&quot;,
+            &quot;desc&quot;: &quot;Buys an item from a specific shop, honouring stock when scarcity is enabled.\n\nThe order of operations is: validate the item, check the ownership limit,\nverify the balance, **debit the currency**, then attempt the stock\ndecrement. Because payment happens before the stock check, a failed\ndecrement is compensated by an explicit refund (logged as a `Refund`\nresource event) rather than avoided.\n\nThe stock decrement only runs when both hold: `FeatureFlags.ScarcityShop`\nis on and the item declares `stockData`. With the flag off (the default)\nthe branch is skipped entirely and stock is effectively infinite.\n\nSkins are handled by [CosmeticService.markPurchased] instead of\n[ShopService.giveItemToPlayer]: they&#x27;re recorded as a boolean unlock, not\na stackable quantity, and are auto-equipped and applied to both the\ncharacter and the held item.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;player&quot;,
+                    &quot;desc&quot;: &quot;buyer&quot;,
+                    &quot;lua_type&quot;: &quot;Player&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;shopType&quot;,
+                    &quot;desc&quot;: &quot;what shop the player is buying from&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;itemId&quot;,
+                    &quot;desc&quot;: &quot;item to buy&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;quantity&quot;,
+                    &quot;desc&quot;: &quot;amount, defaults to 1; priced per unit&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;boolean&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 763,
+                &quot;path&quot;: &quot;src/Server/Features/Shop/ShopService.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;setupShops&quot;,
+            &quot;desc&quot;: &quot;Creates one shop replica per non-custom entry in `ShopData.SHOPS`. Custom\nshops (skins, market) ship their own component and do not participate in the\nscarcity stock system, so they are skipped.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;the union of item types across all created shops&quot;,
+                    &quot;lua_type&quot;: &quot;{ string }&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;private&quot;: true,
+            &quot;source&quot;: {
+                &quot;line&quot;: 901,
+                &quot;path&quot;: &quot;src/Server/Features/Shop/ShopService.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;populateShopItems&quot;,
+            &quot;desc&quot;: &quot;Seeds every shop replica with a zero-quantity entry for each stockable item\nwhose type that shop supports, so the item exists in the replica before the\nfirst restock fills it.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;supportedItemTypes&quot;,
+                    &quot;desc&quot;: &quot;item types across all shops, from setupShops&quot;,
+                    &quot;lua_type&quot;: &quot;{ string }&quot;
+                }
+            ],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;private&quot;: true,
+            &quot;source&quot;: {
+                &quot;line&quot;: 944,
+                &quot;path&quot;: &quot;src/Server/Features/Shop/ShopService.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;initializeStock&quot;,
+            &quot;desc&quot;: &quot;Restores the in-memory stock snapshot if one exists, otherwise runs a full\n[ShopService.performRestock] to generate stock from scratch.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;private&quot;: true,
+            &quot;source&quot;: {
+                &quot;line&quot;: 969,
+                &quot;path&quot;: &quot;src/Server/Features/Shop/ShopService.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;startRestockLoop&quot;,
+            &quot;desc&quot;: &quot;Spawns the restock poller. It sleeps until the next window, but never for\nmore than one second at a time, so the narrow one-second window in\n[ShopService.getTimeUntilRestock] cannot be slept through.\n\nOnly started when `FeatureFlags.ScarcityShop` is on.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;private&quot;: true,
+            &quot;source&quot;: {
+                &quot;line&quot;: 990,
+                &quot;path&quot;: &quot;src/Server/Features/Shop/ShopService.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;clearLocalStorage&quot;,
+            &quot;desc&quot;: &quot;Clears the in-memory stock snapshot and restock timestamp. Useful for\ntesting — the next [ShopService.initializeStock] will regenerate stock from\nscratch rather than restoring it.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 1014,
+                &quot;path&quot;: &quot;src/Server/Features/Shop/ShopService.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;getRestockInfo&quot;,
+            &quot;desc&quot;: &quot;Builds a debug snapshot of restock timing: the global refresh interval and\nthe time left on it, plus per-shop, per-item restock interval, time\nremaining and current quantity. `modulus` on each entry is the elapsed time\nwithin that interval, which is what the scheduling comparisons key off.\n\nRead-only — computing this does not advance any cycle.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;`{ globalRefresh = {...}, shops = { [shopType] = { [itemId] = {...} } } }`&quot;,
+                    &quot;lua_type&quot;: &quot;table&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 1032,
+                &quot;path&quot;: &quot;src/Server/Features/Shop/ShopService.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;manualRestock&quot;,
+            &quot;desc&quot;: &quot;Force-restocks a single shop, used at boot so items are available\nimmediately rather than after the first scheduled window.\n\nDiffers from the scheduled path in what it guarantees: items of\n`INITIAL_STOCK_RARITY` (\&quot;Common\&quot;) and all props are filled to\n`maxStockQuantity` unconditionally, while rarer items only restock if their\nown interval boundary is within the last second — and even then they refill\nto 0 rather than their max, so rare stock is never seeded at boot.\n\nAdvances `_lastRestockCycle` on success so the scheduled loop does not\nimmediately repeat the work, and broadcasts the restock toast.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;shopType&quot;,
+                    &quot;desc&quot;: &quot;key in `ShopData.SHOPS`&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;whether anything actually restocked&quot;,
+                    &quot;lua_type&quot;: &quot;boolean&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 1113,
+                &quot;path&quot;: &quot;src/Server/Features/Shop/ShopService.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;playerOwnsItem&quot;,
+            &quot;desc&quot;: &quot;Resolves an inventory recordId to its itemId, or nil when the player does\nnot hold that record. Used to verify crate ownership before opening.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;player&quot;,
+                    &quot;desc&quot;: &quot;claimed owner&quot;,
+                    &quot;lua_type&quot;: &quot;Player&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;recordId&quot;,
+                    &quot;desc&quot;: &quot;record to resolve&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;the itemId, when owned&quot;,
+                    &quot;lua_type&quot;: &quot;string?&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;private&quot;: true,
+            &quot;source&quot;: {
+                &quot;line&quot;: 1204,
+                &quot;path&quot;: &quot;src/Server/Features/Shop/ShopService.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;giveItem&quot;,
+            &quot;desc&quot;: &quot;Legacy grant path: builds an [ItemRecord] by hand and appends it to the\nprofile via the `inventory.++` path operator, then notifies the client with\n`ITEM_SHOP_ITEM_ADD`.\n\nUnlike [ShopService.giveItemToPlayer] this bypasses [InventoryService]\nentirely, so it performs no stacking against existing records and always\nplaces the item in the bag. Used by the redeem-code, crate and\n[ShopService.purchaseItem] flows.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;player&quot;,
+                    &quot;desc&quot;: &quot;recipient&quot;,
+                    &quot;lua_type&quot;: &quot;Player&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;itemId&quot;,
+                    &quot;desc&quot;: &quot;item to grant&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;showInventory&quot;,
+                    &quot;desc&quot;: &quot;whether the client should pop the inventory open&quot;,
+                    &quot;lua_type&quot;: &quot;boolean?&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;quantity&quot;,
+                    &quot;desc&quot;: &quot;amount, defaults to 1&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;the record created&quot;,
+                    &quot;lua_type&quot;: &quot;Types.ItemRecord?&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;private&quot;: true,
+            &quot;source&quot;: {
+                &quot;line&quot;: 1242,
+                &quot;path&quot;: &quot;src/Server/Features/Shop/ShopService.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;claimRedemption&quot;,
+            &quot;desc&quot;: &quot;Marks `&lt;userId&gt;-&lt;code&gt;` as taken on this server and returns whether it was\nfree. Called before the redeemed-code lookup, whose DataStore calls yield,\nso a parallel request for the same code stops here instead of passing the\nlookup too. A claim lasts for the server&#x27;s life.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;player&quot;,
+                    &quot;desc&quot;: &quot;redeemer&quot;,
+                    &quot;lua_type&quot;: &quot;Player&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;code&quot;,
+                    &quot;desc&quot;: &quot;code being redeemed&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;false when a request for this code already claimed it&quot;,
+                    &quot;lua_type&quot;: &quot;boolean&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;private&quot;: true,
+            &quot;source&quot;: {
+                &quot;line&quot;: 1289,
+                &quot;path&quot;: &quot;src/Server/Features/Shop/ShopService.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;isCodeRedeemed&quot;,
+            &quot;desc&quot;: &quot;Returns whether this player has already redeemed a code.\n\nChecks the in-memory `redemptionCache` first, then falls back to the\n`redeemed_codes` DataStore under the key `&lt;userId&gt;-&lt;code&gt;`, retried up to 3\ntimes. A successful lookup is cached so repeat attempts do not hit the\ndatastore again. Always false in Studio, where the datastore is not created.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;player&quot;,
+                    &quot;desc&quot;: &quot;redeemer&quot;,
+                    &quot;lua_type&quot;: &quot;Player&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;code&quot;,
+                    &quot;desc&quot;: &quot;code to check&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;boolean&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;private&quot;: true,
+            &quot;source&quot;: {
+                &quot;line&quot;: 1317,
+                &quot;path&quot;: &quot;src/Server/Features/Shop/ShopService.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;redeemCode&quot;,
+            &quot;desc&quot;: &quot;Redeems a promo code from `Data/ShopCodes` and grants its item.\n\nThe code is upper-cased before lookup. Redemption is rejected when the code\nis unknown, its item does not exist, it requires Premium the player lacks,\nthe server is Studio (codes are disabled there), or it has already been\nredeemed. Otherwise the redemption is written to the `redeemed_codes`\nDataStore **first** — the grant only happens if that write succeeds, so a\ndatastore failure cannot produce a free duplicate.\n\nReplies with a `UI_TOAST` on success or `ITEM_SHOP_ERROR` on any rejection.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;player&quot;,
+                    &quot;desc&quot;: &quot;redeemer&quot;,
+                    &quot;lua_type&quot;: &quot;Player&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;payload&quot;,
+                    &quot;desc&quot;: &quot;carries the entered code&quot;,
+                    &quot;lua_type&quot;: &quot;ShopTypes.ShopRedeemCodePayload&quot;
+                }
+            ],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 1368,
+                &quot;path&quot;: &quot;src/Server/Features/Shop/ShopService.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;purchaseItem&quot;,
+            &quot;desc&quot;: &quot;Legacy catalogue purchase path, driven from the shop UI.\n\nChecks the ownership limit (reporting `owned/limit` back to the player when\nexceeded), then debits coins through [CurrencyService.take], which refuses a\npurchase the balance can&#x27;t cover. Unlike the other purchase paths it does not\nlog a resource analytics event. Items with no `purchasePrice` are granted free.\n\nCrates are granted without popping the inventory open, since the client\nplays its own opening flow.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;player&quot;,
+                    &quot;desc&quot;: &quot;buyer&quot;,
+                    &quot;lua_type&quot;: &quot;Player&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;payload&quot;,
+                    &quot;desc&quot;: &quot;carries the item id&quot;,
+                    &quot;lua_type&quot;: &quot;ShopTypes.ShopPurchasePayload&quot;
+                }
+            ],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 1440,
+                &quot;path&quot;: &quot;src/Server/Features/Shop/ShopService.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;openCrate&quot;,
+            &quot;desc&quot;: &quot;Opens an owned crate and grants a rolled item.\n\nVerifies via [ShopService.playerOwnsItem] that the record really belongs to\nthe player, rolls a reward with `ShopItems.chooseCrateItem`, grants it and\nreplies with `ITEM_SHOP_CRATE_OPEN`. Non-common results additionally\nbroadcast a server-wide `CHAT_ALERT`, delayed 6 seconds to land after the\nclient&#x27;s reel animation finishes.\n\n:::warning Crate is not consumed\nThe removal of the crate record is commented out and replaced by an empty\nstub table, so opening a crate does not currently destroy it — the same\ncrate can be opened repeatedly.\n:::&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;player&quot;,
+                    &quot;desc&quot;: &quot;opener&quot;,
+                    &quot;lua_type&quot;: &quot;Player&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;payload&quot;,
+                    &quot;desc&quot;: &quot;crate item id and inventory recordId&quot;,
+                    &quot;lua_type&quot;: &quot;ShopTypes.ShopOpenCratePayload&quot;
+                }
+            ],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 1526,
+                &quot;path&quot;: &quot;src/Server/Features/Shop/ShopService.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;init&quot;,
+            &quot;desc&quot;: &quot;Boots the service: binds the `Handlers` folder, and registers the `item`\ndeveloper-product callback so a purchased item is granted through\n[InventoryService] once the receipt is processed.\n\nThe shop stock machinery — replica setup, item population, initial stock,\nthe per-shop boot restock and the restock loop — is entirely behind\n`FeatureFlags.ScarcityShop`, which is off by default. With it off, no shop\nreplicas exist at all and clients see no stock data.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 1619,
+                &quot;path&quot;: &quot;src/Server/Features/Shop/ShopService.luau&quot;
+            }
+        }
+    ],
+    &quot;properties&quot;: [],
+    &quot;types&quot;: [],
+    &quot;name&quot;: &quot;ShopService&quot;,
+    &quot;desc&quot;: &quot;Handles shop management, including stock for multiple shop types.\n\nOne [Replica] is created per non-custom shop defined in `ShopData.SHOPS`,\neach holding a `{ [itemId]: StockItem }` map that is the single source of\ntruth clients read stock from. Shops marked `custom` (skins, player market)\nship their own component and are skipped entirely — they do not participate\nin the stock system.\n\n## Restock scheduling\n\nRestocking is derived from wall-clock time rather than tracked per item.\nTwo intervals interact:\n\n- `ShopData.STOCK_REFRESH_INTERVAL` — the global cycle. `_lastRestockCycle`\n  records the cycle ordinal already processed, which is what stops a cycle\n  from firing twice.\n- `item.stockData.restockInterval` — per item. An item&#x27;s most recent due\n  restock is `floor(now / interval) * interval`; it refills to\n  `maxStockQuantity` only when that timestamp falls inside the current\n  global window, otherwise it keeps its quantity.\n\n[ShopService.startRestockLoop] polls [ShopService.getTimeUntilRestock] at\nmost once a second and calls [ShopService.performRestock] when the window\nopens.\n\n:::caution Stock is not persisted\nDespite the `save*` naming, `LocalStorage` is a plain in-memory table on the\nserver — [ShopService.saveStockToLocalStorage] and\n[ShopService.saveRestockTime] write no DataStore, so stock and the restock\nclock reset on every server start. The only DataStore this module touches is\n`redeemed_codes`, used by the redeem-code flow.\n:::\n\n## Feature gate\n\n`FeatureFlags.ScarcityShop` is **off** by default. When off,\n[ShopService.init] never builds the shop replicas, never populates stock and\nnever starts the restock loop, and [ShopService.purchaseStock] skips its\nstock-decrement step entirely — so stock is effectively infinite and\npurchases are limited only by currency and ownership limits. Handlers,\nredeem codes, crates and the marketplace item callback all remain active.\n\nCopyright (c) 2026 firebit. All rights reserved.\nfirebit/survival-islands - proprietary and confidential.&quot;,
+    &quot;realm&quot;: [
+        &quot;Server&quot;
+    ],
+    &quot;source&quot;: {
+        &quot;line&quot;: 50,
+        &quot;path&quot;: &quot;src/Server/Features/Shop/ShopService.luau&quot;
+    }
+}</pre></details></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#functions" class="table-of-contents__link toc-highlight">Functions</a><ul><li><a href="#applyStock" class="table-of-contents__link toc-highlight">.applyStock</a></li><li><a href="#checkOwnershipLimit" class="table-of-contents__link toc-highlight">.checkOwnershipLimit</a></li><li><a href="#clearLocalStorage" class="table-of-contents__link toc-highlight">.clearLocalStorage</a></li><li><a href="#decrementStock" class="table-of-contents__link toc-highlight">.decrementStock</a></li><li><a href="#fetch" class="table-of-contents__link toc-highlight">.fetch</a></li><li><a href="#generateStock" class="table-of-contents__link toc-highlight">.generateStock</a></li><li><a href="#getCurrentStock" class="table-of-contents__link toc-highlight">.getCurrentStock</a></li><li><a href="#getRestockInfo" class="table-of-contents__link toc-highlight">.getRestockInfo</a></li><li><a href="#getShopStock" class="table-of-contents__link toc-highlight">.getShopStock</a></li><li><a href="#getTimeUntilRestock" class="table-of-contents__link toc-highlight">.getTimeUntilRestock</a></li><li><a href="#giveItemToPlayer" class="table-of-contents__link toc-highlight">.giveItemToPlayer</a></li><li><a href="#init" class="table-of-contents__link toc-highlight">.init</a></li><li><a href="#manualRestock" class="table-of-contents__link toc-highlight">.manualRestock</a></li><li><a href="#openCrate" class="table-of-contents__link toc-highlight">.openCrate</a></li><li><a href="#performRestock" class="table-of-contents__link toc-highlight">.performRestock</a></li><li><a href="#purchase" class="table-of-contents__link toc-highlight">.purchase</a></li><li><a href="#purchaseItem" class="table-of-contents__link toc-highlight">.purchaseItem</a></li><li><a href="#purchaseStock" class="table-of-contents__link toc-highlight">.purchaseStock</a></li><li><a href="#redeemCode" class="table-of-contents__link toc-highlight">.redeemCode</a></li><li><a href="#saveRestockTime" class="table-of-contents__link toc-highlight">.saveRestockTime</a></li><li><a href="#saveStockToLocalStorage" class="table-of-contents__link toc-highlight">.saveStockToLocalStorage</a></li><li><a href="#subtractQuantityFromItem" class="table-of-contents__link toc-highlight">.subtractQuantityFromItem</a></li></ul></li></ul></div></div></div></div></main></div></div><footer class="theme-layout-footer footer"><div class="container container-fluid"><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © firebit</div></div></div></footer></div>
+</body>
+</html>

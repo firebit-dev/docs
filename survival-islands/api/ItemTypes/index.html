@@ -1,0 +1,834 @@
+<!doctype html>
+<html lang="en" dir="ltr" class="plugin-moonwave plugin-id-moonwave" data-has-hydrated="false">
+<head>
+<meta charset="UTF-8">
+<meta name="generator" content="Docusaurus v3.10.1">
+<title data-rh="true">ItemTypes | Survival Islands</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://firebit-dev.github.io/docs/survival-islands/api/ItemTypes"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docusaurus_tag" content="default"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docsearch:docusaurus_tag" content="default"><meta data-rh="true" property="og:title" content="ItemTypes | Survival Islands"><meta data-rh="true" name="description" content="Shared shape of everything the game treats as an &quot;item&quot;: shop stock, inventory
+records, placeable props, seeds and crops, animals, and cosmetic skins.
+
+Every item type starts from [BaseItem] and intersects extra fields onto it, so a
+field documented on BaseItem means the same thing everywhere. Concrete item tables
+live in the `src/Shared/Data/Items/` and `src/Shared/Data/Cosmetics/` registries
+and are keyed by item id; those registries are what the shop and inventory read
+at runtime. The prop, seed, crop, animal and egg shapes only type the flag-gated
+Base classes; no items of those kinds ship in the registries.
+
+The `*ItemData` variants exist to tighten optional BaseItem fields into required
+ones once the registry has filled in defaults — author data against [PropItem],
+consume it as [PropItemData].
+
+Copyright (c) 2026 firebit. All rights reserved.
+firebit/survival-islands - proprietary and confidential."><meta data-rh="true" property="og:description" content="Shared shape of everything the game treats as an &quot;item&quot;: shop stock, inventory
+records, placeable props, seeds and crops, animals, and cosmetic skins.
+
+Every item type starts from [BaseItem] and intersects extra fields onto it, so a
+field documented on BaseItem means the same thing everywhere. Concrete item tables
+live in the `src/Shared/Data/Items/` and `src/Shared/Data/Cosmetics/` registries
+and are keyed by item id; those registries are what the shop and inventory read
+at runtime. The prop, seed, crop, animal and egg shapes only type the flag-gated
+Base classes; no items of those kinds ship in the registries.
+
+The `*ItemData` variants exist to tighten optional BaseItem fields into required
+ones once the registry has filled in defaults — author data against [PropItem],
+consume it as [PropItemData].
+
+Copyright (c) 2026 firebit. All rights reserved.
+firebit/survival-islands - proprietary and confidential."><link data-rh="true" rel="canonical" href="https://firebit-dev.github.io/docs/survival-islands/api/ItemTypes"><link data-rh="true" rel="alternate" href="https://firebit-dev.github.io/docs/survival-islands/api/ItemTypes" hreflang="en"><link data-rh="true" rel="alternate" href="https://firebit-dev.github.io/docs/survival-islands/api/ItemTypes" hreflang="x-default"><link rel="stylesheet" href="/docs/survival-islands/assets/css/styles.d954f017.css">
+<script src="/docs/survival-islands/assets/js/runtime~main.43105527.js" defer="defer"></script>
+<script src="/docs/survival-islands/assets/js/main.19b6b4af.js" defer="defer"></script>
+</head>
+<body>
+<svg style="display: none;"><defs>
+<symbol id="theme-svg-external-link" viewBox="0 0 24 24"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"/></symbol>
+</defs></svg>
+<script>!function(){var t=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme")}catch(t){}}();document.documentElement.setAttribute("data-theme",t||(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light")),document.documentElement.setAttribute("data-theme-choice",t||"system")}(),function(){try{const c=new URLSearchParams(window.location.search).entries();for(var[t,e]of c)if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id="__docusaurus"><div role="region" aria-label="Skip to main content"><a class="skipToContent_fXgn" href="#__docusaurus_skipToContent_fallback">Skip to main content</a></div><nav aria-label="Main" class="theme-layout-navbar navbar navbar--fixed-top"><div class="navbar__inner"><div class="theme-layout-navbar-left navbar__items"><button aria-label="Toggle navigation bar" aria-expanded="false" class="navbar__toggle clean-btn" type="button"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/docs/survival-islands/"><b class="navbar__title text--truncate">Survival Islands</b></a><a class="navbar__item navbar__link" href="/docs/survival-islands/docs/intro">Docs</a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/docs/survival-islands/api/">API</a></div><div class="theme-layout-navbar-right navbar__items navbar__items--right"><a href="https://github.com/firebit-dev/survival-islands" target="_blank" rel="noopener noreferrer" class="navbar__item navbar__link">GitHub<svg width="13.5" height="13.5" aria-label="(opens in new tab)" class="iconExternalLink_nPIU"><use href="#theme-svg-external-link"></use></svg></a><div class="toggle_vylO colorModeToggle_DEke"><button class="clean-btn toggleButton_gllP toggleButtonDisabled_aARS" type="button" disabled="" title="system mode" aria-label="Switch between dark and light mode (currently system mode)"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP lightToggleIcon_pyhR"><path fill="currentColor" d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP darkToggleIcon_wfgR"><path fill="currentColor" d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP systemToggleIcon_QzmC"><path fill="currentColor" d="m12 21c4.971 0 9-4.029 9-9s-4.029-9-9-9-9 4.029-9 9 4.029 9 9 9zm4.95-13.95c1.313 1.313 2.05 3.093 2.05 4.95s-0.738 3.637-2.05 4.95c-1.313 1.313-3.093 2.05-4.95 2.05v-14c1.857 0 3.637 0.737 4.95 2.05z"></path></svg></button></div><div class="navbarSearchContainer_Bca1"><div class="navbar__search"><span aria-label="expand searchbar" role="button" class="search-icon" tabindex="0"></span><input id="search_input_react" type="search" placeholder="Loading..." aria-label="Search" class="navbar__search-input search-bar" disabled=""></div></div></div></div><div role="presentation" class="navbar-sidebar__backdrop"></div></nav><div id="__docusaurus_skipToContent_fallback" class="theme-layout-main main-wrapper mainWrapper_z2l0 docPageContainer_wNNk"><div class="docPage_Dpn1"><div class="docSidebarContainer_o_re"><div class="sidebar_njMd"><nav aria-label="Docs sidebar" class="menu thin-scrollbar menu_SIkG"><ul class="theme-doc-sidebar-menu menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Actions"><span title="​Actions" class="linkLabel_WmDU">​Actions</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/AdminService"><span title="​Admin​Service" class="linkLabel_WmDU">​Admin​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Analytics"><span title="​Analytics" class="linkLabel_WmDU">​Analytics</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/AnalyticsService"><span title="​Analytics​Service" class="linkLabel_WmDU">​Analytics​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/AnchorDescendants"><span title="​Anchor​Descendants" class="linkLabel_WmDU">​Anchor​Descendants</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/AnimalPen"><span title="​Animal​Pen" class="linkLabel_WmDU">​Animal​Pen</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/AnimalPenBaseClass"><span title="​Animal​Pen​Base​Class" class="linkLabel_WmDU">​Animal​Pen​Base​Class</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Attrify"><span title="​Attrify" class="linkLabel_WmDU">​Attrify</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/AutoCanvasSize"><span title="​Auto​Canvas​Size" class="linkLabel_WmDU">​Auto​Canvas​Size</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/BaseGameMode"><span title="​Base​Game​Mode" class="linkLabel_WmDU">​Base​Game​Mode</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/BaseUtil"><span title="​Base​Util" class="linkLabel_WmDU">​Base​Util</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Bezier"><span title="​Bezier" class="linkLabel_WmDU">​Bezier</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Blur"><span title="​Blur" class="linkLabel_WmDU">​Blur</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Bootstrap"><span title="​Bootstrap" class="linkLabel_WmDU">​Bootstrap</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/BoxService"><span title="​Box​Service" class="linkLabel_WmDU">​Box​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ButtonSoundController"><span title="​Button​Sound​Controller" class="linkLabel_WmDU">​Button​Sound​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/BuySkillNodeHandler"><span title="​Buy​Skill​Node​Handler" class="linkLabel_WmDU">​Buy​Skill​Node​Handler</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Character"><span title="​Character" class="linkLabel_WmDU">​Character</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/CharacterGrip"><span title="​Character​Grip" class="linkLabel_WmDU">​Character​Grip</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ChatCommand"><span title="​Chat​Command" class="linkLabel_WmDU">​Chat​Command</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ChatNameController"><span title="​Chat​Name​Controller" class="linkLabel_WmDU">​Chat​Name​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ClientState"><span title="​Client​State" class="linkLabel_WmDU">​Client​State</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/CollectionObject"><span title="​Collection​Object" class="linkLabel_WmDU">​Collection​Object</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/CollectionWatcher"><span title="​Collection​Watcher" class="linkLabel_WmDU">​Collection​Watcher</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/CollectionWatcherController"><span title="​Collection​Watcher​Controller" class="linkLabel_WmDU">​Collection​Watcher​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/CollectionWatcherService"><span title="​Collection​Watcher​Service" class="linkLabel_WmDU">​Collection​Watcher​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/CollisionService"><span title="​Collision​Service" class="linkLabel_WmDU">​Collision​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Colors"><span title="​Colors" class="linkLabel_WmDU">​Colors</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ConeCast"><span title="​Cone​Cast" class="linkLabel_WmDU">​Cone​Cast</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Confetti"><span title="​Confetti" class="linkLabel_WmDU">​Confetti</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ControlsData"><span title="​Controls​Data" class="linkLabel_WmDU">​Controls​Data</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Cooldown"><span title="​Cooldown" class="linkLabel_WmDU">​Cooldown</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/CoreService"><span title="​Core​Service" class="linkLabel_WmDU">​Core​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/CoreState"><span title="​Core​State" class="linkLabel_WmDU">​Core​State</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/CosmeticService"><span title="​Cosmetic​Service" class="linkLabel_WmDU">​Cosmetic​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/CreateCharacterWeld"><span title="​Create​Character​Weld" class="linkLabel_WmDU">​Create​Character​Weld</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/CreateFullViewport"><span title="​Create​Full​Viewport" class="linkLabel_WmDU">​Create​Full​Viewport</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/CreateNumberTween"><span title="​Create​Number​Tween" class="linkLabel_WmDU">​Create​Number​Tween</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/CreateTween"><span title="​Create​Tween" class="linkLabel_WmDU">​Create​Tween</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/CreateWeld"><span title="​Create​Weld" class="linkLabel_WmDU">​Create​Weld</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/CropTypes"><span title="​Crop​Types" class="linkLabel_WmDU">​Crop​Types</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/CrownGrab"><span title="​Crown​Grab" class="linkLabel_WmDU">​Crown​Grab</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/CurrencyService"><span title="​Currency​Service" class="linkLabel_WmDU">​Currency​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/DailyRewards"><span title="​Daily​Rewards" class="linkLabel_WmDU">​Daily​Rewards</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/DailyRotationService"><span title="​Daily​Rotation​Service" class="linkLabel_WmDU">​Daily​Rotation​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/DataController"><span title="​Data​Controller" class="linkLabel_WmDU">​Data​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/DefaultProps"><span title="​Default​Props" class="linkLabel_WmDU">​Default​Props</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Device"><span title="​Device" class="linkLabel_WmDU">​Device</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/DodgeTheTeapots"><span title="​Dodge​The​Teapots" class="linkLabel_WmDU">​Dodge​The​Teapots</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Door"><span title="​Door" class="linkLabel_WmDU">​Door</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/DropsController"><span title="​Drops​Controller" class="linkLabel_WmDU">​Drops​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/DuplicateProtection"><span title="​Duplicate​Protection" class="linkLabel_WmDU">​Duplicate​Protection</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Effects"><span title="​Effects" class="linkLabel_WmDU">​Effects</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/EmoteController"><span title="​Emote​Controller" class="linkLabel_WmDU">​Emote​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/FeatureFlags"><span title="​Feature​Flags" class="linkLabel_WmDU">​Feature​Flags</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/GameService"><span title="​Game​Service" class="linkLabel_WmDU">​Game​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/GamepadSelection"><span title="​Gamepad​Selection" class="linkLabel_WmDU">​Gamepad​Selection</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/GearController"><span title="​Gear​Controller" class="linkLabel_WmDU">​Gear​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/GearDebugService"><span title="​Gear​Debug​Service" class="linkLabel_WmDU">​Gear​Debug​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/GearService"><span title="​Gear​Service" class="linkLabel_WmDU">​Gear​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/GearkitSetup"><span title="​Gearkit​Setup" class="linkLabel_WmDU">​Gearkit​Setup</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/GradientUtil"><span title="​Gradient​Util" class="linkLabel_WmDU">​Gradient​Util</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/GridNav"><span title="​Grid​Nav" class="linkLabel_WmDU">​Grid​Nav</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/HealthBar"><span title="​Health​Bar" class="linkLabel_WmDU">​Health​Bar</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/HighlightedPrompt"><span title="​Highlighted​Prompt" class="linkLabel_WmDU">​Highlighted​Prompt</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/InstanceSync"><span title="​Instance​Sync" class="linkLabel_WmDU">​Instance​Sync</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/InventoryHandler"><span title="​Inventory​Handler" class="linkLabel_WmDU">​Inventory​Handler</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/InventoryService"><span title="​Inventory​Service" class="linkLabel_WmDU">​Inventory​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/InventoryTypes"><span title="​Inventory​Types" class="linkLabel_WmDU">​Inventory​Types</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/InventoryUtil"><span title="​Inventory​Util" class="linkLabel_WmDU">​Inventory​Util</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/InviteFriends"><span title="​Invite​Friends" class="linkLabel_WmDU">​Invite​Friends</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ItemSlotIcon"><span title="​Item​Slot​Icon" class="linkLabel_WmDU">​Item​Slot​Icon</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link menu__link--active" aria-current="page" href="/docs/survival-islands/api/ItemTypes"><span title="​Item​Types" class="linkLabel_WmDU">​Item​Types</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/KillEffectController"><span title="​Kill​Effect​Controller" class="linkLabel_WmDU">​Kill​Effect​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Leaderstats"><span title="​Leaderstats" class="linkLabel_WmDU">​Leaderstats</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Level"><span title="​Level" class="linkLabel_WmDU">​Level</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/LevelService"><span title="​Level​Service" class="linkLabel_WmDU">​Level​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/LevelTeleport"><span title="​Level​Teleport" class="linkLabel_WmDU">​Level​Teleport</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ListenForKey"><span title="​Listen​For​Key" class="linkLabel_WmDU">​Listen​For​Key</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/MarketplaceData"><span title="​Marketplace​Data" class="linkLabel_WmDU">​Marketplace​Data</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/MarketplaceService"><span title="​Marketplace​Service" class="linkLabel_WmDU">​Marketplace​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/MemoryStoreService"><span title="​Memory​Store​Service" class="linkLabel_WmDU">​Memory​Store​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/MessageController"><span title="​Message​Controller" class="linkLabel_WmDU">​Message​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/MineablesController"><span title="​Mineables​Controller" class="linkLabel_WmDU">​Mineables​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/MinigameData"><span title="​Minigame​Data" class="linkLabel_WmDU">​Minigame​Data</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/MinigameService"><span title="​Minigame​Service" class="linkLabel_WmDU">​Minigame​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/MinigameUtil"><span title="​Minigame​Util" class="linkLabel_WmDU">​Minigame​Util</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Minigames"><span title="​Minigames" class="linkLabel_WmDU">​Minigames</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ModelWrap"><span title="​Model​Wrap" class="linkLabel_WmDU">​Model​Wrap</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Monetization"><span title="​Monetization" class="linkLabel_WmDU">​Monetization</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/MonetizationController"><span title="​Monetization​Controller" class="linkLabel_WmDU">​Monetization​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/MonetizationService"><span title="​Monetization​Service" class="linkLabel_WmDU">​Monetization​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/MovingGradientController"><span title="​Moving​Gradient​Controller" class="linkLabel_WmDU">​Moving​Gradient​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/NPC"><span title="​N​P​C" class="linkLabel_WmDU">​N​P​C</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/NavigationController"><span title="​Navigation​Controller" class="linkLabel_WmDU">​Navigation​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Nuisance"><span title="​Nuisance" class="linkLabel_WmDU">​Nuisance</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/PetController"><span title="​Pet​Controller" class="linkLabel_WmDU">​Pet​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/PlaceUtility"><span title="​Place​Utility" class="linkLabel_WmDU">​Place​Utility</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/PlaySFX"><span title="​Play​S​F​X" class="linkLabel_WmDU">​Play​S​F​X</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/PlayerOverhead"><span title="​Player​Overhead" class="linkLabel_WmDU">​Player​Overhead</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/PlayerService"><span title="​Player​Service" class="linkLabel_WmDU">​Player​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/PlayerState"><span title="​Player​State" class="linkLabel_WmDU">​Player​State</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/PoissonDisk"><span title="​Poisson​Disk" class="linkLabel_WmDU">​Poisson​Disk</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ProfileService"><span title="​Profile​Service" class="linkLabel_WmDU">​Profile​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ProfileTypes"><span title="​Profile​Types" class="linkLabel_WmDU">​Profile​Types</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ProgressBar"><span title="​Progress​Bar" class="linkLabel_WmDU">​Progress​Bar</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/PropBaseClass"><span title="​Prop​Base​Class" class="linkLabel_WmDU">​Prop​Base​Class</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/PropTypes"><span title="​Prop​Types" class="linkLabel_WmDU">​Prop​Types</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/QueueService"><span title="​Queue​Service" class="linkLabel_WmDU">​Queue​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/RandomizeYOrientation"><span title="​Randomize​Y​Orientation" class="linkLabel_WmDU">​Randomize​Y​Orientation</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Range"><span title="​Range" class="linkLabel_WmDU">​Range</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/RarityData"><span title="​Rarity​Data" class="linkLabel_WmDU">​Rarity​Data</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Rng"><span title="​Rng" class="linkLabel_WmDU">​Rng</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Round"><span title="​Round" class="linkLabel_WmDU">​Round</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Router"><span title="​Router" class="linkLabel_WmDU">​Router</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/RunMode"><span title="​Run​Mode" class="linkLabel_WmDU">​Run​Mode</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/SafeSet"><span title="​Safe​Set" class="linkLabel_WmDU">​Safe​Set</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Sanitation"><span title="​Sanitation" class="linkLabel_WmDU">​Sanitation</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ScaleTween"><span title="​Scale​Tween" class="linkLabel_WmDU">​Scale​Tween</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ScalingButton"><span title="​Scaling​Button" class="linkLabel_WmDU">​Scaling​Button</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/SeasonData"><span title="​Season​Data" class="linkLabel_WmDU">​Season​Data</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/SeasonService"><span title="​Season​Service" class="linkLabel_WmDU">​Season​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/SecurityController"><span title="​Security​Controller" class="linkLabel_WmDU">​Security​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/SecurityService"><span title="​Security​Service" class="linkLabel_WmDU">​Security​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ShopController"><span title="​Shop​Controller" class="linkLabel_WmDU">​Shop​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ShopHandler"><span title="​Shop​Handler" class="linkLabel_WmDU">​Shop​Handler</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ShopItems"><span title="​Shop​Items" class="linkLabel_WmDU">​Shop​Items</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ShopService"><span title="​Shop​Service" class="linkLabel_WmDU">​Shop​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/ShopTypes"><span title="​Shop​Types" class="linkLabel_WmDU">​Shop​Types</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Shuffle"><span title="​Shuffle" class="linkLabel_WmDU">​Shuffle</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/SkillTreeData"><span title="​Skill​Tree​Data" class="linkLabel_WmDU">​Skill​Tree​Data</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/SkillTreeService"><span title="​Skill​Tree​Service" class="linkLabel_WmDU">​Skill​Tree​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Smoothstep"><span title="​Smoothstep" class="linkLabel_WmDU">​Smoothstep</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/SocialController"><span title="​Social​Controller" class="linkLabel_WmDU">​Social​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Soil"><span title="​Soil" class="linkLabel_WmDU">​Soil</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/SoundController"><span title="​Sound​Controller" class="linkLabel_WmDU">​Sound​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Sounds"><span title="​Sounds" class="linkLabel_WmDU">​Sounds</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Spring"><span title="​Spring" class="linkLabel_WmDU">​Spring</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/StatsController"><span title="​Stats​Controller" class="linkLabel_WmDU">​Stats​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/TeleportPad"><span title="​Teleport​Pad" class="linkLabel_WmDU">​Teleport​Pad</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Town"><span title="​Town" class="linkLabel_WmDU">​Town</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/TrackedPlayerValues"><span title="​Tracked​Player​Values" class="linkLabel_WmDU">​Tracked​Player​Values</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/UITypes"><span title="​U​I​Types" class="linkLabel_WmDU">​U​I​Types</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Vehicle"><span title="​Vehicle" class="linkLabel_WmDU">​Vehicle</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/VehicleAttachmentData"><span title="​Vehicle​Attachment​Data" class="linkLabel_WmDU">​Vehicle​Attachment​Data</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/VehicleController"><span title="​Vehicle​Controller" class="linkLabel_WmDU">​Vehicle​Controller</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/VehicleService"><span title="​Vehicle​Service" class="linkLabel_WmDU">​Vehicle​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/VehicleTypes"><span title="​Vehicle​Types" class="linkLabel_WmDU">​Vehicle​Types</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/VoteService"><span title="​Vote​Service" class="linkLabel_WmDU">​Vote​Service</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/WaitForPrimaryPart"><span title="​Wait​For​Primary​Part" class="linkLabel_WmDU">​Wait​For​Primary​Part</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Zombie"><span title="​Zombie" class="linkLabel_WmDU">​Zombie</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/Zone"><span title="​Zone" class="linkLabel_WmDU">​Zone</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/adjustValueByUserPriceLevel"><span title="adjust​Value​By​User​Price​Level" class="linkLabel_WmDU">adjust​Value​By​User​Price​Level</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/breakJoints"><span title="break​Joints" class="linkLabel_WmDU">break​Joints</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/getFirstTaggedDescendant"><span title="get​First​Tagged​Descendant" class="linkLabel_WmDU">get​First​Tagged​Descendant</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/getFriendsInServer"><span title="get​Friends​In​Server" class="linkLabel_WmDU">get​Friends​In​Server</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/getPriceLevel"><span title="get​Price​Level" class="linkLabel_WmDU">get​Price​Level</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/getProductInfo"><span title="get​Product​Info" class="linkLabel_WmDU">get​Product​Info</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/quantityToUrgencyText"><span title="quantity​To​Urgency​Text" class="linkLabel_WmDU">quantity​To​Urgency​Text</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/survival-islands/api/spawnParticle"><span title="spawn​Particle" class="linkLabel_WmDU">spawn​Particle</span></a></li></ul></nav></div></div><main class="docMainContainer_HJE1"><div class="container padding-vert--lg"><div class="row"><div class="col docItemCol_MU3C"><div class="docItemContainer_Wv98"><article><div class="member_J0w1 markdown"><div class="tocCollapsible_ETCw theme-doc-toc-mobile tocMobile_oUs_"><button type="button" class="clean-btn tocCollapsibleButton_TO0P">On this page</button></div><header><h1 class="docTitle_mZRt" style="text-decoration:none"><span style="display:inline-block">Item</span><span style="display:inline-block">Types</span></h1><div class="luaClassTags_EipM"></div><div>
+<p>
+  Shared shape of everything the game treats as an "item": shop stock, inventory
+  records, placeable props, seeds and crops, animals, and cosmetic skins.
+</p>
+<p>
+  Every item type starts from <a href="/docs/survival-islands/api/ItemTypes#BaseItem">BaseItem</a> and intersects extra fields onto it, so a
+  field documented on BaseItem means the same thing everywhere. Concrete item tables
+  live in the <code>src/Shared/Data/Items/</code> and <code>src/Shared/Data/Cosmetics/</code> registries
+  and are keyed by item id; those registries are what the shop and inventory read
+  at runtime. The prop, seed, crop, animal and egg shapes only type the flag-gated
+  Base classes; no items of those kinds ship in the registries.
+</p>
+<p>
+  The <code>*ItemData</code> variants exist to tighten optional BaseItem fields into required
+  ones once the registry has filled in defaults — author data against <a href="/docs/survival-islands/api/ItemTypes#PropItem">PropItem</a>,
+  consume it as <a href="/docs/survival-islands/api/ItemTypes#PropItemData">PropItemData</a>.
+</p>
+<p>
+  Copyright (c) 2026 firebit. All rights reserved.
+  firebit/survival-islands - proprietary and confidential.
+</p>
+</div></header><h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="types">Types<a href="#types" class="hash-link" aria-label="Direct link to Types" title="Direct link to Types" translate="no">​</a></h2><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="StockData"><code style="text-decoration:none">StockData</code><a href="#StockData" class="hash-link" aria-label="Direct link to StockData" title="Direct link to StockData" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Shared/Types/ItemTypes.luau#L37"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>StockData<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>maxStockQuantity<!-- -->: </code><code class="blue_P4bS">number</code><span class="inlineDescription_G7Er">-- <span>
+<p>The maximum number of items that can be in stock</p>
+</span></span></div><div><code>restockInterval<!-- -->: </code><code class="blue_P4bS">number</code><span class="inlineDescription_G7Er">-- <span>
+<p>Seconds between full restocks</p>
+</span></span></div></div><code>}</code></div><div>
+<p>Limited-stock behavior for a shop item. Absent from an item means unlimited stock.</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="BaseItem"><code style="text-decoration:none">BaseItem</code><a href="#BaseItem" class="hash-link" aria-label="Direct link to BaseItem" title="Direct link to BaseItem" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Shared/Types/ItemTypes.luau#L67"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>BaseItem<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>name<!-- -->: </code><code class="blue_P4bS">string</code><span class="inlineDescription_G7Er">-- <span>
+<p>Display name shown in the shop and inventory</p>
+</span></span></div><div><code>description<!-- -->: </code><code class="blue_P4bS">string?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Blurb shown on the item's detail card</p>
+</span></span></div><div><code>type<!-- -->: </code><code class="blue_P4bS">string</code><span class="inlineDescription_G7Er">-- <span>
+<p>Item category (<code>"Skin"</code>, <code>"Emote"</code>, <code>"Pet"</code>, ...)</p>
+</span></span></div><div><code>subtype<!-- -->: </code><code class="blue_P4bS">string?</code><span class="inlineDescription_G7Er">-- <span>
+<p>If the item is a subtype of another item</p>
+</span></span></div><div><code>icon<!-- -->: </code><code class="blue_P4bS">string?</code><span class="inlineDescription_G7Er">-- <span>
+<p>A placeholder icon is used if not defined</p>
+</span></span></div><div><code>purchasePrice<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Cost to buy; absent means not purchasable</p>
+</span></span></div><div><code>purchaseCurrency<!-- -->: </code><code class="blue_P4bS">string?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Defaults to <code>"Coins"</code> when <code>purchasePrice</code> is set</p>
+</span></span></div><div><code>hidden<!-- -->: </code><code class="blue_P4bS">boolean?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Kept out of shop listings</p>
+</span></span></div><div><code>rarity<!-- -->: </code><code class="blue_P4bS">string?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Rarity key, see <code>RarityData.Rarity</code></p>
+</span></span></div><div><code>resaleValue<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Item cannot be sold without this field</p>
+</span></span></div><div><code>cameraOffset<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/CFrame" target="_blank" rel="noopener noreferrer">CFrame?<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
+<p>Viewport CFrame offset when shown in a ViewportFrame</p>
+</span></span></div><div><code>maxCopies<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Nil means the item can be purchased infinitely</p>
+</span></span></div><div><code>model<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/Model" target="_blank" rel="noopener noreferrer">Model?<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
+<p>Source model cloned when the item is spawned</p>
+</span></span></div><div><code>levelRequirement<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Player level needed to purchase</p>
+</span></span></div><div><code>townLevelRequirement<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Town level needed to purchase</p>
+</span></span></div><div><code>stockData<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/docs/survival-islands/api/ItemTypes#StockData">StockData?</a></code><span class="inlineDescription_G7Er">-- <span>
+<p>Limited-stock config; absent means unlimited</p>
+</span></span></div><div><code>props<!-- -->: </code><code class="purple_ieR2">{</code><span><code>[</code><code class="blue_P4bS">string</code><code>]</code></span><code>: </code><code class="blue_P4bS">any</code><code class="purple_ieR2">}</code><code class="blue_P4bS">?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Extra properties that don't warrant their own field</p>
+</span></span></div><div><code>ownershipLimit<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Max quantity a player can own of this item</p>
+</span></span></div><div><code>boxes<!-- -->: </code><code class="purple_ieR2">{</code><code class="blue_P4bS">string</code><code class="purple_ieR2">}</code><code class="blue_P4bS">?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Loot box ids this item's pool belongs to; see BoxService</p>
+</span></span></div></div><code>}</code></div><div>
+<p>The fields every item shares, regardless of what kind of item it is.</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="PropUpgradeInfo"><code style="text-decoration:none">PropUpgradeInfo</code><a href="#PropUpgradeInfo" class="hash-link" aria-label="Direct link to PropUpgradeInfo" title="Direct link to PropUpgradeInfo" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Shared/Types/ItemTypes.luau#L106"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>PropUpgradeInfo<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>name<!-- -->: </code><code class="blue_P4bS">string?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Display name of the upgrade</p>
+</span></span></div><div><code>description<!-- -->: </code><code class="blue_P4bS">string?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Blurb shown on the upgrade prompt</p>
+</span></span></div><div><code>purchasePrice<!-- -->: </code><code class="blue_P4bS">number</code><span class="inlineDescription_G7Er">-- <span>
+<p>Cost to apply this upgrade</p>
+</span></span></div><div><code>purchaseCurrency<!-- -->: </code><code class="blue_P4bS">string?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Defaults to <code>"Coins"</code> when <code>purchasePrice</code> is set</p>
+</span></span></div><div><code>townLevelRequirement<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Town level needed to purchase the upgrade</p>
+</span></span></div><div><code>icon<!-- -->: </code><code class="blue_P4bS">string?</code></div><div><code>buildTime<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Seconds the upgrade takes to build</p>
+</span></span></div><div><code>props<!-- -->: </code><code class="purple_ieR2">{</code><span><code>[</code><code class="blue_P4bS">string</code><code>]</code></span><code>: </code><code class="blue_P4bS">any</code><code class="purple_ieR2">}</code><code class="blue_P4bS">?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Extra properties that don't warrant their own field</p>
+</span></span></div></div><code>}</code></div><div>
+<p>
+  One entry in a prop's <code>upgrades</code> list. A prop's level is its index into that
+  list — props start at level 1, and buying the upgrade at index <em>n</em> moves them to
+  level <em>n + 1</em>.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="PropItem"><code style="text-decoration:none">PropItem</code><a href="#PropItem" class="hash-link" aria-label="Direct link to PropItem" title="Direct link to PropItem" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Shared/Types/ItemTypes.luau#L149"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>PropItem<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>rarity<!-- -->: </code><code class="blue_P4bS">RarityData.Rarity</code><span class="inlineDescription_G7Er">-- <span>
+<p>Required for props, unlike on BaseItem</p>
+</span></span></div><div><code>buildTime<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Seconds the prop takes to build</p>
+</span></span></div><div><code>upgrades<!-- -->: </code><code class="purple_ieR2">{</code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/docs/survival-islands/api/ItemTypes#PropUpgradeInfo">PropUpgradeInfo</a></code><code class="purple_ieR2">}</code><code class="blue_P4bS">?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Levels this prop can be upgraded through</p>
+</span></span></div><div><code>useUpgradePrompt<!-- -->: </code><code class="blue_P4bS">boolean?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Show the upgrade prompt when a player is nearby</p>
+</span></span></div><div><code>immovable<!-- -->: </code><code class="blue_P4bS">boolean?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Disables the move tool for this prop</p>
+</span></span></div><div><code>destructionPrice<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Cost to remove the prop, if set</p>
+</span></span></div><div><code>destroyTime<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Seconds the prop takes to destroy</p>
+</span></span></div><div><code>stashable<!-- -->: </code><code class="blue_P4bS">boolean?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Prop can be stashed back into the player's inventory</p>
+</span></span></div><div><code>propDisplayPaths<!-- -->: </code><code class="purple_ieR2">{</code><code class="green_DgR4">{</code><div class="inset_uKQm"><code>path<!-- -->: </code><code class="blue_P4bS">string</code><code class="green_DgR4">,</code></div><div class="inset_uKQm"><code>label<!-- -->: </code><code class="blue_P4bS">string</code><code class="green_DgR4">,</code></div><div class="inset_uKQm"><code>formatter<!-- -->: </code><code class="yellow_QJap">(</code><code class="cyan_dehK">(</code><code class="blue_P4bS">any</code><code class="cyan_dehK">)</code><code class="cyan_dehK"> → </code><code class="blue_P4bS">string</code><code class="yellow_QJap">)</code><code class="blue_P4bS">?</code></div><code class="green_DgR4">}</code><code class="purple_ieR2">}</code><code class="blue_P4bS">?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Stats surfaced on the nearby-prop display</p>
+</span></span></div></div><code>}</code></div><div>
+<p>A <a href="/docs/survival-islands/api/ItemTypes#BaseItem">BaseItem</a> that can be placed on a base.</p>
+<p>
+  This type exists to make the shape easier to read while authoring prop item
+  data, where several BaseItem fields are still optional. Use <a href="/docs/survival-islands/api/ItemTypes#PropItemData">PropItemData</a>
+  everywhere else.
+</p>
+<p>
+  Removing a prop requires meeting the same gates as buying it —
+  <code>levelRequirement</code>, <code>townLevelRequirement</code>, <code>purchasePrice</code> and so on.
+</p>
+<p>
+  <code>propDisplayPaths</code> entries are paths relative to the data's <code>props</code> table. Lookup
+  walks the current level's upgrade info down to level 1 for a value; if the next
+  level also defines that path, the display shows <code>"currentValue -> nextValue"</code>.
+</p>
+
+  
+    
+    
+      <div class="admonition admonition-note alert alert--secondary">
+        <div class="admonition-heading">
+          <h5><span class="admonition-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="16" viewBox="0 0 14 16">
+                <path d="M6.3 5.69a.942.942 0 0 1-.28-.7c0-.28.09-.52.28-.7.19-.18.42-.28.7-.28.28 0 .52.09.7.28.18.19.28.42.28.7 0 .28-.09.52-.28.7a1 1 0 0 1-.7.3c-.28 0-.52-.11-.7-.3zM8 7.99c-.02-.25-.11-.48-.31-.69-.2-.19-.42-.3-.69-.31H6c-.27.02-.48.13-.69.31-.2.2-.3.44-.31.69h1v3c.02.27.11.5.31.69.2.2.42.31.69.31h1c.27 0 .48-.11.69-.31.2-.19.3-.42.31-.69H8V7.98v.01zM7 2.3c-3.14 0-5.7 2.54-5.7 5.68 0 3.14 2.56 5.7 5.7 5.7s5.7-2.55 5.7-5.7c0-3.15-2.56-5.69-5.7-5.69v.01zM7 .98c3.86 0 7 3.14 7 7s-3.14 7-7 7-7-3.12-7-7 3.14-7 7-7z"></path>
+              </svg></span><span class="admonition-title">destructionPrice is inert</span></h5>
+        </div>
+        <div class="admonition-content">
+          <p>
+            The <code>destructionPrice</code> field and the <a href="/docs/survival-islands/api/FeatureFlags">FeatureFlags</a>.ChargeForDestruction flag
+            that would govern it both exist, but nothing in the codebase currently reads
+            either one. Removing a prop is free today.
+          </p>
+        </div>
+      </div>
+    
+  
+
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="PropItemData"><code style="text-decoration:none">PropItemData</code><a href="#PropItemData" class="hash-link" aria-label="Direct link to PropItemData" title="Direct link to PropItemData" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Shared/Types/ItemTypes.luau#L193"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>PropItemData<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>purchasePrice<!-- -->: </code><code class="blue_P4bS">number</code><span class="inlineDescription_G7Er">-- <span>
+<p>Defaults to 0</p>
+</span></span></div><div><code>levelRequirement<!-- -->: </code><code class="blue_P4bS">number</code><span class="inlineDescription_G7Er">-- <span>
+<p>Defaults to 0</p>
+</span></span></div><div><code>ownershipLimit<!-- -->: </code><code class="blue_P4bS">number</code><span class="inlineDescription_G7Er">-- <span>
+<p>Max owned including placed props; enforced on purchase only</p>
+</span></span></div><div><code>model<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/Model" target="_blank" rel="noopener noreferrer">Model<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
+<p>Always present once the registry has resolved it</p>
+</span></span></div></div><code>}</code></div><div>
+<p>
+  <a href="/docs/survival-islands/api/ItemTypes#PropItem">PropItem</a> with its defaults filled in. This is the type to consume outside
+  of item data — the optional fields are guaranteed here.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="SeedItemData"><code style="text-decoration:none">SeedItemData</code><a href="#SeedItemData" class="hash-link" aria-label="Direct link to SeedItemData" title="Direct link to SeedItemData" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Shared/Types/ItemTypes.luau#L230"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>SeedItemData<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>rarity<!-- -->: </code><code class="blue_P4bS">RarityData.Rarity</code></div><div><code>seedTime<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Seconds from seed to flower (usually within seconds)</p>
+</span></span></div><div><code>maturityTime<!-- -->: </code><code class="blue_P4bS">number</code><span class="inlineDescription_G7Er">-- <span>
+<p>Seconds until the crop is ready to harvest</p>
+</span></span></div><div><code>floweringTime<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Seconds; must be less than <code>maturityTime</code>, defaults to half of it</p>
+</span></span></div><div><code>harvestTime<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Seconds after maturity before withering; absent means it never withers</p>
+</span></span></div><div><code>cropItemId<!-- -->: </code><code class="blue_P4bS">string</code><span class="inlineDescription_G7Er">-- <span>
+<p>Id of the crop this seed grows into</p>
+</span></span></div><div><code>cropTreeData<!-- -->: </code><code class="purple_ieR2">{</code><div class="inset_uKQm"><code>produceGrowTime<!-- -->: </code><code class="blue_P4bS">number</code><code class="purple_ieR2">,</code></div><div class="inset_uKQm"><code>produceYield<!-- -->: </code><code class="blue_P4bS">number?</code></div><code class="purple_ieR2">}</code><code class="blue_P4bS">?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Present only for tree crops</p>
+</span></span></div></div><code>}</code></div><div>
+<p>A plantable seed and its growth timings.</p>
+<p>
+  Supplying <code>cropTreeData</code> turns the seed into a crop <em>tree</em>: instead of being
+  harvested once, it repeatedly yields produce every <code>produceGrowTime</code> seconds,
+  indefinitely unless <code>produceYield</code> caps it.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="SkinSurfaceAppearance"><code style="text-decoration:none">SkinSurfaceAppearance</code><a href="#SkinSurfaceAppearance" class="hash-link" aria-label="Direct link to SkinSurfaceAppearance" title="Direct link to SkinSurfaceAppearance" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Shared/Types/ItemTypes.luau#L282"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>SkinSurfaceAppearance<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>ColorMap<!-- -->: </code><code class="blue_P4bS">string?</code></div><div><code>MetalnessMap<!-- -->: </code><code class="blue_P4bS">string?</code></div><div><code>RoughnessMap<!-- -->: </code><code class="blue_P4bS">string?</code></div><div><code>NormalMap<!-- -->: </code><code class="blue_P4bS">string?</code></div></div><code>}</code></div><div>
+<p>PBR map set baked onto the default skin mesh via a SurfaceAppearance child.</p>
+<p>A mesh-swap cosmetic skin has three visual paths, in order of precedence:</p>
+<ol>
+  <li>
+    Hand-authored MeshPart at <code>ReplicatedStorage.Assets.Cosmetics.&#x3C;itemId></code>
+    (escape hatch for skins with custom geometry).
+  </li>
+  <li><code>surfaceAppearance</code> — this type. Use for metals, gems, glossy looks.</li>
+  <li>
+    <code>texture</code> — a single image asset id set as the MeshPart's <code>TextureID</code>.
+    Use for plain painted/diffuse looks.
+  </li>
+</ol>
+<p>
+  Both (2) and (3) are baked into <code>assets/shared/Cosmetics.rbxm</code> by the Lune build
+  tool; SurfaceAppearance can't be assigned at runtime.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="SkinItem"><code style="text-decoration:none">SkinItem</code><a href="#SkinItem" class="hash-link" aria-label="Direct link to SkinItem" title="Direct link to SkinItem" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Shared/Types/ItemTypes.luau#L351"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>SkinItem<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>rarity<!-- -->: </code><code class="blue_P4bS">RarityData.Rarity</code></div><div><code>surfaceAppearance<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/docs/survival-islands/api/ItemTypes#SkinSurfaceAppearance">SkinSurfaceAppearance?</a></code><span class="inlineDescription_G7Er">-- <span>
+<p>PBR map set (precedence 2)</p>
+</span></span></div><div><code>texture<!-- -->: </code><code class="blue_P4bS">string?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Single diffuse image asset id (precedence 3)</p>
+</span></span></div><div><code>particles<!-- -->: </code><code class="purple_ieR2">{</code><code class="blue_P4bS">ParticleEmitterConfig</code><code class="purple_ieR2">}</code><code class="blue_P4bS">?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Emitters baked under the skin's MeshPart</p>
+</span></span></div><div><code>gear<!-- -->: </code><code class="blue_P4bS">Gearkit.GearOverride?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Gear skins only: config deep-merged over the base gear</p>
+</span></span></div></div><code>}</code></div><div>
+<p>
+  A mesh-swap cosmetic skin, or a gear skin when <code>subtype</code> names a gear slot. See
+  the comment on <a href="/docs/survival-islands/api/ItemTypes#SkinSurfaceAppearance">SkinSurfaceAppearance</a> for the three visual paths and their
+  order of precedence; gear skins instead take their model from
+  <code>Assets.Cosmetics.&#x3C;itemId></code> and may override the gear config through <code>gear</code>.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="KillEffectBurst"><code style="text-decoration:none">KillEffectBurst</code><a href="#KillEffectBurst" class="hash-link" aria-label="Direct link to KillEffectBurst" title="Direct link to KillEffectBurst" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Shared/Types/ItemTypes.luau#L373"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>KillEffectBurst<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>texture<!-- -->: </code><code class="blue_P4bS">string</code><span class="inlineDescription_G7Er">-- <span>
+<p>Particle texture (<code>rbxasset://</code> or <code>rbxassetid://</code>)</p>
+</span></span></div><div><code>color<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/Color3" target="_blank" rel="noopener noreferrer">Color3<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code></div><div><code>count<!-- -->: </code><code class="blue_P4bS">number</code><span class="inlineDescription_G7Er">-- <span>
+<p>Particles emitted in the one-shot burst</p>
+</span></span></div><div><code>size<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Starting particle size in studs; 0.6 when nil</p>
+</span></span></div><div><code>acceleration<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/Vector3" target="_blank" rel="noopener noreferrer">Vector3?<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
+<p>Constant pull on the particles, e.g. upward drift</p>
+</span></span></div><div><code>lightEmission<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>1 (default) glows additively; 0 keeps solid sprites solid</p>
+</span></span></div></div><code>}</code></div><div>
+<p>A one-shot particle burst every client plays at the victim's position.</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="KillEffectItem"><code style="text-decoration:none">KillEffectItem</code><a href="#KillEffectItem" class="hash-link" aria-label="Direct link to KillEffectItem" title="Direct link to KillEffectItem" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Shared/Types/ItemTypes.luau#L390"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>KillEffectItem<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>rarity<!-- -->: </code><code class="blue_P4bS">RarityData.Rarity</code></div><div><code>burst<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/docs/survival-islands/api/ItemTypes#KillEffectBurst">KillEffectBurst?</a></code><span class="inlineDescription_G7Er">-- <span>
+<p>Plays nothing when absent</p>
+</span></span></div></div><code>}</code></div><div>
+<p>A cosmetic VFX played on the victim when a kill lands.</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="EmoteItem"><code style="text-decoration:none">EmoteItem</code><a href="#EmoteItem" class="hash-link" aria-label="Direct link to EmoteItem" title="Direct link to EmoteItem" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Shared/Types/ItemTypes.luau#L405"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>EmoteItem<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>rarity<!-- -->: </code><code class="blue_P4bS">RarityData.Rarity</code></div><div><code>animation<!-- -->: </code><code class="blue_P4bS">string?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Animation asset id played on the owner's Animator</p>
+</span></span></div></div><code>}</code></div><div>
+<p>An emote the owner plays from the lobby (see <code>EmoteController</code>).</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="PetItem"><code style="text-decoration:none">PetItem</code><a href="#PetItem" class="hash-link" aria-label="Direct link to PetItem" title="Direct link to PetItem" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Shared/Types/ItemTypes.luau#L422"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>PetItem<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>rarity<!-- -->: </code><code class="blue_P4bS">RarityData.Rarity</code></div><div><code>template<!-- -->: </code><code class="blue_P4bS">string?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Model path under <code>ReplicatedStorage.Assets</code>, dot-separated</p>
+</span></span></div><div><code>flying<!-- -->: </code><code class="blue_P4bS">boolean?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Hovers beside the owner instead of walking behind</p>
+</span></span></div></div><code>}</code></div><div>
+<p>A cosmetic follower that trails its owner (see <code>PetController</code>).</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="TitleItem"><code style="text-decoration:none">TitleItem</code><a href="#TitleItem" class="hash-link" aria-label="Direct link to TitleItem" title="Direct link to TitleItem" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Shared/Types/ItemTypes.luau#L441"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>TitleItem<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>rarity<!-- -->: </code><code class="blue_P4bS">RarityData.Rarity</code></div><div><code>text<!-- -->: </code><code class="blue_P4bS">string?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Display text; falls back to <code>name</code></p>
+</span></span></div><div><code>gradient<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/ColorSequence" target="_blank" rel="noopener noreferrer">ColorSequence?<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
+<p>Colors the text instead of the rarity color</p>
+</span></span></div><div><code>gradientSpeed<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Gradient loops per second overhead; static when nil</p>
+</span></span></div></div><code>}</code></div><div>
+<p>
+  A title shown before the player's name in chat and above it overhead. A
+  moving gradient must loop (first color = last) to scroll seamlessly.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="NametagItem"><code style="text-decoration:none">NametagItem</code><a href="#NametagItem" class="hash-link" aria-label="Direct link to NametagItem" title="Direct link to NametagItem" translate="no">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/firebit-dev/survival-islands/blob/main/src/Shared/Types/ItemTypes.luau#L459"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>NametagItem<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>rarity<!-- -->: </code><code class="blue_P4bS">RarityData.Rarity</code></div><div><code>gradient<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/ColorSequence" target="_blank" rel="noopener noreferrer">ColorSequence?<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
+<p>Colors across the name, left to right</p>
+</span></span></div></div><code>}</code></div><div>
+<p>
+  An effect applied to the player's DisplayName (gradient, glow, shimmer...),
+  both over their head and in chat.
+</p>
+</div></div></article></div><details><summary>Show raw api</summary><pre style="max-width:100%;white-space:pre-wrap">{
+    &quot;functions&quot;: [],
+    &quot;properties&quot;: [],
+    &quot;types&quot;: [
+        {
+            &quot;name&quot;: &quot;StockData&quot;,
+            &quot;desc&quot;: &quot;Limited-stock behavior for a shop item. Absent from an item means unlimited stock.&quot;,
+            &quot;fields&quot;: [
+                {
+                    &quot;name&quot;: &quot;maxStockQuantity&quot;,
+                    &quot;lua_type&quot;: &quot;number&quot;,
+                    &quot;desc&quot;: &quot;The maximum number of items that can be in stock&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;restockInterval&quot;,
+                    &quot;lua_type&quot;: &quot;number&quot;,
+                    &quot;desc&quot;: &quot;Seconds between full restocks&quot;
+                }
+            ],
+            &quot;source&quot;: {
+                &quot;line&quot;: 37,
+                &quot;path&quot;: &quot;src/Shared/Types/ItemTypes.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;BaseItem&quot;,
+            &quot;desc&quot;: &quot;The fields every item shares, regardless of what kind of item it is.&quot;,
+            &quot;fields&quot;: [
+                {
+                    &quot;name&quot;: &quot;name&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;,
+                    &quot;desc&quot;: &quot;Display name shown in the shop and inventory&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;description&quot;,
+                    &quot;lua_type&quot;: &quot;string?&quot;,
+                    &quot;desc&quot;: &quot;Blurb shown on the item&#x27;s detail card&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;type&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;,
+                    &quot;desc&quot;: &quot;Item category (`\&quot;Skin\&quot;`, `\&quot;Emote\&quot;`, `\&quot;Pet\&quot;`, ...)&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;subtype&quot;,
+                    &quot;lua_type&quot;: &quot;string?&quot;,
+                    &quot;desc&quot;: &quot;If the item is a subtype of another item&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;icon&quot;,
+                    &quot;lua_type&quot;: &quot;string?&quot;,
+                    &quot;desc&quot;: &quot;A placeholder icon is used if not defined&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;purchasePrice&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Cost to buy; absent means not purchasable&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;purchaseCurrency&quot;,
+                    &quot;lua_type&quot;: &quot;string?&quot;,
+                    &quot;desc&quot;: &quot;Defaults to `\&quot;Coins\&quot;` when `purchasePrice` is set&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;hidden&quot;,
+                    &quot;lua_type&quot;: &quot;boolean?&quot;,
+                    &quot;desc&quot;: &quot;Kept out of shop listings&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;rarity&quot;,
+                    &quot;lua_type&quot;: &quot;string?&quot;,
+                    &quot;desc&quot;: &quot;Rarity key, see `RarityData.Rarity`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;resaleValue&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Item cannot be sold without this field&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;cameraOffset&quot;,
+                    &quot;lua_type&quot;: &quot;CFrame?&quot;,
+                    &quot;desc&quot;: &quot;Viewport CFrame offset when shown in a ViewportFrame&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;maxCopies&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Nil means the item can be purchased infinitely&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;model&quot;,
+                    &quot;lua_type&quot;: &quot;Model?&quot;,
+                    &quot;desc&quot;: &quot;Source model cloned when the item is spawned&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;levelRequirement&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Player level needed to purchase&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;townLevelRequirement&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Town level needed to purchase&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;stockData&quot;,
+                    &quot;lua_type&quot;: &quot;StockData?&quot;,
+                    &quot;desc&quot;: &quot;Limited-stock config; absent means unlimited&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;props&quot;,
+                    &quot;lua_type&quot;: &quot;{ [string]: any }?&quot;,
+                    &quot;desc&quot;: &quot;Extra properties that don&#x27;t warrant their own field&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;ownershipLimit&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Max quantity a player can own of this item&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;boxes&quot;,
+                    &quot;lua_type&quot;: &quot;{ string }?&quot;,
+                    &quot;desc&quot;: &quot;Loot box ids this item&#x27;s pool belongs to; see BoxService&quot;
+                }
+            ],
+            &quot;source&quot;: {
+                &quot;line&quot;: 67,
+                &quot;path&quot;: &quot;src/Shared/Types/ItemTypes.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;PropUpgradeInfo&quot;,
+            &quot;desc&quot;: &quot;One entry in a prop&#x27;s `upgrades` list. A prop&#x27;s level is its index into that\nlist — props start at level 1, and buying the upgrade at index *n* moves them to\nlevel *n + 1*.&quot;,
+            &quot;fields&quot;: [
+                {
+                    &quot;name&quot;: &quot;name&quot;,
+                    &quot;lua_type&quot;: &quot;string?&quot;,
+                    &quot;desc&quot;: &quot;Display name of the upgrade&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;description&quot;,
+                    &quot;lua_type&quot;: &quot;string?&quot;,
+                    &quot;desc&quot;: &quot;Blurb shown on the upgrade prompt&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;purchasePrice&quot;,
+                    &quot;lua_type&quot;: &quot;number&quot;,
+                    &quot;desc&quot;: &quot;Cost to apply this upgrade&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;purchaseCurrency&quot;,
+                    &quot;lua_type&quot;: &quot;string?&quot;,
+                    &quot;desc&quot;: &quot;Defaults to `\&quot;Coins\&quot;` when `purchasePrice` is set&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;townLevelRequirement&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Town level needed to purchase the upgrade&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;icon&quot;,
+                    &quot;lua_type&quot;: &quot;string?&quot;,
+                    &quot;desc&quot;: &quot;&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;buildTime&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Seconds the upgrade takes to build&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;props&quot;,
+                    &quot;lua_type&quot;: &quot;{ [string]: any }?&quot;,
+                    &quot;desc&quot;: &quot;Extra properties that don&#x27;t warrant their own field&quot;
+                }
+            ],
+            &quot;source&quot;: {
+                &quot;line&quot;: 106,
+                &quot;path&quot;: &quot;src/Shared/Types/ItemTypes.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;PropItem&quot;,
+            &quot;desc&quot;: &quot;A [BaseItem] that can be placed on a base.\n\nThis type exists to make the shape easier to read while authoring prop item\ndata, where several BaseItem fields are still optional. Use [PropItemData]\neverywhere else.\n\nRemoving a prop requires meeting the same gates as buying it —\n`levelRequirement`, `townLevelRequirement`, `purchasePrice` and so on.\n\n`propDisplayPaths` entries are paths relative to the data&#x27;s `props` table. Lookup\nwalks the current level&#x27;s upgrade info down to level 1 for a value; if the next\nlevel also defines that path, the display shows `\&quot;currentValue -&gt; nextValue\&quot;`.\n\n:::note destructionPrice is inert\nThe `destructionPrice` field and the [FeatureFlags].ChargeForDestruction flag\nthat would govern it both exist, but nothing in the codebase currently reads\neither one. Removing a prop is free today.\n:::&quot;,
+            &quot;fields&quot;: [
+                {
+                    &quot;name&quot;: &quot;rarity&quot;,
+                    &quot;lua_type&quot;: &quot;RarityData.Rarity&quot;,
+                    &quot;desc&quot;: &quot;Required for props, unlike on BaseItem&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;buildTime&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Seconds the prop takes to build&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;upgrades&quot;,
+                    &quot;lua_type&quot;: &quot;{ PropUpgradeInfo }?&quot;,
+                    &quot;desc&quot;: &quot;Levels this prop can be upgraded through&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;useUpgradePrompt&quot;,
+                    &quot;lua_type&quot;: &quot;boolean?&quot;,
+                    &quot;desc&quot;: &quot;Show the upgrade prompt when a player is nearby&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;immovable&quot;,
+                    &quot;lua_type&quot;: &quot;boolean?&quot;,
+                    &quot;desc&quot;: &quot;Disables the move tool for this prop&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;destructionPrice&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Cost to remove the prop, if set&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;destroyTime&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Seconds the prop takes to destroy&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;stashable&quot;,
+                    &quot;lua_type&quot;: &quot;boolean?&quot;,
+                    &quot;desc&quot;: &quot;Prop can be stashed back into the player&#x27;s inventory&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;propDisplayPaths&quot;,
+                    &quot;lua_type&quot;: &quot;{ { path: string, label: string, formatter: ((any) -&gt; string)? } }?&quot;,
+                    &quot;desc&quot;: &quot;Stats surfaced on the nearby-prop display&quot;
+                }
+            ],
+            &quot;source&quot;: {
+                &quot;line&quot;: 149,
+                &quot;path&quot;: &quot;src/Shared/Types/ItemTypes.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;PropItemData&quot;,
+            &quot;desc&quot;: &quot;[PropItem] with its defaults filled in. This is the type to consume outside\nof item data — the optional fields are guaranteed here.&quot;,
+            &quot;fields&quot;: [
+                {
+                    &quot;name&quot;: &quot;purchasePrice&quot;,
+                    &quot;lua_type&quot;: &quot;number&quot;,
+                    &quot;desc&quot;: &quot;Defaults to 0&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;levelRequirement&quot;,
+                    &quot;lua_type&quot;: &quot;number&quot;,
+                    &quot;desc&quot;: &quot;Defaults to 0&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;ownershipLimit&quot;,
+                    &quot;lua_type&quot;: &quot;number&quot;,
+                    &quot;desc&quot;: &quot;Max owned including placed props; enforced on purchase only&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;model&quot;,
+                    &quot;lua_type&quot;: &quot;Model&quot;,
+                    &quot;desc&quot;: &quot;Always present once the registry has resolved it&quot;
+                }
+            ],
+            &quot;source&quot;: {
+                &quot;line&quot;: 193,
+                &quot;path&quot;: &quot;src/Shared/Types/ItemTypes.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;SeedItemData&quot;,
+            &quot;desc&quot;: &quot;A plantable seed and its growth timings.\n\nSupplying `cropTreeData` turns the seed into a crop *tree*: instead of being\nharvested once, it repeatedly yields produce every `produceGrowTime` seconds,\nindefinitely unless `produceYield` caps it.&quot;,
+            &quot;fields&quot;: [
+                {
+                    &quot;name&quot;: &quot;rarity&quot;,
+                    &quot;lua_type&quot;: &quot;RarityData.Rarity&quot;,
+                    &quot;desc&quot;: &quot;&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;seedTime&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Seconds from seed to flower (usually within seconds)&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;maturityTime&quot;,
+                    &quot;lua_type&quot;: &quot;number&quot;,
+                    &quot;desc&quot;: &quot;Seconds until the crop is ready to harvest&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;floweringTime&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Seconds; must be less than `maturityTime`, defaults to half of it&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;harvestTime&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Seconds after maturity before withering; absent means it never withers&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;cropItemId&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;,
+                    &quot;desc&quot;: &quot;Id of the crop this seed grows into&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;cropTreeData&quot;,
+                    &quot;lua_type&quot;: &quot;{ produceGrowTime: number, produceYield: number? }?&quot;,
+                    &quot;desc&quot;: &quot;Present only for tree crops&quot;
+                }
+            ],
+            &quot;source&quot;: {
+                &quot;line&quot;: 230,
+                &quot;path&quot;: &quot;src/Shared/Types/ItemTypes.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;SkinSurfaceAppearance&quot;,
+            &quot;desc&quot;: &quot;PBR map set baked onto the default skin mesh via a SurfaceAppearance child.\n\nA mesh-swap cosmetic skin has three visual paths, in order of precedence:\n\n1. Hand-authored MeshPart at `ReplicatedStorage.Assets.Cosmetics.&lt;itemId&gt;`\n   (escape hatch for skins with custom geometry).\n2. `surfaceAppearance` — this type. Use for metals, gems, glossy looks.\n3. `texture` — a single image asset id set as the MeshPart&#x27;s `TextureID`.\n   Use for plain painted/diffuse looks.\n\nBoth (2) and (3) are baked into `assets/shared/Cosmetics.rbxm` by the Lune build\ntool; SurfaceAppearance can&#x27;t be assigned at runtime.&quot;,
+            &quot;fields&quot;: [
+                {
+                    &quot;name&quot;: &quot;ColorMap&quot;,
+                    &quot;lua_type&quot;: &quot;string?&quot;,
+                    &quot;desc&quot;: &quot;&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;MetalnessMap&quot;,
+                    &quot;lua_type&quot;: &quot;string?&quot;,
+                    &quot;desc&quot;: &quot;&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;RoughnessMap&quot;,
+                    &quot;lua_type&quot;: &quot;string?&quot;,
+                    &quot;desc&quot;: &quot;&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;NormalMap&quot;,
+                    &quot;lua_type&quot;: &quot;string?&quot;,
+                    &quot;desc&quot;: &quot;&quot;
+                }
+            ],
+            &quot;source&quot;: {
+                &quot;line&quot;: 282,
+                &quot;path&quot;: &quot;src/Shared/Types/ItemTypes.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;SkinItem&quot;,
+            &quot;desc&quot;: &quot;A mesh-swap cosmetic skin, or a gear skin when `subtype` names a gear slot. See\nthe comment on [SkinSurfaceAppearance] for the three visual paths and their\norder of precedence; gear skins instead take their model from\n`Assets.Cosmetics.&lt;itemId&gt;` and may override the gear config through `gear`.&quot;,
+            &quot;fields&quot;: [
+                {
+                    &quot;name&quot;: &quot;rarity&quot;,
+                    &quot;lua_type&quot;: &quot;RarityData.Rarity&quot;,
+                    &quot;desc&quot;: &quot;&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;surfaceAppearance&quot;,
+                    &quot;lua_type&quot;: &quot;SkinSurfaceAppearance?&quot;,
+                    &quot;desc&quot;: &quot;PBR map set (precedence 2)&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;texture&quot;,
+                    &quot;lua_type&quot;: &quot;string?&quot;,
+                    &quot;desc&quot;: &quot;Single diffuse image asset id (precedence 3)&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;particles&quot;,
+                    &quot;lua_type&quot;: &quot;{ ParticleEmitterConfig }?&quot;,
+                    &quot;desc&quot;: &quot;Emitters baked under the skin&#x27;s MeshPart&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;gear&quot;,
+                    &quot;lua_type&quot;: &quot;Gearkit.GearOverride?&quot;,
+                    &quot;desc&quot;: &quot;Gear skins only: config deep-merged over the base gear&quot;
+                }
+            ],
+            &quot;source&quot;: {
+                &quot;line&quot;: 351,
+                &quot;path&quot;: &quot;src/Shared/Types/ItemTypes.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;KillEffectBurst&quot;,
+            &quot;desc&quot;: &quot;A one-shot particle burst every client plays at the victim&#x27;s position.&quot;,
+            &quot;fields&quot;: [
+                {
+                    &quot;name&quot;: &quot;texture&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;,
+                    &quot;desc&quot;: &quot;Particle texture (`rbxasset://` or `rbxassetid://`)&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;color&quot;,
+                    &quot;lua_type&quot;: &quot;Color3&quot;,
+                    &quot;desc&quot;: &quot;&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;count&quot;,
+                    &quot;lua_type&quot;: &quot;number&quot;,
+                    &quot;desc&quot;: &quot;Particles emitted in the one-shot burst&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;size&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Starting particle size in studs; 0.6 when nil&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;acceleration&quot;,
+                    &quot;lua_type&quot;: &quot;Vector3?&quot;,
+                    &quot;desc&quot;: &quot;Constant pull on the particles, e.g. upward drift&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;lightEmission&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;1 (default) glows additively; 0 keeps solid sprites solid&quot;
+                }
+            ],
+            &quot;source&quot;: {
+                &quot;line&quot;: 373,
+                &quot;path&quot;: &quot;src/Shared/Types/ItemTypes.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;KillEffectItem&quot;,
+            &quot;desc&quot;: &quot;A cosmetic VFX played on the victim when a kill lands.&quot;,
+            &quot;fields&quot;: [
+                {
+                    &quot;name&quot;: &quot;rarity&quot;,
+                    &quot;lua_type&quot;: &quot;RarityData.Rarity&quot;,
+                    &quot;desc&quot;: &quot;&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;burst&quot;,
+                    &quot;lua_type&quot;: &quot;KillEffectBurst?&quot;,
+                    &quot;desc&quot;: &quot;Plays nothing when absent&quot;
+                }
+            ],
+            &quot;source&quot;: {
+                &quot;line&quot;: 390,
+                &quot;path&quot;: &quot;src/Shared/Types/ItemTypes.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;EmoteItem&quot;,
+            &quot;desc&quot;: &quot;An emote the owner plays from the lobby (see `EmoteController`).&quot;,
+            &quot;fields&quot;: [
+                {
+                    &quot;name&quot;: &quot;rarity&quot;,
+                    &quot;lua_type&quot;: &quot;RarityData.Rarity&quot;,
+                    &quot;desc&quot;: &quot;&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;animation&quot;,
+                    &quot;lua_type&quot;: &quot;string?&quot;,
+                    &quot;desc&quot;: &quot;Animation asset id played on the owner&#x27;s Animator&quot;
+                }
+            ],
+            &quot;source&quot;: {
+                &quot;line&quot;: 405,
+                &quot;path&quot;: &quot;src/Shared/Types/ItemTypes.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;PetItem&quot;,
+            &quot;desc&quot;: &quot;A cosmetic follower that trails its owner (see `PetController`).&quot;,
+            &quot;fields&quot;: [
+                {
+                    &quot;name&quot;: &quot;rarity&quot;,
+                    &quot;lua_type&quot;: &quot;RarityData.Rarity&quot;,
+                    &quot;desc&quot;: &quot;&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;template&quot;,
+                    &quot;lua_type&quot;: &quot;string?&quot;,
+                    &quot;desc&quot;: &quot;Model path under `ReplicatedStorage.Assets`, dot-separated&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;flying&quot;,
+                    &quot;lua_type&quot;: &quot;boolean?&quot;,
+                    &quot;desc&quot;: &quot;Hovers beside the owner instead of walking behind&quot;
+                }
+            ],
+            &quot;source&quot;: {
+                &quot;line&quot;: 422,
+                &quot;path&quot;: &quot;src/Shared/Types/ItemTypes.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;TitleItem&quot;,
+            &quot;desc&quot;: &quot;A title shown before the player&#x27;s name in chat and above it overhead. A\nmoving gradient must loop (first color = last) to scroll seamlessly.&quot;,
+            &quot;fields&quot;: [
+                {
+                    &quot;name&quot;: &quot;rarity&quot;,
+                    &quot;lua_type&quot;: &quot;RarityData.Rarity&quot;,
+                    &quot;desc&quot;: &quot;&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;text&quot;,
+                    &quot;lua_type&quot;: &quot;string?&quot;,
+                    &quot;desc&quot;: &quot;Display text; falls back to `name`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;gradient&quot;,
+                    &quot;lua_type&quot;: &quot;ColorSequence?&quot;,
+                    &quot;desc&quot;: &quot;Colors the text instead of the rarity color&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;gradientSpeed&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Gradient loops per second overhead; static when nil&quot;
+                }
+            ],
+            &quot;source&quot;: {
+                &quot;line&quot;: 441,
+                &quot;path&quot;: &quot;src/Shared/Types/ItemTypes.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;NametagItem&quot;,
+            &quot;desc&quot;: &quot;An effect applied to the player&#x27;s DisplayName (gradient, glow, shimmer...),\nboth over their head and in chat.&quot;,
+            &quot;fields&quot;: [
+                {
+                    &quot;name&quot;: &quot;rarity&quot;,
+                    &quot;lua_type&quot;: &quot;RarityData.Rarity&quot;,
+                    &quot;desc&quot;: &quot;&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;gradient&quot;,
+                    &quot;lua_type&quot;: &quot;ColorSequence?&quot;,
+                    &quot;desc&quot;: &quot;Colors across the name, left to right&quot;
+                }
+            ],
+            &quot;source&quot;: {
+                &quot;line&quot;: 459,
+                &quot;path&quot;: &quot;src/Shared/Types/ItemTypes.luau&quot;
+            }
+        }
+    ],
+    &quot;name&quot;: &quot;ItemTypes&quot;,
+    &quot;desc&quot;: &quot;Shared shape of everything the game treats as an \&quot;item\&quot;: shop stock, inventory\nrecords, placeable props, seeds and crops, animals, and cosmetic skins.\n\nEvery item type starts from [BaseItem] and intersects extra fields onto it, so a\nfield documented on BaseItem means the same thing everywhere. Concrete item tables\nlive in the `src/Shared/Data/Items/` and `src/Shared/Data/Cosmetics/` registries\nand are keyed by item id; those registries are what the shop and inventory read\nat runtime. The prop, seed, crop, animal and egg shapes only type the flag-gated\nBase classes; no items of those kinds ship in the registries.\n\nThe `*ItemData` variants exist to tighten optional BaseItem fields into required\nones once the registry has filled in defaults — author data against [PropItem],\nconsume it as [PropItemData].\n\nCopyright (c) 2026 firebit. All rights reserved.\nfirebit/survival-islands - proprietary and confidential.&quot;,
+    &quot;source&quot;: {
+        &quot;line&quot;: 21,
+        &quot;path&quot;: &quot;src/Shared/Types/ItemTypes.luau&quot;
+    }
+}</pre></details></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#types" class="table-of-contents__link toc-highlight">Types</a><ul><li><a href="#BaseItem" class="table-of-contents__link toc-highlight">BaseItem</a></li><li><a href="#EmoteItem" class="table-of-contents__link toc-highlight">EmoteItem</a></li><li><a href="#KillEffectBurst" class="table-of-contents__link toc-highlight">KillEffectBurst</a></li><li><a href="#KillEffectItem" class="table-of-contents__link toc-highlight">KillEffectItem</a></li><li><a href="#NametagItem" class="table-of-contents__link toc-highlight">NametagItem</a></li><li><a href="#PetItem" class="table-of-contents__link toc-highlight">PetItem</a></li><li><a href="#PropItem" class="table-of-contents__link toc-highlight">PropItem</a></li><li><a href="#PropItemData" class="table-of-contents__link toc-highlight">PropItemData</a></li><li><a href="#PropUpgradeInfo" class="table-of-contents__link toc-highlight">PropUpgradeInfo</a></li><li><a href="#SeedItemData" class="table-of-contents__link toc-highlight">SeedItemData</a></li><li><a href="#SkinItem" class="table-of-contents__link toc-highlight">SkinItem</a></li><li><a href="#SkinSurfaceAppearance" class="table-of-contents__link toc-highlight">SkinSurfaceAppearance</a></li><li><a href="#StockData" class="table-of-contents__link toc-highlight">StockData</a></li><li><a href="#TitleItem" class="table-of-contents__link toc-highlight">TitleItem</a></li></ul></li></ul></div></div></div></div></main></div></div><footer class="theme-layout-footer footer"><div class="container container-fluid"><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © firebit</div></div></div></footer></div>
+</body>
+</html>
