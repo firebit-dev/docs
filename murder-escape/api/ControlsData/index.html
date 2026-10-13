@@ -24,11 +24,17 @@ Gamepad button budget (keep in sync when editing):
 - Y: drop weapon, queue mode toggle (lobby picker), arena pack 2 (L1
   chord)
 - L1: chord modifier (quick-buy upgrades, arena packs, inventory)
-- L2: melee, trap rotate (priority-gated pair)
+- L2: melee, trap rotate (priority-gated pair); Gearkit aim (`AIM`)
 - L3: sprint
 - R1: hotbar cycle (bare), settings toggle (L1 chord, console only)
-- R2: shoot, consumable use, trap place, vehicle gas (context-gated)
-- R3: arena auto-skip toggle (level)
+- R2: shoot, consumable use, trap place, vehicle gas (context-gated);
+  Gearkit gear fires through the engine&#x27;s tool activation on R2
+- R3: arena auto-skip toggle (level); Gearkit camera framing (`FRAMING`)
+
+In a Murder Escape round the live binds are R2 (stab / shoot), L2 (aim,
+pistol only, off while `camera.aimable` is off), R3 (framing), R1 (gear
+hotbar), L1 + R1 (settings), DPadDown (side menu focus), A (jump) and
+Thumbstick2 (look). The rest above belong to dormant systems.
 - DPad L/U/R: quick-buy slots (bare = traps, L1 = upgrades); queue
   party size 1/2/3 while the lobby picker shows
 - DPad Down: buy weapon tier; inventory toggle (L1 chord); queue party
@@ -57,11 +63,17 @@ Gamepad button budget (keep in sync when editing):
 - Y: drop weapon, queue mode toggle (lobby picker), arena pack 2 (L1
   chord)
 - L1: chord modifier (quick-buy upgrades, arena packs, inventory)
-- L2: melee, trap rotate (priority-gated pair)
+- L2: melee, trap rotate (priority-gated pair); Gearkit aim (`AIM`)
 - L3: sprint
 - R1: hotbar cycle (bare), settings toggle (L1 chord, console only)
-- R2: shoot, consumable use, trap place, vehicle gas (context-gated)
-- R3: arena auto-skip toggle (level)
+- R2: shoot, consumable use, trap place, vehicle gas (context-gated);
+  Gearkit gear fires through the engine&#x27;s tool activation on R2
+- R3: arena auto-skip toggle (level); Gearkit camera framing (`FRAMING`)
+
+In a Murder Escape round the live binds are R2 (stab / shoot), L2 (aim,
+pistol only, off while `camera.aimable` is off), R3 (framing), R1 (gear
+hotbar), L1 + R1 (settings), DPadDown (side menu focus), A (jump) and
+Thumbstick2 (look). The rest above belong to dormant systems.
 - DPad L/U/R: quick-buy slots (bare = traps, L1 = upgrades); queue
   party size 1/2/3 while the lobby picker shows
 - DPad Down: buy weapon tier; inventory toggle (L1 chord); queue party
@@ -70,8 +82,8 @@ Gamepad button budget (keep in sync when editing):
 - DPad Up also = PLAY (join best queue) in the lobby while NOT queued —
   disjoint from its size-2 role, which only exists while queued
 - Thumbstick2: camera look / auto-aim break / skill tree preview"><link data-rh="true" rel="canonical" href="https://firebit-dev.github.io/docs/murder-escape/api/ControlsData"><link data-rh="true" rel="alternate" href="https://firebit-dev.github.io/docs/murder-escape/api/ControlsData" hreflang="en"><link data-rh="true" rel="alternate" href="https://firebit-dev.github.io/docs/murder-escape/api/ControlsData" hreflang="x-default"><link rel="stylesheet" href="/docs/murder-escape/assets/css/styles.3f63b0bb.css">
-<script src="/docs/murder-escape/assets/js/runtime~main.f9be84a9.js" defer="defer"></script>
-<script src="/docs/murder-escape/assets/js/main.b5cb4b82.js" defer="defer"></script>
+<script src="/docs/murder-escape/assets/js/runtime~main.af6f7ad0.js" defer="defer"></script>
+<script src="/docs/murder-escape/assets/js/main.f3767a62.js" defer="defer"></script>
 </head>
 <body>
 <svg style="display: none;"><defs>
@@ -108,11 +120,22 @@ Gamepad button budget (keep in sync when editing):
     chord)
   </li>
   <li>L1: chord modifier (quick-buy upgrades, arena packs, inventory)</li>
-  <li>L2: melee, trap rotate (priority-gated pair)</li>
+  <li>L2: melee, trap rotate (priority-gated pair); Gearkit aim (<code>AIM</code>)</li>
   <li>L3: sprint</li>
   <li>R1: hotbar cycle (bare), settings toggle (L1 chord, console only)</li>
-  <li>R2: shoot, consumable use, trap place, vehicle gas (context-gated)</li>
-  <li>R3: arena auto-skip toggle (level)</li>
+  <li>
+    R2: shoot, consumable use, trap place, vehicle gas (context-gated);
+    Gearkit gear fires through the engine's tool activation on R2
+  </li>
+  <li>R3: arena auto-skip toggle (level); Gearkit camera framing (<code>FRAMING</code>)</li>
+</ul>
+<p>
+  In a Murder Escape round the live binds are R2 (stab / shoot), L2 (aim,
+  pistol only, off while <code>camera.aimable</code> is off), R3 (framing), R1 (gear
+  hotbar), L1 + R1 (settings), DPadDown (side menu focus), A (jump) and
+  Thumbstick2 (look). The rest above belong to dormant systems.
+</p>
+<ul>
   <li>
     DPad L/U/R: quick-buy slots (bare = traps, L1 = upgrades); queue
     party size 1/2/3 while the lobby picker shows
@@ -133,9 +156,9 @@ Gamepad button budget (keep in sync when editing):
     &quot;properties&quot;: [],
     &quot;types&quot;: [],
     &quot;name&quot;: &quot;ControlsData&quot;,
-    &quot;desc&quot;: &quot;Single source of truth for every gamepad bind in the game (and the\nkeyboard keys that mirror gamepad-first actions). Feature code requires\nthis instead of inlining `Enum.KeyCode.Button*` literals so the whole\ncontroller layout is auditable in one place — and so a new bind can be\nchecked against the budget below before it ships.\n\nKeyboard-first keys that predate this file (reload R, drop G, quick-buy\nZ/X/C + B/N/M, arena packs H/J/K, tier T, hotbar 1-0) stay declared in\ntheir feature files; only their gamepad twins live here.\n\nGamepad button budget (keep in sync when editing):\n- A: vehicle exit / GUI activate (engine); game-over continue (bound\n  only while the run-end takeover is on screen); round summary Continue\n  (bound only while the summary is on screen)\n- B: modal close, RV repair (guarded), arena pack 3 (L1 chord), queue\n  leave (B = \&quot;back out\&quot; — modals sink B first, so an open modal closes\n  before a second press leaves the queue)\n- X: reload, queue vote-skip, arena pack 1 (L1 chord)\n- Y: drop weapon, queue mode toggle (lobby picker), arena pack 2 (L1\n  chord)\n- L1: chord modifier (quick-buy upgrades, arena packs, inventory)\n- L2: melee, trap rotate (priority-gated pair)\n- L3: sprint\n- R1: hotbar cycle (bare), settings toggle (L1 chord, console only)\n- R2: shoot, consumable use, trap place, vehicle gas (context-gated)\n- R3: arena auto-skip toggle (level)\n- DPad L/U/R: quick-buy slots (bare = traps, L1 = upgrades); queue\n  party size 1/2/3 while the lobby picker shows\n- DPad Down: buy weapon tier; inventory toggle (L1 chord); queue party\n  size 4 while the lobby picker shows; focus the lobby side menu (bare,\n  main place, not queued — disjoint from every other DPadDown role)\n- DPad Up also = PLAY (join best queue) in the lobby while NOT queued —\n  disjoint from its size-2 role, which only exists while queued\n- Thumbstick2: camera look / auto-aim break / skill tree preview&quot;,
+    &quot;desc&quot;: &quot;Single source of truth for every gamepad bind in the game (and the\nkeyboard keys that mirror gamepad-first actions). Feature code requires\nthis instead of inlining `Enum.KeyCode.Button*` literals so the whole\ncontroller layout is auditable in one place — and so a new bind can be\nchecked against the budget below before it ships.\n\nKeyboard-first keys that predate this file (reload R, drop G, quick-buy\nZ/X/C + B/N/M, arena packs H/J/K, tier T, hotbar 1-0) stay declared in\ntheir feature files; only their gamepad twins live here.\n\nGamepad button budget (keep in sync when editing):\n- A: vehicle exit / GUI activate (engine); game-over continue (bound\n  only while the run-end takeover is on screen); round summary Continue\n  (bound only while the summary is on screen)\n- B: modal close, RV repair (guarded), arena pack 3 (L1 chord), queue\n  leave (B = \&quot;back out\&quot; — modals sink B first, so an open modal closes\n  before a second press leaves the queue)\n- X: reload, queue vote-skip, arena pack 1 (L1 chord)\n- Y: drop weapon, queue mode toggle (lobby picker), arena pack 2 (L1\n  chord)\n- L1: chord modifier (quick-buy upgrades, arena packs, inventory)\n- L2: melee, trap rotate (priority-gated pair); Gearkit aim (`AIM`)\n- L3: sprint\n- R1: hotbar cycle (bare), settings toggle (L1 chord, console only)\n- R2: shoot, consumable use, trap place, vehicle gas (context-gated);\n  Gearkit gear fires through the engine&#x27;s tool activation on R2\n- R3: arena auto-skip toggle (level); Gearkit camera framing (`FRAMING`)\n\nIn a Murder Escape round the live binds are R2 (stab / shoot), L2 (aim,\npistol only, off while `camera.aimable` is off), R3 (framing), R1 (gear\nhotbar), L1 + R1 (settings), DPadDown (side menu focus), A (jump) and\nThumbstick2 (look). The rest above belong to dormant systems.\n- DPad L/U/R: quick-buy slots (bare = traps, L1 = upgrades); queue\n  party size 1/2/3 while the lobby picker shows\n- DPad Down: buy weapon tier; inventory toggle (L1 chord); queue party\n  size 4 while the lobby picker shows; focus the lobby side menu (bare,\n  main place, not queued — disjoint from every other DPadDown role)\n- DPad Up also = PLAY (join best queue) in the lobby while NOT queued —\n  disjoint from its size-2 role, which only exists while queued\n- Thumbstick2: camera look / auto-aim break / skill tree preview&quot;,
     &quot;source&quot;: {
-        &quot;line&quot;: 42,
+        &quot;line&quot;: 48,
         &quot;path&quot;: &quot;src/Shared/Data/Core/ControlsData.luau&quot;
     }
 }</pre></details></div></div></div></main></div></div><footer class="theme-layout-footer footer footer--dark"><div class="container container-fluid"><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2026 firebit-dev. Built with Moonwave and Docusaurus.</div></div></div></footer></div>
